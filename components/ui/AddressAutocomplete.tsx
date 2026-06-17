@@ -10,7 +10,7 @@ export type AddressResult = {
   postcode: string;
 };
 
-type Suggestion = { address: string; url: string };
+type Suggestion = AddressResult & { address: string };
 
 interface Props {
   onSelect: (result: AddressResult) => void;
@@ -20,9 +20,7 @@ export function AddressAutocomplete({ onSelect }: Props) {
   const [query, setQuery]       = useState("");
   const [suggestions, setSuggs] = useState<Suggestion[]>([]);
   const [loading, setLoading]   = useState(false);
-  const [fetching, setFetching] = useState(false);
   const [open, setOpen]         = useState(false);
-  const [apiError, setApiError] = useState(false);
   const [highlighted, setHL]    = useState(-1);
   const containerRef            = useRef<HTMLDivElement>(null);
   const debounceRef             = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,11 +42,9 @@ export function AddressAutocomplete({ onSelect }: Props) {
     if (val.length < 3) { setSuggs([]); setOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
-      setApiError(false);
       try {
         const res  = await fetch(`/api/address-search?q=${encodeURIComponent(val)}`);
         const data = await res.json();
-        if (data.error) { setApiError(true); setSuggs([]); setOpen(false); return; }
         setSuggs(data.suggestions ?? []);
         setOpen((data.suggestions?.length ?? 0) > 0);
       } catch {
@@ -59,34 +55,19 @@ export function AddressAutocomplete({ onSelect }: Props) {
     }, 300);
   }
 
-  async function select(suggestion: Suggestion) {
+  function select(s: Suggestion) {
+    setQuery(s.address);
+    setSuggs([]);
     setOpen(false);
-    setQuery(suggestion.address);
-    setFetching(true);
-    try {
-      const res  = await fetch(`/api/address-get?url=${encodeURIComponent(suggestion.url)}`);
-      const data = await res.json();
-      onSelect({
-        line1:    data.line_1        ?? "",
-        line2:    data.line_2        ?? "",
-        city:     data.town_or_city  ?? "",
-        county:   data.county        ?? "",
-        postcode: data.postcode      ?? "",
-      });
-    } catch {
-      // Fallback: put the full string in line1
-      onSelect({ line1: suggestion.address, line2: "", city: "", county: "", postcode: "" });
-    } finally {
-      setFetching(false);
-    }
+    onSelect({ line1: s.line1, line2: s.line2, city: s.city, county: s.county, postcode: s.postcode });
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!open || suggestions.length === 0) return;
-    if (e.key === "ArrowDown")                    { e.preventDefault(); setHL((h) => Math.min(h + 1, suggestions.length - 1)); }
-    else if (e.key === "ArrowUp")                 { e.preventDefault(); setHL((h) => Math.max(h - 1, 0)); }
+    if (e.key === "ArrowDown")                      { e.preventDefault(); setHL((h) => Math.min(h + 1, suggestions.length - 1)); }
+    else if (e.key === "ArrowUp")                   { e.preventDefault(); setHL((h) => Math.max(h - 1, 0)); }
     else if (e.key === "Enter" && highlighted >= 0) { e.preventDefault(); select(suggestions[highlighted]); }
-    else if (e.key === "Escape")                  { setOpen(false); }
+    else if (e.key === "Escape")                    { setOpen(false); }
   }
 
   return (
@@ -106,7 +87,7 @@ export function AddressAutocomplete({ onSelect }: Props) {
           className="w-full min-h-[44px] border border-input-border rounded-[var(--radius-md)] px-3 py-3 pr-9 text-[14px] bg-[var(--color-input-bg)] text-text-primary transition-[border-color,box-shadow]"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          {loading || fetching ? (
+          {loading ? (
             <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--color-gold)" strokeWidth="3" strokeLinecap="round" />
@@ -119,19 +100,13 @@ export function AddressAutocomplete({ onSelect }: Props) {
         </div>
       </div>
 
-      {apiError && (
-        <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>
-          Address lookup unavailable — please fill in the fields below manually.
-        </p>
-      )}
-
       {open && suggestions.length > 0 && (
         <ul
           className="absolute z-50 top-full left-0 right-0 mt-1 rounded-xl border overflow-hidden shadow-xl"
           style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
         >
-          {suggestions.slice(0, 8).map((s, i) => (
-            <li key={s.url ?? i}>
+          {suggestions.map((s, i) => (
+            <li key={i}>
               <button
                 type="button"
                 onMouseDown={() => select(s)}
