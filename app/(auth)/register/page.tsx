@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { AddressAutocomplete } from "@/components/ui/AddressAutocomplete";
+import { AddressAutocomplete, type AddressResult } from "@/components/ui/AddressAutocomplete";
 
 type Step = 1 | 2 | 3;
 const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate"];
@@ -18,11 +18,23 @@ export default function RegisterPage() {
 
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
-    phone: "", dateOfBirth: "", nationality: "United Kingdom", address: "",
+    phone: "", dateOfBirth: "", nationality: "United Kingdom",
+    addressLine1: "", addressLine2: "", city: "", county: "", postcode: "",
     emergencyName: "", emergencyPhone: "",
     dietary: "", medical: "",
     ageConfirmed: false, privacyAccepted: false,
   });
+
+  function fillAddress(result: AddressResult) {
+    setForm((f) => ({
+      ...f,
+      addressLine1: result.line1,
+      addressLine2: result.line2,
+      city:         result.city,
+      county:       result.county,
+      postcode:     result.postcode,
+    }));
+  }
 
   const [hasDbsCert, setHasDbsCert]     = useState<boolean | null>(null);
   const [dbsFile, setDbsFile]           = useState<File | null>(null);
@@ -98,7 +110,9 @@ export default function RegisterPage() {
       if (!form.email || !form.email.includes("@"))    return "Please enter a valid email address.";
       if (!form.phone)                                  return "Please enter a phone number.";
       if (!form.dateOfBirth)                            return "Please enter your date of birth.";
-      if (!form.address)                                return "Please enter your address.";
+      if (!form.addressLine1)                            return "Please enter your address (line 1).";
+      if (!form.city)                                    return "Please enter your city or town.";
+      if (!form.postcode)                                return "Please enter your postcode.";
       if (!form.password || form.password.length < 8)  return "Password must be at least 8 characters.";
       if (form.password !== form.confirmPassword)       return "Passwords do not match.";
     }
@@ -137,7 +151,7 @@ export default function RegisterPage() {
       fd.append("phone",           form.phone);
       fd.append("dateOfBirth",     form.dateOfBirth);
       fd.append("nationality",     form.nationality);
-      fd.append("address",         form.address);
+      fd.append("address", [form.addressLine1, form.addressLine2, form.city, form.county, form.postcode].filter(Boolean).join("\n"));
       fd.append("emergencyName",   form.emergencyName);
       fd.append("emergencyPhone",  form.emergencyPhone);
       fd.append("dietary",         form.dietary);
@@ -226,7 +240,46 @@ export default function RegisterPage() {
             </div>
             <Input label="Password" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} hint="Min 8 characters" required className="sm:col-span-2" />
             <Input label="Confirm password" type="password" value={form.confirmPassword} onChange={(e) => set("confirmPassword", e.target.value)} required className="sm:col-span-2" />
-            <AddressAutocomplete label="Address" value={form.address} onChange={(v) => set("address", v)} required className="sm:col-span-2" />
+
+            {/* Address block */}
+            <div className="sm:col-span-2 flex flex-col gap-3.5">
+              <AddressAutocomplete onSelect={fillAddress} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <Input
+                  label="Address line 1"
+                  placeholder="House number & street"
+                  value={form.addressLine1}
+                  onChange={(e) => set("addressLine1", e.target.value)}
+                  required
+                  className="sm:col-span-2"
+                />
+                <Input
+                  label="Address line 2"
+                  placeholder="Flat, apartment, etc. (optional)"
+                  value={form.addressLine2}
+                  onChange={(e) => set("addressLine2", e.target.value)}
+                  className="sm:col-span-2"
+                />
+                <Input
+                  label="City / Town"
+                  value={form.city}
+                  onChange={(e) => set("city", e.target.value)}
+                  required
+                />
+                <Input
+                  label="County"
+                  placeholder="Optional"
+                  value={form.county}
+                  onChange={(e) => set("county", e.target.value)}
+                />
+                <Input
+                  label="Postcode"
+                  value={form.postcode}
+                  onChange={(e) => set("postcode", e.target.value.toUpperCase())}
+                  required
+                />
+              </div>
+            </div>
           </div>
         )}
 

@@ -2,26 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 
-interface Props {
-  label?: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  className?: string;
-}
+export type AddressResult = {
+  line1:    string;
+  line2:    string;
+  city:     string;
+  county:   string;
+  postcode: string;
+};
 
 type Suggestion = { address: string; url: string };
 
-export function AddressAutocomplete({ label, value, onChange, required, className }: Props) {
-  const [query, setQuery]           = useState(value);
-  const [suggestions, setSuggs]     = useState<Suggestion[]>([]);
-  const [loading, setLoading]       = useState(false);
-  const [open, setOpen]             = useState(false);
-  const [highlighted, setHL]        = useState(-1);
-  const containerRef                = useRef<HTMLDivElement>(null);
-  const debounceRef                 = useRef<ReturnType<typeof setTimeout> | null>(null);
+interface Props {
+  onSelect: (result: AddressResult) => void;
+}
 
-  useEffect(() => { setQuery(value); }, [value]);
+export function AddressAutocomplete({ onSelect }: Props) {
+  const [query, setQuery]       = useState("");
+  const [suggestions, setSuggs] = useState<Suggestion[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [open, setOpen]         = useState(false);
+  const [highlighted, setHL]    = useState(-1);
+  const containerRef            = useRef<HTMLDivElement>(null);
+  const debounceRef             = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
@@ -35,7 +38,6 @@ export function AddressAutocomplete({ label, value, onChange, required, classNam
 
   function handleInput(val: string) {
     setQuery(val);
-    onChange(val);
     setHL(-1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.length < 3) { setSuggs([]); setOpen(false); return; }
@@ -54,29 +56,41 @@ export function AddressAutocomplete({ label, value, onChange, required, classNam
     }, 300);
   }
 
-  function select(address: string) {
-    setQuery(address);
-    onChange(address);
-    setSuggs([]);
+  async function select(suggestion: Suggestion) {
     setOpen(false);
+    setQuery(suggestion.address);
+    setFetching(true);
+    try {
+      const res  = await fetch(`/api/address-get?url=${encodeURIComponent(suggestion.url)}`);
+      const data = await res.json();
+      onSelect({
+        line1:    data.line_1        ?? "",
+        line2:    data.line_2        ?? "",
+        city:     data.town_or_city  ?? "",
+        county:   data.county        ?? "",
+        postcode: data.postcode      ?? "",
+      });
+    } catch {
+      // Fallback: put the full string in line1
+      onSelect({ line1: suggestion.address, line2: "", city: "", county: "", postcode: "" });
+    } finally {
+      setFetching(false);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!open || suggestions.length === 0) return;
-    if (e.key === "ArrowDown")  { e.preventDefault(); setHL((h) => Math.min(h + 1, suggestions.length - 1)); }
-    else if (e.key === "ArrowUp")   { e.preventDefault(); setHL((h) => Math.max(h - 1, 0)); }
-    else if (e.key === "Enter" && highlighted >= 0) { e.preventDefault(); select(suggestions[highlighted].address); }
-    else if (e.key === "Escape") { setOpen(false); }
+    if (e.key === "ArrowDown")                    { e.preventDefault(); setHL((h) => Math.min(h + 1, suggestions.length - 1)); }
+    else if (e.key === "ArrowUp")                 { e.preventDefault(); setHL((h) => Math.max(h - 1, 0)); }
+    else if (e.key === "Enter" && highlighted >= 0) { e.preventDefault(); select(suggestions[highlighted]); }
+    else if (e.key === "Escape")                  { setOpen(false); }
   }
 
   return (
-    <div ref={containerRef} className={`relative flex flex-col gap-1.5 ${className ?? ""}`}>
-      {label && (
-        <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
-          {label}{required && <span className="ml-0.5" style={{ color: "var(--color-gold)" }}>*</span>}
-        </label>
-      )}
-
+    <div ref={containerRef} className="relative flex flex-col gap-1.5">
+      <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
+        Find address
+      </label>
       <div className="relative">
         <input
           type="text"
@@ -85,11 +99,11 @@ export function AddressAutocomplete({ label, value, onChange, required, classNam
           onKeyDown={handleKeyDown}
           onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
           autoComplete="off"
-          placeholder="Start typing your address or postcode…"
+          placeholder="Type postcode or street name…"
           className="w-full min-h-[44px] border border-input-border rounded-[var(--radius-md)] px-3 py-3 pr-9 text-[14px] bg-[var(--color-input-bg)] text-text-primary transition-[border-color,box-shadow]"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          {loading ? (
+          {loading || fetching ? (
             <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--color-gold)" strokeWidth="3" strokeLinecap="round" />
@@ -111,7 +125,7 @@ export function AddressAutocomplete({ label, value, onChange, required, classNam
             <li key={s.url ?? i}>
               <button
                 type="button"
-                onMouseDown={() => select(s.address)}
+                onMouseDown={() => select(s)}
                 onMouseEnter={() => setHL(i)}
                 className="w-full text-left px-4 py-2.5 text-[13px] transition-colors"
                 style={{
