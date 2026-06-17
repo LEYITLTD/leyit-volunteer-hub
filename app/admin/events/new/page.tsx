@@ -94,7 +94,7 @@ export default function NewEventPage() {
   const labelStyle = { color: "var(--color-text-secondary)" };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[680px]">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[680px] mx-auto w-full">
       {/* Back */}
       <Link href="/admin/events" className="inline-flex items-center gap-1.5 text-[13px] mb-6" style={{ color: "var(--color-text-secondary)" }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>

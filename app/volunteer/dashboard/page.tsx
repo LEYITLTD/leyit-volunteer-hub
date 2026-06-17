@@ -93,7 +93,7 @@ export default function VolunteerDashboard() {
   const tier = getTier(POINTS);
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[900px]">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[900px] mx-auto w-full">
       {/* Welcome */}
       <div className="mb-6">
         <h1 className="font-display text-[26px] sm:text-[30px] font-semibold" style={{ color: "var(--color-text-primary)" }}>

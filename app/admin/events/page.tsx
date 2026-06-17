@@ -121,7 +121,7 @@ function EventCard({ event }: { event: Event }) {
       {/* Card footer */}
       <div className="px-4 sm:px-5 py-3 border-t flex items-center justify-between gap-3" style={{ borderColor: "var(--color-card-border)" }}>
         <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-          {totalApplied} applied · {totalCapacity} total spots
+          {totalApplied} confirmed · {totalCapacity} total spots
         </span>
         <Link
           href={`/admin/events/${event.id}`}
@@ -155,7 +155,7 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[860px]">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[860px] mx-auto w-full">
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-6 flex-col sm:flex-row">
         <div>

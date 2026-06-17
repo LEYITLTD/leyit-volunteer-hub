@@ -107,7 +107,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[900px]">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[900px] mx-auto w-full">
 
       {/* Back */}
       <Link href="/admin/events" className="inline-flex items-center gap-1.5 text-[13px] mb-5" style={{ color: "var(--color-text-secondary)" }}>
@@ -156,7 +156,7 @@ export default function EventDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: "Total spots",  value: totalCapacity.toString() },
-          { label: "Applied",      value: totalApplied.toString() },
+          { label: "Confirmed",     value: totalApplied.toString() },
           { label: "Confirmed",    value: totalConfirmed.toString(), gold: true },
           { label: "Fill rate",    value: `${fillRate}%` },
         ].map(({ label, value, gold }) => (
@@ -204,7 +204,6 @@ export default function EventDetailPage() {
                     />
                   </div>
                   <div className="flex gap-4 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                    <span>{applied} applied</span>
                     <span style={{ color: confirmed > 0 ? "#4CAF50" : undefined }}>{confirmed} confirmed</span>
                   </div>
                 </div>
@@ -236,7 +235,7 @@ export default function EventDetailPage() {
               <table className="w-full text-[13px]">
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--color-card-border)" }}>
-                    {["Volunteer", "Role", "Status", "Applied"].map(h => (
+                    {["Volunteer", "Role", "Status", "Date"].map(h => (
                       <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-muted)" }}>{h}</th>
                     ))}
                   </tr>
@@ -265,7 +264,7 @@ export default function EventDetailPage() {
             {/* Mobile cards */}
             <div className="sm:hidden divide-y" style={{ borderColor: "var(--color-card-border)" }}>
               {event.event_applications.map(app => {
-                const badge = APP_STATUS[app.status] ?? APP_STATUS.applied;
+                const badge = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
                 return (
                   <div key={app.id} className="px-4 py-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
