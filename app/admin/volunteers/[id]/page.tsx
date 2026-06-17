@@ -712,6 +712,149 @@ export default function VolunteerDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Right column — compliance — first in DOM so it's at top on mobile */}
+        <div className="order-first lg:order-last lg:col-span-2 flex flex-col gap-5">
+          {/* Refinitiv — primary action, show first */}
+          <section
+            className="rounded-2xl border overflow-hidden"
+            style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
+          >
+            <div
+              className="px-5 py-3.5 border-b flex items-center justify-between"
+              style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
+            >
+              <div>
+                <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Refinitiv check</h2>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>World-Check name &amp; DOB screening</p>
+              </div>
+              <Badge map={REFINITIV_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              {/* Status callout */}
+              {compliance?.refinitiv_status === "clear" && (
+                <div className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: "#1A2E1A" }}>
+                  <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <p className="text-[13px]" style={{ color: "#4CAF50" }}>Cleared — no matches found on Refinitiv World-Check.</p>
+                </div>
+              )}
+              {compliance?.refinitiv_status === "high_risk" && (
+                <div className="rounded-xl p-3" style={{ background: "#2E1A1A", border: "1px solid #4E2A2A" }}>
+                  <p className="text-[13px] font-semibold" style={{ color: "#E57373" }}>Marked as high risk</p>
+                  {compliance.refinitiv_rejection_reason && (
+                    <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "#C47070" }}>{compliance.refinitiv_rejection_reason}</p>
+                  )}
+                </div>
+              )}
+              {(!compliance?.refinitiv_status || compliance.refinitiv_status === "pending") && (
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+                  Search this volunteer&apos;s name and date of birth on Refinitiv World-Check, then record the result here.
+                </p>
+              )}
+              {compliance?.refinitiv_screened_at && (
+                <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+                  Last reviewed {fmt(compliance.refinitiv_screened_at)}
+                </p>
+              )}
+              {/* Action buttons — side by side */}
+              <div className="flex gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+                <button
+                  onClick={() => setModal("refinitiv-approve")}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
+                  style={{ background: "var(--color-gold)", color: "#1A1714" }}
+                >
+                  Clear ✓
+                </button>
+                <button
+                  onClick={() => setModal("refinitiv-reject")}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold border transition-opacity"
+                  style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
+                >
+                  High Risk
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* DBS section */}
+          <section
+            className="rounded-2xl border overflow-hidden"
+            style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
+          >
+            <div
+              className="px-5 py-3.5 border-b flex items-center justify-between"
+              style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
+            >
+              <div>
+                <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>DBS certificate</h2>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Optional — informational only</p>
+              </div>
+              <Badge map={DBS_BADGE} value={dbsStatus} />
+            </div>
+            <div className="p-5 flex flex-col gap-4">
+              {compliance?.dbs_uploaded_at && (
+                <Field label="Uploaded" value={fmt(compliance.dbs_uploaded_at)} />
+              )}
+              {compliance?.dbs_expiry_date && (
+                <Field label="Expires"  value={fmt(compliance.dbs_expiry_date)} />
+              )}
+              {compliance?.dbs_reviewed_at && (
+                <Field label="Reviewed" value={fmt(compliance.dbs_reviewed_at)} />
+              )}
+              {dbsStatus === "rejected" && compliance?.dbs_rejection_reason && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>
+                    Rejection reason
+                  </p>
+                  <div className="rounded-xl p-3 text-[13px] leading-relaxed" style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}>
+                    {compliance.dbs_rejection_reason}
+                  </div>
+                </div>
+              )}
+              {dbsUrl && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-muted)" }}>Document</p>
+                  {dbsUrl.match(/\.pdf(\?|$)/i) ? (
+                    <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-card-border)", height: "260px" }}>
+                      <iframe src={dbsUrl} className="w-full h-full border-0" title="DBS certificate" />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-card-border)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={dbsUrl} alt="DBS certificate" className="w-full object-contain max-h-[260px]" />
+                    </div>
+                  )}
+                  <a href={dbsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-[12px]" style={{ color: "var(--color-gold)" }}>
+                    Open in new tab ↗
+                  </a>
+                </div>
+              )}
+              {!compliance?.dbs_document_url && (
+                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No document uploaded yet.</p>
+              )}
+              {isPending && (
+                <div className="flex gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+                  <button
+                    onClick={() => setModal("approve")}
+                    className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold"
+                    style={{ background: "var(--color-gold)", color: "#1A1714" }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => setModal("reject")}
+                    className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold border"
+                    style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
         {/* Left column — personal info */}
         <div className="lg:col-span-3 flex flex-col gap-5">
           {/* Personal details */}
@@ -758,168 +901,6 @@ export default function VolunteerDetailPage() {
           </section>
         </div>
 
-        {/* Right column — compliance */}
-        <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* DBS section */}
-          <section
-            className="rounded-2xl border overflow-hidden"
-            style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
-          >
-            <div
-              className="px-5 py-3.5 border-b flex items-center justify-between"
-              style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
-            >
-              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>DBS certificate</h2>
-              <Badge map={DBS_BADGE} value={dbsStatus} />
-            </div>
-            <div className="p-5 flex flex-col gap-4">
-              {compliance?.dbs_uploaded_at && (
-                <Field label="Uploaded" value={fmt(compliance.dbs_uploaded_at)} />
-              )}
-              {compliance?.dbs_expiry_date && (
-                <Field label="Expires"  value={fmt(compliance.dbs_expiry_date)} />
-              )}
-              {compliance?.dbs_reviewed_at && (
-                <Field label="Reviewed" value={fmt(compliance.dbs_reviewed_at)} />
-              )}
-
-              {/* Rejection reason */}
-              {dbsStatus === "rejected" && compliance?.dbs_rejection_reason && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>
-                    Rejection reason
-                  </p>
-                  <div
-                    className="rounded-xl p-3 text-[13px] leading-relaxed"
-                    style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}
-                  >
-                    {compliance.dbs_rejection_reason}
-                  </div>
-                </div>
-              )}
-
-              {/* Document viewer */}
-              {dbsUrl && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-muted)" }}>
-                    Document
-                  </p>
-                  {dbsUrl.match(/\.pdf(\?|$)/i) ? (
-                    <div
-                      className="rounded-xl overflow-hidden border"
-                      style={{ borderColor: "var(--color-card-border)", height: "260px" }}
-                    >
-                      <iframe src={dbsUrl} className="w-full h-full border-0" title="DBS certificate" />
-                    </div>
-                  ) : (
-                    <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-card-border)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={dbsUrl} alt="DBS certificate" className="w-full object-contain max-h-[260px]" />
-                    </div>
-                  )}
-                  <a
-                    href={dbsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block text-[12px]"
-                    style={{ color: "var(--color-gold)" }}
-                  >
-                    Open in new tab ↗
-                  </a>
-                </div>
-              )}
-
-              {!compliance?.dbs_document_url && (
-                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
-                  No document uploaded yet.
-                </p>
-              )}
-
-              {/* Approve / Reject buttons */}
-              {isPending && (
-                <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
-                  <button
-                    onClick={() => setModal("approve")}
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
-                    style={{ background: "var(--color-gold)", color: "#1A1714" }}
-                  >
-                    Approve DBS
-                  </button>
-                  <button
-                    onClick={() => setModal("reject")}
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold border transition-opacity"
-                    style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
-                  >
-                    Reject DBS
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Refinitiv */}
-          <section
-            className="rounded-2xl border overflow-hidden"
-            style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
-          >
-            <div
-              className="px-5 py-3.5 border-b flex items-center justify-between"
-              style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
-            >
-              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Refinitiv check</h2>
-              <Badge map={REFINITIV_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
-            </div>
-            <div className="p-5 flex flex-col gap-4">
-              {compliance?.refinitiv_screened_at && (
-                <Field label="Last reviewed" value={fmt(compliance.refinitiv_screened_at)} />
-              )}
-
-              {compliance?.refinitiv_status === "clear" && (
-                <div
-                  className="rounded-xl p-3 text-[13px]"
-                  style={{ background: "#1A2E1A", color: "#4CAF50" }}
-                >
-                  Refinitiv check passed — name and DOB cleared.
-                </div>
-              )}
-
-              {compliance?.refinitiv_status === "high_risk" && (
-                <div
-                  className="rounded-xl p-3 text-[13px]"
-                  style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}
-                >
-                  Marked as high risk.
-                  {compliance.refinitiv_rejection_reason && (
-                    <p className="mt-1 opacity-80">{compliance.refinitiv_rejection_reason}</p>
-                  )}
-                </div>
-              )}
-
-              {(!compliance?.refinitiv_status || compliance.refinitiv_status === "pending") && (
-                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
-                  Run a manual Refinitiv world-check on this volunteer&apos;s name and date of birth, then record the result below.
-                </p>
-              )}
-
-              <div className="flex flex-col gap-2 pt-1 border-t" style={{ borderColor: "var(--color-card-border)" }}>
-                <button
-                  onClick={() => setModal("refinitiv-approve")}
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
-                  style={{ background: "var(--color-gold)", color: "#1A1714" }}
-                >
-                  Mark as Clear
-                </button>
-                <button
-                  onClick={() => setModal("refinitiv-reject")}
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold border transition-opacity"
-                  style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
-                >
-                  Mark as High Risk
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
       </div>
 
       {/* Modals */}
