@@ -127,26 +127,28 @@ function EventCard({
         >
           {event.name}
         </h3>
-        <div
-          className="flex flex-wrap gap-x-3 gap-y-0.5 text-[12px]"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
+        <div className="flex flex-col gap-1 mt-1">
           {event.city && (
-            <span className="flex items-center gap-1">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
               {event.city}
             </span>
           )}
-          <span className="flex items-center gap-1">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
               <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
             {fmtDate(event.event_start)}
           </span>
-          <span>{fmtTime(event.event_start)} – {fmtTime(event.event_end)}</span>
+          <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            {fmtTime(event.event_start)} – {fmtTime(event.event_end)}
+          </span>
         </div>
       </div>
 
@@ -260,57 +262,61 @@ function ApplyModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-stretch justify-end sm:items-center sm:justify-center sm:p-4"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      className="fixed inset-0 z-50 flex flex-col items-stretch justify-end sm:items-center sm:justify-center sm:p-6"
+      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl"
-        style={{ background: "var(--color-card)" }}
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col"
+        style={{ background: "var(--color-card)", maxHeight: "88dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal header */}
+        {/* Header */}
         <div
-          className="px-5 py-4 flex items-start justify-between border-b"
+          className="px-5 py-4 flex items-center justify-between border-b shrink-0"
           style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
         >
           <div>
-            <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Apply for event
-            </h2>
-            <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+            <h2 className="text-[16px] font-semibold leading-tight" style={{ color: "var(--color-text-primary)" }}>
               {event.name}
-            </p>
+            </h2>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0 mt-1">
+              {event.city && (
+                <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {event.city}
+                </span>
+              )}
+              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
+                {fmtDate(event.event_start)} · {fmtTime(event.event_start)}–{fmtTime(event.event_end)}
+              </span>
+            </div>
           </div>
-          <button onClick={onClose} className="text-[22px] leading-none mt-0.5" style={{ color: "var(--color-text-muted)" }}>×</button>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ml-3"
+            style={{ color: "var(--color-text-muted)", background: "var(--color-card-border)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
-        <div className="p-5 flex flex-col gap-4">
-          {/* Date/city summary */}
-          <div
-            className="flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] px-3 py-2.5 rounded-xl"
-            style={{ background: "var(--color-card-header-bg)", color: "var(--color-text-secondary)" }}
-          >
-            {event.city && <span>📍 {event.city}</span>}
-            <span>🗓 {fmtDate(event.event_start)}</span>
-            <span>⏰ {fmtTime(event.event_start)} – {fmtTime(event.event_end)}</span>
-          </div>
-
-          {/* Role picker */}
+        {/* Body */}
+        <div className="p-5 flex flex-col gap-4 overflow-y-auto">
           {availableRoles.length === 0 ? (
-            <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-[14px] text-center py-4" style={{ color: "var(--color-text-muted)" }}>
               All roles are currently full.
             </p>
           ) : availableRoles.length === 1 ? (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-secondary)" }}>
-                Role
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-2" style={{ color: "var(--color-text-muted)" }}>
+                Your role
               </p>
               <div
-                className="flex items-center justify-between px-3 py-3 rounded-xl border"
+                className="flex items-center justify-between px-4 py-3.5 rounded-xl border"
                 style={{ borderColor: "var(--color-gold)", background: "var(--color-gold-subtle)" }}
               >
-                <span className="text-[14px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                <span className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
                   {availableRoles[0].role_name}
                 </span>
                 <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
@@ -320,73 +326,73 @@ function ApplyModal({
             </div>
           ) : (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-2" style={{ color: "var(--color-text-muted)" }}>
                 Choose a role
               </p>
               <div className="flex flex-col gap-2">
-                {availableRoles.map((role) => (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => setSelectedRole(role.id)}
-                    className="flex items-center justify-between px-3 py-3 rounded-xl border text-left transition-colors"
-                    style={{
-                      borderColor: selectedRole === role.id ? "var(--color-gold)" : "var(--color-card-border)",
-                      background:  selectedRole === role.id ? "var(--color-gold-subtle)" : "transparent",
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
+                {availableRoles.map((role) => {
+                  const selected = selectedRole === role.id;
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => setSelectedRole(role.id)}
+                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl border w-full text-left transition-colors"
+                      style={{
+                        borderColor: selected ? "var(--color-gold)" : "var(--color-card-border)",
+                        background:  selected ? "var(--color-gold-subtle)" : "transparent",
+                      }}
+                    >
                       <span
-                        className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
-                        style={{ borderColor: selectedRole === role.id ? "var(--color-gold)" : "var(--color-input-border)" }}
+                        className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                        style={{ borderColor: selected ? "var(--color-gold)" : "var(--color-input-border)" }}
                       >
-                        {selectedRole === role.id && (
-                          <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-gold)" }} />
-                        )}
+                        {selected && <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--color-gold)" }} />}
                       </span>
-                      <span className="text-[14px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                      <span className="flex-1 text-[14px] font-medium" style={{ color: "var(--color-text-primary)" }}>
                         {role.role_name}
                       </span>
-                    </div>
-                    <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                      {Math.max(0, role.capacity - role.appliedCount)} left
-                    </span>
-                  </button>
-                ))}
+                      <span className="text-[12px] shrink-0" style={{ color: "var(--color-text-secondary)" }}>
+                        {Math.max(0, role.capacity - role.appliedCount)} left
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {err && (
-            <p className="text-[13px] px-3 py-2.5 rounded-xl" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
+            <p className="text-[13px] text-center px-3 py-2.5 rounded-xl" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
               {err}
             </p>
           )}
-
-          {availableRoles.length > 0 && (
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-[13px] border"
-                style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={apply}
-                disabled={applying || !selectedRole}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
-                style={{
-                  background: "var(--color-gold)",
-                  color:      "#1A1411",
-                  opacity:    applying || !selectedRole ? 0.6 : 1,
-                }}
-              >
-                {applying ? "Applying…" : roleName ? `Apply — ${roleName}` : "Apply"}
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* Footer — always visible */}
+        {availableRoles.length > 0 && (
+          <div className="px-5 py-4 border-t shrink-0 flex gap-3" style={{ borderColor: "var(--color-card-border)" }}>
+            <button
+              onClick={onClose}
+              className="flex-1 flex items-center justify-center py-3 rounded-xl text-[14px] font-medium border"
+              style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={apply}
+              disabled={applying || !selectedRole}
+              className="flex-1 flex items-center justify-center py-3 rounded-xl text-[14px] font-semibold transition-opacity"
+              style={{
+                background: "var(--color-gold)",
+                color:      "#1A1411",
+                opacity:    applying || !selectedRole ? 0.55 : 1,
+              }}
+            >
+              {applying ? "Submitting…" : "Confirm"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
