@@ -168,6 +168,11 @@ input[type="radio"] {
   min-height: 18px;
 }
 
+/* Pointer cursor on all interactive elements */
+button, [role="button"], a, label[for], select, input[type="checkbox"], input[type="radio"], input[type="file"] {
+  cursor: pointer;
+}
+
 /* Minimum 44px touch targets for interactive elements */
 button, [role="button"], a {
   min-height: 44px;
