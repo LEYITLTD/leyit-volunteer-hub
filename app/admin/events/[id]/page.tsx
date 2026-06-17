@@ -207,7 +207,6 @@ export default function EventDetailPage() {
                   <div className="flex gap-4 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                     <span>{applied} applied</span>
                     <span style={{ color: confirmed > 0 ? "#4CAF50" : undefined }}>{confirmed} confirmed</span>
-                    <span>{Math.max(0, applied - confirmed)} pending</span>
                   </div>
                 </div>
               );
