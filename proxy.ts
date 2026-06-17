@@ -48,6 +48,10 @@ export async function proxy(request: NextRequest) {
       await supabase.auth.signOut();
       return NextResponse.redirect(new URL("/admin-login", request.url));
     }
+    // Force password change on first login
+    if (user.user_metadata?.must_change_password && !path.startsWith("/admin/change-password")) {
+      return NextResponse.redirect(new URL("/admin/change-password", request.url));
+    }
   }
 
   return response;

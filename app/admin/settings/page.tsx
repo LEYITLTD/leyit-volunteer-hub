@@ -1,4 +1,286 @@
-import { ComingSoon } from "@/components/ui/ComingSoon";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+
+type AdminUser = {
+  id:              string;
+  email:           string;
+  full_name:       string | null;
+  created_at:      string;
+  last_sign_in_at: string | null;
+};
+
+type Creds = { email: string; password: string };
+
+function fmtDate(d: string | null) {
+  if (!d) return "Never";
+  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function SettingsPage() {
-  return <ComingSoon feature="Settings" />;
+  const [admins,  setAdmins]  = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal,   setModal]   = useState(false);
+
+  // Add-admin form state
+  const [fullName,    setFullName]    = useState("");
+  const [email,       setEmail]       = useState("");
+  const [submitting,  setSubmitting]  = useState(false);
+  const [formError,   setFormError]   = useState<string | null>(null);
+  const [creds,       setCreds]       = useState<Creds | null>(null);
+  const [copied,      setCopied]      = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then(r => r.json())
+      .then(d => setAdmins(Array.isArray(d) ? d : []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openModal() {
+    setFullName("");
+    setEmail("");
+    setFormError(null);
+    setCreds(null);
+    setCopied(false);
+    setModal(true);
+  }
+
+  function closeModal() {
+    setModal(false);
+    setCreds(null);
+  }
+
+  async function handleSubmit() {
+    if (!fullName.trim()) { setFormError("Full name is required."); return; }
+    if (!email.trim())    { setFormError("Email address is required."); return; }
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), full_name: fullName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to create account");
+      setCreds({ email: data.email, password: data.password });
+      setAdmins(a => [
+        ...a,
+        { id: data.id, email: data.email, full_name: data.full_name, created_at: new Date().toISOString(), last_sign_in_at: null },
+      ]);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Failed to create account");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function copyPassword() {
+    if (!creds) return;
+    await navigator.clipboard.writeText(creds.password);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <>
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[720px] mx-auto w-full">
+        <div className="mb-6">
+          <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Settings
+          </h1>
+          <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+            Manage admin accounts and platform configuration.
+          </p>
+        </div>
+
+        {/* Admin team */}
+        <div className="rounded-xl border overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "var(--color-card-border)" }}>
+            <div>
+              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Admin team</h2>
+              {!loading && (
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  {admins.length} admin{admins.length !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={openModal}
+              className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg"
+              style={{ background: "var(--color-gold)", color: "#1A1411" }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add admin
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+            </div>
+          ) : admins.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>No admin accounts found.</p>
+            </div>
+          ) : (
+            <div className="divide-y" style={{ borderColor: "var(--color-card-border)" }}>
+              {admins.map(admin => (
+                <div key={admin.id} className="px-5 py-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    {admin.full_name && (
+                      <p className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
+                        {admin.full_name}
+                      </p>
+                    )}
+                    <p className="text-[12px] truncate" style={{ color: admin.full_name ? "var(--color-text-muted)" : "var(--color-text-primary)" }}>
+                      {admin.email}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[10px] uppercase tracking-[0.06em] mb-0.5" style={{ color: "var(--color-text-muted)" }}>Last sign in</p>
+                    <p className="text-[11px] tabular-nums" style={{ color: "var(--color-text-secondary)" }}>
+                      {fmtDate(admin.last_sign_in_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal overlay */}
+      {modal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
+        >
+          <div
+            className="w-full max-w-[400px] rounded-2xl border p-6"
+            style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
+          >
+            {creds ? (
+              /* ---- Credentials screen ---- */
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#1A2E1A" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                    Account created
+                  </h2>
+                </div>
+
+                <p className="text-[12px] mb-4 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+                  Share these credentials securely. The user will be asked to set a new password on first login.
+                </p>
+
+                <div
+                  className="rounded-xl p-4 mb-5 space-y-3"
+                  style={{ background: "#1C1916", border: "1px solid var(--color-card-border)" }}
+                >
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-1" style={{ color: "var(--color-text-muted)" }}>
+                      Email
+                    </p>
+                    <p className="text-[13px] font-mono" style={{ color: "var(--color-text-primary)" }}>{creds.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>
+                      Temporary password
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[14px] font-mono font-medium flex-1 tracking-wide" style={{ color: "var(--color-gold)" }}>
+                        {creds.password}
+                      </p>
+                      <button
+                        onClick={copyPassword}
+                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-md flex-shrink-0 transition-all"
+                        style={{
+                          background: copied ? "#1A2E1A" : "var(--color-gold-subtle)",
+                          color:      copied ? "#4CAF50" : "var(--color-gold)",
+                        }}
+                      >
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <Button variant="gold" fullWidth onClick={closeModal}>
+                  Done
+                </Button>
+              </>
+            ) : (
+              /* ---- Create form ---- */
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                    Add admin
+                  </h2>
+                  <button
+                    onClick={closeModal}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4 mb-4">
+                  <Input
+                    label="Full name"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    placeholder="e.g. Khadijah Khan"
+                  />
+                  <Input
+                    label="Email address"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="e.g. k.khan@emanchannel.tv"
+                  />
+                </div>
+
+                {formError && (
+                  <p className="text-[12px] rounded-lg px-3 py-2.5 mb-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
+                    {formError}
+                  </p>
+                )}
+
+                <p className="text-[11px] mb-4 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+                  A temporary password will be generated automatically. The user must change it on first login.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeModal}
+                    className="flex-1 text-[13px] py-2.5 rounded-lg font-semibold"
+                    style={{ color: "var(--color-text-secondary)", border: "1px solid var(--color-card-border)" }}
+                  >
+                    Cancel
+                  </button>
+                  <Button variant="gold" onClick={handleSubmit} disabled={submitting} className="flex-1">
+                    {submitting ? "Creating…" : "Create account"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
