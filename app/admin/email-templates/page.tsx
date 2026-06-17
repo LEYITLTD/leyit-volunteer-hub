@@ -108,14 +108,14 @@ export default function EmailTemplatesPage() {
             >
               {/* Header */}
               <div
-                className="flex items-center justify-between px-5 py-4"
+                className="flex flex-col gap-2 px-4 sm:px-5 py-3 sm:py-4 sm:flex-row sm:items-center sm:justify-between"
                 style={{ background: "var(--color-card-header-bg)", borderBottom: `1px solid var(--color-card-border)` }}
               >
-                <div>
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{t.name}</p>
-                  <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--color-text-muted)" }}>{t.key}</p>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>{t.name}</p>
+                  <p className="text-[11px] font-mono mt-0.5 truncate" style={{ color: "var(--color-text-muted)" }}>{t.key}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {wasSaved && (
                     <span className="text-[12px] font-medium" style={{ color: "var(--color-success)" }}>Saved ✓</span>
                   )}
@@ -123,14 +123,14 @@ export default function EmailTemplatesPage() {
                     <>
                       <button
                         onClick={() => setPreview(preview === t.key ? null : t.key)}
-                        className="text-[13px] px-3 py-1.5 rounded-lg border transition-colors"
+                        className="text-[12px] sm:text-[13px] px-2.5 sm:px-3 py-1.5 rounded-lg border transition-colors"
                         style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
                       >
-                        {preview === t.key ? "Hide preview" : "Preview"}
+                        {preview === t.key ? "Hide" : "Preview"}
                       </button>
                       <button
                         onClick={() => setEditing(t.key)}
-                        className="text-[13px] px-3 py-1.5 rounded-lg border transition-colors"
+                        className="text-[12px] sm:text-[13px] px-2.5 sm:px-3 py-1.5 rounded-lg border transition-colors"
                         style={{ borderColor: "var(--color-gold)", color: "var(--color-gold)", background: "var(--color-gold-subtle)" }}
                       >
                         Edit
@@ -139,7 +139,7 @@ export default function EmailTemplatesPage() {
                   )}
                   {isEditing && (
                     <>
-                      <button onClick={() => cancel(t.key)} className="text-[13px] px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}>
+                      <button onClick={() => cancel(t.key)} className="text-[12px] sm:text-[13px] px-2.5 sm:px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}>
                         Cancel
                       </button>
                       <Button variant="gold" onClick={() => save(t.key)} disabled={isSaving}>
@@ -151,7 +151,7 @@ export default function EmailTemplatesPage() {
               </div>
 
               {/* Body */}
-              <div className="p-5 flex flex-col gap-4">
+              <div className="p-4 sm:p-5 flex flex-col gap-4">
                 {/* Variable hints */}
                 {hints.length > 0 && (
                   <div className="flex flex-wrap gap-2">

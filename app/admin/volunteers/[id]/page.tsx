@@ -132,8 +132,8 @@ function ApproveModal({
   return (
     <Overlay onClose={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-        style={{ background: "var(--color-card)" }}
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl overflow-y-auto"
+        style={{ background: "var(--color-card)", maxHeight: "92dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
@@ -282,8 +282,8 @@ function RejectModal({
   return (
     <Overlay onClose={onClose}>
       <div
-        className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-        style={{ background: "var(--color-card)", maxHeight: "90vh" }}
+        className="w-full sm:max-w-4xl rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+        style={{ background: "var(--color-card)", maxHeight: "92dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
@@ -404,7 +404,7 @@ function RejectModal({
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex flex-col items-stretch justify-end sm:items-center sm:justify-center sm:p-4 overflow-y-auto"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
@@ -471,7 +471,7 @@ export default function VolunteerDetailPage() {
   const approveTpl = templates.find((t) => t.key === "application_approved") ?? null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 w-full">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
       {/* Back */}
       <Link
         href="/admin/volunteers"

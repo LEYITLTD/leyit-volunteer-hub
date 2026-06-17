@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen flex flex-col" style={{ background: "var(--color-bg)" }}>
       {/* Top bar */}
       <header
-        className="flex items-center justify-between px-6 py-4 border-b"
+        className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b"
         style={{ background: "var(--color-chrome)", borderColor: "#2C2825" }}
       >
         <div className="flex items-center gap-3">
