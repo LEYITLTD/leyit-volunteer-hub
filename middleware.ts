@@ -36,10 +36,6 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Admins have their own portal
-    if (user.app_metadata?.role === "admin") {
-      return NextResponse.redirect(new URL("/admin/overview", request.url));
-    }
   }
 
   // --- Admin portal ---
