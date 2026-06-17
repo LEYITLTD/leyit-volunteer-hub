@@ -39,12 +39,12 @@ export default function LoginPage() {
         alt="Light Upon Light Global"
         width={120}
         height={96}
-        className="mb-8 h-24 w-auto object-contain"
+        className="mb-6 sm:mb-8 h-20 sm:h-24 w-auto object-contain"
         priority
       />
 
       <div
-        className="w-full bg-card border border-card-border rounded-xl p-7"
+        className="w-full bg-card border border-card-border rounded-xl p-5 sm:p-7"
         style={{ boxShadow: "var(--shadow-card)" }}
       >
         <h1 className="font-display text-[28px] font-semibold text-text-primary mb-1">

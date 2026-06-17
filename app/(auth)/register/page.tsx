@@ -79,7 +79,7 @@ export default function RegisterPage() {
         <Image src="/assets/logo-gold.png" alt="LUL" width={100} height={70} className="h-[70px] w-auto" />
       </div>
 
-      <div className="bg-card border border-card-border rounded-xl p-8" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="bg-card border border-card-border rounded-xl p-5 sm:p-8" style={{ boxShadow: "var(--shadow-card)" }}>
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-7">
           {([1, 2, 3] as Step[]).map((s) => (
@@ -93,7 +93,7 @@ export default function RegisterPage() {
         <h2 className="font-display text-[24px] font-semibold mb-5">{STEP_LABELS[step - 1]}</h2>
 
         {step === 1 && (
-          <div className="grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <Input label="First name" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} required />
             <Input label="Last name" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} required />
             <Input label="Email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
@@ -104,24 +104,24 @@ export default function RegisterPage() {
               <select
                 value={form.nationality}
                 onChange={(e) => set("nationality", e.target.value)}
-                className="border border-input-border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] bg-[var(--color-input-bg)] text-text-primary"
+                className="min-h-[44px] border border-input-border rounded-[var(--radius-md)] px-3 py-3 text-[14px] bg-[var(--color-input-bg)] text-text-primary"
               >
                 <option>United Kingdom</option>
                 <option>Other</option>
               </select>
             </div>
-            <Input label="Password" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} hint="Min 8 characters" required className="col-span-2" />
-            <Input label="Confirm password" type="password" value={form.confirmPassword} onChange={(e) => set("confirmPassword", e.target.value)} required className="col-span-2" />
-            <Input label="Address" value={form.address} onChange={(e) => set("address", e.target.value)} required className="col-span-2" />
+            <Input label="Password" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} hint="Min 8 characters" required className="sm:col-span-2" />
+            <Input label="Confirm password" type="password" value={form.confirmPassword} onChange={(e) => set("confirmPassword", e.target.value)} required className="sm:col-span-2" />
+            <Input label="Address" value={form.address} onChange={(e) => set("address", e.target.value)} required className="sm:col-span-2" />
           </div>
         )}
 
         {step === 2 && (
-          <div className="grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <Input label="Emergency contact name" value={form.emergencyName} onChange={(e) => set("emergencyName", e.target.value)} required />
             <Input label="Emergency contact phone" type="tel" value={form.emergencyPhone} onChange={(e) => set("emergencyPhone", e.target.value)} required />
-            <Input label="Dietary requirements" value={form.dietary} onChange={(e) => set("dietary", e.target.value)} className="col-span-2" />
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <Input label="Dietary requirements" value={form.dietary} onChange={(e) => set("dietary", e.target.value)} className="sm:col-span-2" />
+            <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
                 Medical information{" "}
                 <span className="normal-case tracking-normal font-semibold text-gold">· Admin-visible only</span>
@@ -133,12 +133,12 @@ export default function RegisterPage() {
                 className="border border-input-border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] bg-[var(--color-input-bg)] resize-y"
               />
             </div>
-            <label className="col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
-              <input type="checkbox" checked={form.ageConfirmed} onChange={(e) => set("ageConfirmed", e.target.checked)} className="mt-0.5" />
+            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
+              <input type="checkbox" checked={form.ageConfirmed} onChange={(e) => set("ageConfirmed", e.target.checked)} className="mt-0.5 shrink-0" />
               I confirm I am 16 years of age or older.
             </label>
-            <label className="col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
-              <input type="checkbox" checked={form.privacyAccepted} onChange={(e) => set("privacyAccepted", e.target.checked)} className="mt-0.5" />
+            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
+              <input type="checkbox" checked={form.privacyAccepted} onChange={(e) => set("privacyAccepted", e.target.checked)} className="mt-0.5 shrink-0" />
               I have read and accept the privacy policy.
             </label>
           </div>
@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         {step === 3 && (
           <div>
-            <div className="border-2 border-dashed border-input-border rounded-xl p-10 text-center bg-surface">
+            <div className="border-2 border-dashed border-input-border rounded-xl p-6 sm:p-10 text-center bg-surface">
               <div className="w-[46px] h-[46px] rounded-xl bg-gold-light text-gold flex items-center justify-center mx-auto mb-3 text-[22px]">
                 ⬆
               </div>

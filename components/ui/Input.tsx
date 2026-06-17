@@ -21,7 +21,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         id={id}
         className={cn(
-          "w-full border border-input-border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] bg-[var(--color-input-bg)] text-text-primary transition-[border-color,box-shadow]",
+          // min-h-[44px] ensures 44px Apple/Android touch target minimum
+          "w-full min-h-[44px] border border-input-border rounded-[var(--radius-md)] px-3 py-3 text-[14px] bg-[var(--color-input-bg)] text-text-primary transition-[border-color,box-shadow]",
           "disabled:bg-[var(--color-input-bg-disabled)] disabled:border-[var(--color-input-border-disabled)] disabled:text-text-muted",
           className,
         )}

@@ -140,10 +140,17 @@ body {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size inflation on iOS */
+  -webkit-text-size-adjust: 100%;
 }
 
 input, select, textarea, button { font-family: inherit; }
 ::placeholder { color: var(--color-text-muted); }
+
+/* Ensure iOS doesn't zoom on input focus (font-size must be ≥16px) */
+input, select, textarea {
+  font-size: max(16px, 0.875rem);
+}
 
 input:focus,
 select:focus,
@@ -156,13 +163,34 @@ textarea:focus {
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--color-gold);
+  /* Minimum touch target */
+  min-width: 18px;
+  min-height: 18px;
 }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
+/* Minimum 44px touch targets for interactive elements */
+button, [role="button"], a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Exception: inline text links don't need 44px height */
+p a, span a, label a {
+  min-height: unset;
+  display: inline;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb {
   background: #E0D9CB;
   border-radius: 6px;
   border: 2px solid var(--color-bg);
+}
+
+/* On mobile, hide scrollbar but keep scroll behaviour */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { width: 0; height: 0; }
 }
 
 /* ── Animations ── */
