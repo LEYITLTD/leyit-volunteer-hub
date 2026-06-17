@@ -2,19 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 type Step = 1 | 2 | 3;
-
 const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate"];
 
 export default function RegisterPage() {
-  const [step, setStep] = useState<Step>(1);
-  const [done, setDone] = useState(false);
+  const [step, setStep]     = useState<Step>(1);
+  const [done, setDone]     = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]   = useState<string | null>(null);
 
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
@@ -24,19 +23,84 @@ export default function RegisterPage() {
     ageConfirmed: false, privacyAccepted: false,
   });
 
+  const [hasDbsCert, setHasDbsCert] = useState<boolean | null>(null);
+  const [dbsFile, setDbsFile]       = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   function set(field: string, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  async function submit() {
-    setLoading(true);
+  function handleFile(file: File | null) {
+    if (!file) return;
+    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setError("Please upload a PDF or image file (JPG, PNG, WEBP).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File must be under 10 MB.");
+      return;
+    }
     setError(null);
+    setDbsFile(file);
+  }
+
+  function validateStep(): string | null {
+    if (step === 1) {
+      if (!form.firstName || !form.lastName)           return "Please enter your full name.";
+      if (!form.email || !form.email.includes("@"))    return "Please enter a valid email address.";
+      if (!form.phone)                                  return "Please enter a phone number.";
+      if (!form.dateOfBirth)                            return "Please enter your date of birth.";
+      if (!form.address)                                return "Please enter your address.";
+      if (!form.password || form.password.length < 8)  return "Password must be at least 8 characters.";
+      if (form.password !== form.confirmPassword)       return "Passwords do not match.";
+    }
+    if (step === 2) {
+      if (!form.emergencyName || !form.emergencyPhone) return "Please fill in emergency contact details.";
+      if (!form.ageConfirmed)   return "You must confirm you are 16 or older.";
+      if (!form.privacyAccepted) return "You must accept the privacy policy.";
+    }
+    if (step === 3) {
+      if (hasDbsCert === null) return "Please indicate whether you have a DBS certificate.";
+      if (hasDbsCert && !dbsFile) return "Please select your DBS certificate file to upload.";
+    }
+    return null;
+  }
+
+  function next() {
+    const err = validateStep();
+    if (err) { setError(err); return; }
+    setError(null);
+    setStep((s) => (s + 1) as Step);
+  }
+
+  async function submit() {
+    const err = validateStep();
+    if (err) { setError(err); return; }
+    setError(null);
+    setLoading(true);
+
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const fd = new FormData();
+      fd.append("firstName",       form.firstName);
+      fd.append("lastName",        form.lastName);
+      fd.append("email",           form.email);
+      fd.append("password",        form.password);
+      fd.append("confirmPassword", form.confirmPassword);
+      fd.append("phone",           form.phone);
+      fd.append("dateOfBirth",     form.dateOfBirth);
+      fd.append("nationality",     form.nationality);
+      fd.append("address",         form.address);
+      fd.append("emergencyName",   form.emergencyName);
+      fd.append("emergencyPhone",  form.emergencyPhone);
+      fd.append("dietary",         form.dietary);
+      fd.append("medical",         form.medical);
+      fd.append("ageConfirmed",    String(form.ageConfirmed));
+      fd.append("privacyAccepted", String(form.privacyAccepted));
+      if (dbsFile) fd.append("dbsFile", dbsFile);
+
+      const res = await fetch("/api/auth/register", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Registration failed");
       setDone(true);
@@ -54,14 +118,16 @@ export default function RegisterPage() {
           <Image src="/assets/logo-gold.png" alt="LUL" width={100} height={70} className="h-[70px] w-auto" />
         </div>
         <div className="bg-card border border-card-border rounded-xl p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div
-            className="w-[60px] h-[60px] rounded-full bg-success-bg text-success flex items-center justify-center text-[28px] mx-auto mb-5 animate-pop"
-          >
-            ✓
+          <div className="w-[60px] h-[60px] rounded-full bg-success-bg flex items-center justify-center mx-auto mb-5" style={{ color: "var(--color-success)" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
           <h2 className="font-display text-[26px] font-semibold mb-2">Registration submitted</h2>
           <p className="text-[14px] text-text-secondary max-w-[380px] mx-auto mb-6">
-            We'll review your DBS certificate and be in touch shortly. Welcome to the family.
+            {dbsFile
+              ? "We've received your DBS certificate and will be in touch once our checks are complete."
+              : "Please check your email — you'll need to upload your DBS certificate before your application can be approved."}
           </p>
           <Link href="/login" className="text-gold font-semibold text-[14px] hover:underline">
             ← Back to login
@@ -83,15 +149,16 @@ export default function RegisterPage() {
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-7">
           {([1, 2, 3] as Step[]).map((s) => (
-            <div key={s} className="flex-1 h-1 rounded-full" style={{ background: barBg(s) }} />
+            <div key={s} className="flex-1 h-1 rounded-full transition-colors" style={{ background: barBg(s) }} />
           ))}
         </div>
 
-        <div className="text-[11px] uppercase tracking-[0.1em] text-gold font-bold mb-1">
+        <div className="text-[11px] uppercase tracking-[0.1em] font-bold mb-1" style={{ color: "var(--color-gold)" }}>
           Step {step} of 3
         </div>
         <h2 className="font-display text-[24px] font-semibold mb-5">{STEP_LABELS[step - 1]}</h2>
 
+        {/* ── Step 1: Personal details ── */}
         {step === 1 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <Input label="First name" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} required />
@@ -104,7 +171,8 @@ export default function RegisterPage() {
               <select
                 value={form.nationality}
                 onChange={(e) => set("nationality", e.target.value)}
-                className="min-h-[44px] border border-input-border rounded-[var(--radius-md)] px-3 py-3 text-[14px] bg-[var(--color-input-bg)] text-text-primary"
+                className="min-h-[44px] border rounded-[var(--radius-md)] px-3 py-3 text-[14px]"
+                style={{ borderColor: "var(--color-input-border)", background: "var(--color-input-bg)", color: "var(--color-text-primary)" }}
               >
                 <option>United Kingdom</option>
                 <option>Other</option>
@@ -116,6 +184,7 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* ── Step 2: Emergency & medical ── */}
         {step === 2 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <Input label="Emergency contact name" value={form.emergencyName} onChange={(e) => set("emergencyName", e.target.value)} required />
@@ -124,60 +193,140 @@ export default function RegisterPage() {
             <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
                 Medical information{" "}
-                <span className="normal-case tracking-normal font-semibold text-gold">· Admin-visible only</span>
+                <span className="normal-case tracking-normal font-semibold" style={{ color: "var(--color-gold)" }}>· Admin-visible only</span>
               </label>
               <textarea
                 value={form.medical}
                 onChange={(e) => set("medical", e.target.value)}
                 rows={3}
-                className="border border-input-border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] bg-[var(--color-input-bg)] resize-y"
+                className="border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] resize-y"
+                style={{ borderColor: "var(--color-input-border)", background: "var(--color-input-bg)" }}
               />
             </div>
-            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
+            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] cursor-pointer" style={{ color: "var(--color-text-primary)" }}>
               <input type="checkbox" checked={form.ageConfirmed} onChange={(e) => set("ageConfirmed", e.target.checked)} className="mt-0.5 shrink-0" />
               I confirm I am 16 years of age or older.
             </label>
-            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] text-text-primary cursor-pointer">
+            <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] cursor-pointer" style={{ color: "var(--color-text-primary)" }}>
               <input type="checkbox" checked={form.privacyAccepted} onChange={(e) => set("privacyAccepted", e.target.checked)} className="mt-0.5 shrink-0" />
               I have read and accept the privacy policy.
             </label>
           </div>
         )}
 
+        {/* ── Step 3: DBS certificate ── */}
         {step === 3 && (
-          <div>
-            <div className="border-2 border-dashed border-input-border rounded-xl p-6 sm:p-10 text-center bg-surface">
-              <div className="w-[46px] h-[46px] rounded-xl bg-gold-light text-gold flex items-center justify-center mx-auto mb-3 text-[22px]">
-                ⬆
-              </div>
-              <div className="text-[14px] font-semibold text-text-primary">Drop your DBS certificate here</div>
-              <div className="text-[13px] text-text-secondary mt-1">PDF or image · or click to browse</div>
-            </div>
-            <p className="text-[13px] text-text-secondary mt-3.5 text-center">
-              You can also upload this later from your profile.{" "}
-              <button onClick={submit} className="text-gold font-semibold cursor-pointer hover:underline">
-                Skip for now
-              </button>
+          <div className="flex flex-col gap-4">
+            <p className="text-[14px] text-text-secondary">
+              A valid DBS certificate is required before your application can be approved. Do you have one ready to upload?
             </p>
+
+            {/* Yes / No choice */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: true,  label: "Yes, upload now" },
+                { value: false, label: "Upload later" },
+              ].map(({ value, label }) => (
+                <button
+                  key={String(value)}
+                  type="button"
+                  onClick={() => { setHasDbsCert(value); setDbsFile(null); setError(null); }}
+                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl border text-[14px] font-medium transition-colors text-left"
+                  style={{
+                    borderColor: hasDbsCert === value ? "var(--color-gold)" : "var(--color-card-border)",
+                    background:  hasDbsCert === value ? "var(--color-gold-subtle)" : "var(--color-card)",
+                    color:       hasDbsCert === value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                  }}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                    style={{ borderColor: hasDbsCert === value ? "var(--color-gold)" : "var(--color-input-border)" }}
+                  >
+                    {hasDbsCert === value && (
+                      <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-gold)" }} />
+                    )}
+                  </span>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Upload zone — shown when "Yes" is selected */}
+            {hasDbsCert === true && (
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,image/*"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0] ?? null); }}
+                  className="w-full border-2 border-dashed rounded-xl p-8 text-center transition-colors"
+                  style={{
+                    borderColor: dbsFile ? "var(--color-gold)" : "var(--color-input-border)",
+                    background:  dbsFile ? "var(--color-gold-subtle)" : "var(--color-surface)",
+                  }}
+                >
+                  {dbsFile ? (
+                    <div>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{dbsFile.name}</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                        {(dbsFile.size / 1024).toFixed(0)} KB · Click to change
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                      </div>
+                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Drop your DBS certificate here</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>PDF or image · max 10 MB · or click to browse</p>
+                    </div>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Upload later info */}
+            {hasDbsCert === false && (
+              <div
+                className="rounded-xl p-4 text-[13px] leading-relaxed"
+                style={{ background: "var(--color-warning-bg)", color: "var(--color-warning)" }}
+              >
+                <strong>Note:</strong> Your application cannot be approved until we receive a valid DBS certificate. After registering, you can upload it from your profile at any time.
+              </div>
+            )}
           </div>
         )}
 
         {error && (
-          <p className="text-[13px] text-error bg-error-bg rounded-[var(--radius-md)] px-3 py-2 mt-4">
+          <p className="text-[13px] rounded-[var(--radius-md)] px-3 py-2 mt-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
             {error}
           </p>
         )}
 
         <div className="flex justify-between mt-6">
           {step > 1 ? (
-            <Button variant="outline" onClick={() => setStep((s) => (s - 1) as Step)}>
+            <Button variant="outline" onClick={() => { setError(null); setStep((s) => (s - 1) as Step); }}>
               ← Back
             </Button>
           ) : (
             <div />
           )}
           {step < 3 ? (
-            <Button onClick={() => setStep((s) => (s + 1) as Step)}>Continue →</Button>
+            <Button onClick={next}>Continue →</Button>
           ) : (
             <Button variant="gold" onClick={submit} disabled={loading}>
               {loading ? "Submitting…" : "Complete registration"}
@@ -187,7 +336,7 @@ export default function RegisterPage() {
       </div>
 
       <p className="text-center mt-5">
-        <Link href="/login" className="text-[13px] text-text-muted hover:text-text-secondary">
+        <Link href="/login" className="text-[13px] hover:text-text-secondary" style={{ color: "var(--color-text-muted)" }}>
           ← Back to login
         </Link>
       </p>
