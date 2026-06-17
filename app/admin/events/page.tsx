@@ -37,21 +37,20 @@ function fmtTime(d: string) {
   return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-function RoleBar({ role, applications }: { role: Role; applications: Application[] }) {
-  const count = applications.filter(a => a.role_id === role.id).length;
-  const pct   = role.capacity > 0 ? Math.min((count / role.capacity) * 100, 100) : 0;
-  const full  = pct >= 100;
-  const g     = GENDER[role.gender_restriction] ?? GENDER.any;
+function GenderBar({ gender, capacity, applied }: { gender: string; capacity: number; applied: number }) {
+  const pct  = capacity > 0 ? Math.min((applied / capacity) * 100, 100) : 0;
+  const full = pct >= 100;
+  const g    = GENDER[gender] ?? GENDER.any;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[12px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>{role.role_name}</span>
-          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: g.bg, color: g.color }}>{g.label}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: g.bg, color: g.color }}>{g.label}</span>
+          <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>{capacity} spots</span>
         </div>
-        <span className="text-[11px] tabular-nums flex-shrink-0" style={{ color: full ? "#4CAF50" : "var(--color-text-secondary)" }}>
-          {count}/{role.capacity}
+        <span className="text-[11px] tabular-nums font-medium" style={{ color: full ? "#4CAF50" : "var(--color-text-secondary)" }}>
+          {applied}/{capacity}
         </span>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
@@ -68,6 +67,18 @@ function EventCard({ event }: { event: Event }) {
   const s   = STATUS[event.status] ?? STATUS.draft;
   const totalCapacity = event.event_roles.reduce((n, r) => n + r.capacity, 0);
   const totalApplied  = event.event_applications.length;
+
+  // Group roles by gender and sum capacities + applications
+  const genderGroups = (["male", "female", "any"] as const)
+    .map(g => {
+      const rolesForGender = event.event_roles.filter(r => r.gender_restriction === g);
+      if (rolesForGender.length === 0) return null;
+      const roleIds  = new Set(rolesForGender.map(r => r.id));
+      const capacity = rolesForGender.reduce((n, r) => n + r.capacity, 0);
+      const applied  = event.event_applications.filter(a => roleIds.has(a.role_id)).length;
+      return { gender: g, capacity, applied };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
@@ -96,13 +107,13 @@ function EventCard({ event }: { event: Event }) {
         </div>
       </div>
 
-      {/* Role bars */}
+      {/* Gender capacity bars */}
       <div className="px-4 sm:px-5 py-3 space-y-3">
-        {event.event_roles.length === 0 ? (
+        {genderGroups.length === 0 ? (
           <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>No roles added yet</p>
         ) : (
-          event.event_roles.map(role => (
-            <RoleBar key={role.id} role={role} applications={event.event_applications} />
+          genderGroups.map(g => (
+            <GenderBar key={g.gender} gender={g.gender} capacity={g.capacity} applied={g.applied} />
           ))
         )}
       </div>
