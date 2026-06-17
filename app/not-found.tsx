@@ -39,6 +39,10 @@ export default function NotFound() {
         </h1>
         <p style={{ fontSize: 14, color: "#78716C", lineHeight: 1.6, margin: "0 0 28px" }}>
           The page you're looking for doesn't exist or has been moved.
+          If you think this is a mistake, contact{" "}
+          <a href="mailto:admin@emanchannel.tv" style={{ color: "#A8854A" }}>
+            admin@emanchannel.tv
+          </a>
         </p>
         <Link
           href="/"
