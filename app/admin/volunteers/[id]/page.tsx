@@ -100,25 +100,16 @@ function Field({ label, value }: { label: string; value: string }) {
 
 function ApproveModal({
   volunteer,
-  refinitivStatus,
-  approvalTemplate,
   onClose,
   onDone,
 }: {
   volunteer: Volunteer;
-  refinitivStatus: string | null;
-  approvalTemplate: Template | null;
   onClose: () => void;
   onDone: () => void;
 }) {
   const [expiryDate, setExpiryDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr]               = useState<string | null>(null);
-
-  const willApprove = refinitivStatus === "clear";
-  const previewHtml = approvalTemplate
-    ? renderTemplate(approvalTemplate.body_html, { first_name: volunteer.first_name })
-    : "";
 
   async function submit() {
     if (!expiryDate) { setErr("Please enter the DBS expiry date"); return; }
@@ -186,28 +177,11 @@ function ApproveModal({
           {/* What happens next */}
           <div
             className="rounded-xl p-4 text-[13px] leading-relaxed"
-            style={{
-              background: willApprove ? "#1A2E1A" : "#3A2E1A",
-              color:      willApprove ? "#4CAF50"  : "#C4973A",
-            }}
+            style={{ background: "#3A2E1A", color: "#C4973A" }}
           >
-            {willApprove
-              ? `Refinitiv check is already clear — approving this DBS will fully approve ${volunteer.first_name}'s application and send the approval email immediately.`
-              : `Refinitiv check is still pending — DBS will be marked verified but the full approval email won't be sent until Refinitiv clears.`}
+            DBS will be marked as verified for {volunteer.first_name}. Note: application approval is determined solely by the Refinitiv check — approving DBS alone does not change the overall compliance status.
           </div>
 
-          {/* Email preview if will approve */}
-          {willApprove && previewHtml && (
-            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-card-border)" }}>
-              <p
-                className="text-[10px] font-semibold uppercase tracking-widest px-4 py-2 border-b"
-                style={{ color: "var(--color-text-muted)", borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
-              >
-                Email that will be sent
-              </p>
-              <iframe srcDoc={previewHtml} className="w-full border-0" style={{ height: "220px" }} title="Approval email preview" />
-            </div>
-          )}
 
           {err && <p className="text-[13px]" style={{ color: "var(--color-error)" }}>{err}</p>}
 
@@ -952,10 +926,8 @@ export default function VolunteerDetailPage() {
       {modal === "approve" && (
         <ApproveModal
           volunteer={volunteer}
-          refinitivStatus={compliance?.refinitiv_status ?? null}
-          approvalTemplate={approveTpl}
           onClose={() => setModal(null)}
-          onDone={() => handleDone(`DBS approved for ${volunteer.first_name}. ${compliance?.refinitiv_status === "clear" ? "Approval email sent." : "Awaiting Refinitiv check."}`)}
+          onDone={() => handleDone(`DBS approved for ${volunteer.first_name}.`)}
         />
       )}
       {modal === "reject" && (

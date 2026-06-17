@@ -8,7 +8,19 @@ import { Input } from "@/components/ui/Input";
 import { AddressAutocomplete, type AddressResult } from "@/components/ui/AddressAutocomplete";
 
 type Step = 1 | 2 | 3;
-const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate"];
+const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate (optional)"];
+
+const DIETARY_OPTIONS = [
+  { value: "",                  label: "No requirements" },
+  { value: "Vegetarian",        label: "Vegetarian" },
+  { value: "Vegan",             label: "Vegan" },
+  { value: "Gluten-free",       label: "Gluten-free" },
+  { value: "Dairy-free",        label: "Dairy-free" },
+  { value: "Nut allergy",       label: "Nut allergy" },
+  { value: "Shellfish allergy", label: "Shellfish allergy" },
+  { value: "Egg-free",          label: "Egg-free" },
+  { value: "Other",             label: "Other" },
+];
 
 export default function RegisterPage() {
   const [step, setStep]     = useState<Step>(1);
@@ -37,7 +49,6 @@ export default function RegisterPage() {
     }));
   }
 
-  const [hasDbsCert, setHasDbsCert]     = useState<boolean | null>(null);
   const [dbsFile, setDbsFile]           = useState<File | null>(null);
   const [compressing, setCompressing]   = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,10 +134,7 @@ export default function RegisterPage() {
       if (!form.ageConfirmed)   return "You must confirm you are 16 or older.";
       if (!form.privacyAccepted) return "You must accept the privacy policy.";
     }
-    if (step === 3) {
-      if (hasDbsCert === null) return "Please indicate whether you have a DBS certificate.";
-      if (hasDbsCert && !dbsFile) return "Please select your DBS certificate file to upload.";
-    }
+    // Step 3 (DBS) is optional — no validation required
     return null;
   }
 
@@ -188,9 +196,8 @@ export default function RegisterPage() {
           </div>
           <h2 className="font-display text-[26px] font-semibold mb-2">Registration submitted</h2>
           <p className="text-[14px] text-text-secondary max-w-[380px] mx-auto mb-6">
-            {dbsFile
-              ? "We've received your DBS certificate and will be in touch once our checks are complete."
-              : "Please check your email — you'll need to upload your DBS certificate before your application can be approved."}
+            Your application is under review. We&apos;ll run a background check and be in touch once it&apos;s complete.
+            {dbsFile && " Your DBS certificate has also been received."}
           </p>
           <Link href="/login" className="text-gold font-semibold text-[14px] hover:underline">
             ← Back to login
@@ -319,7 +326,21 @@ export default function RegisterPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <Input label="Emergency contact name" value={form.emergencyName} onChange={(e) => set("emergencyName", e.target.value)} required />
             <Input label="Emergency contact phone" type="tel" value={form.emergencyPhone} onChange={(e) => set("emergencyPhone", e.target.value)} required />
-            <Input label="Dietary requirements" value={form.dietary} onChange={(e) => set("dietary", e.target.value)} className="sm:col-span-2" />
+            <div className="sm:col-span-2 flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
+                Dietary requirements
+              </label>
+              <select
+                value={form.dietary}
+                onChange={(e) => set("dietary", e.target.value)}
+                className="min-h-[44px] border rounded-[var(--radius-md)] px-3 py-3 text-[14px]"
+                style={{ borderColor: "var(--color-input-border)", background: "var(--color-input-bg)", color: "var(--color-text-primary)" }}
+              >
+                {DIETARY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
                 Medical information{" "}
@@ -344,106 +365,72 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* ── Step 3: DBS certificate ── */}
+        {/* ── Step 3: DBS certificate (optional) ── */}
         {step === 3 && (
           <div className="flex flex-col gap-4">
-            <p className="text-[14px] text-text-secondary">
-              A valid DBS certificate is required before your application can be approved. Do you have one ready to upload?
+            <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>
+              Uploading a DBS certificate is <strong style={{ color: "var(--color-text-primary)" }}>optional</strong> — you can do it now or any time after registering from your Documents section.
             </p>
 
-            {/* Yes / No choice */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { value: true,  label: "Yes, upload now" },
-                { value: false, label: "Upload later" },
-              ].map(({ value, label }) => (
-                <button
-                  key={String(value)}
-                  type="button"
-                  onClick={() => { setHasDbsCert(value); setDbsFile(null); setError(null); }}
-                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl border text-[14px] font-medium transition-colors text-left"
-                  style={{
-                    borderColor: hasDbsCert === value ? "var(--color-gold)" : "var(--color-card-border)",
-                    background:  hasDbsCert === value ? "var(--color-gold-subtle)" : "var(--color-card)",
-                    color:       hasDbsCert === value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  }}
-                >
-                  <span
-                    className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
-                    style={{ borderColor: hasDbsCert === value ? "var(--color-gold)" : "var(--color-input-border)" }}
-                  >
-                    {hasDbsCert === value && (
-                      <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-gold)" }} />
-                    )}
-                  </span>
-                  {label}
-                </button>
-              ))}
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,image/*"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0] ?? null); }}
+              className="w-full border-2 border-dashed rounded-xl p-8 text-center transition-colors"
+              style={{
+                borderColor: dbsFile ? "var(--color-gold)" : "var(--color-input-border)",
+                background:  dbsFile ? "var(--color-gold-subtle)" : "var(--color-surface)",
+              }}
+            >
+              {compressing ? (
+                <div>
+                  <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Compressing image…</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>Just a moment</p>
+                </div>
+              ) : dbsFile ? (
+                <div>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{dbsFile.name}</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                    {dbsFile.size < 1024 * 1024
+                      ? `${(dbsFile.size / 1024).toFixed(0)} KB`
+                      : `${(dbsFile.size / (1024 * 1024)).toFixed(1)} MB`} · Click to change
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                  </div>
+                  <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Drop your DBS certificate here</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>PDF or image · or click to browse</p>
+                </div>
+              )}
+            </button>
 
-            {/* Upload zone — shown when "Yes" is selected */}
-            {hasDbsCert === true && (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,image/*"
-                  className="hidden"
-                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0] ?? null); }}
-                  className="w-full border-2 border-dashed rounded-xl p-8 text-center transition-colors"
-                  style={{
-                    borderColor: dbsFile ? "var(--color-gold)" : "var(--color-input-border)",
-                    background:  dbsFile ? "var(--color-gold-subtle)" : "var(--color-surface)",
-                  }}
-                >
-                  {compressing ? (
-                    <div>
-                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Compressing image…</p>
-                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>Just a moment</p>
-                    </div>
-                  ) : dbsFile ? (
-                    <div>
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{dbsFile.name}</p>
-                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-                        {dbsFile.size < 1024 * 1024
-                          ? `${(dbsFile.size / 1024).toFixed(0)} KB`
-                          : `${(dbsFile.size / (1024 * 1024)).toFixed(1)} MB`} · Click to change
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                      </div>
-                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Drop your DBS certificate here</p>
-                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>PDF or image · or click to browse</p>
-                    </div>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Upload later info */}
-            {hasDbsCert === false && (
-              <div
-                className="rounded-xl p-4 text-[13px] leading-relaxed"
-                style={{ background: "var(--color-warning-bg)", color: "var(--color-warning)" }}
+            {dbsFile && (
+              <button
+                type="button"
+                onClick={() => setDbsFile(null)}
+                className="text-[12px] text-left"
+                style={{ color: "var(--color-text-muted)" }}
               >
-                <strong>Note:</strong> Your application cannot be approved until we receive a valid DBS certificate. After registering, you can upload it from your profile at any time.
-              </div>
+                × Remove file
+              </button>
             )}
           </div>
         )}
