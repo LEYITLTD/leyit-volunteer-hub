@@ -23,15 +23,53 @@ export default function RegisterPage() {
     ageConfirmed: false, privacyAccepted: false,
   });
 
-  const [hasDbsCert, setHasDbsCert] = useState<boolean | null>(null);
-  const [dbsFile, setDbsFile]       = useState<File | null>(null);
+  const [hasDbsCert, setHasDbsCert]     = useState<boolean | null>(null);
+  const [dbsFile, setDbsFile]           = useState<File | null>(null);
+  const [compressing, setCompressing]   = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function set(field: string, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function handleFile(file: File | null) {
+  async function compressImage(file: File): Promise<File> {
+    if (!file.type.startsWith("image/")) return file;
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX = 1800;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          const scale = MAX / Math.max(width, height);
+          width  = Math.round(width  * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        const tryQuality = (qualities: number[]) => {
+          const [q, ...rest] = qualities;
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) { resolve(file); return; }
+              if (blob.size <= 2 * 1024 * 1024 || rest.length === 0) {
+                resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+              } else {
+                tryQuality(rest);
+              }
+            },
+            "image/jpeg",
+            q,
+          );
+        };
+        tryQuality([0.85, 0.70, 0.55, 0.40]);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function handleFile(file: File | null) {
     if (!file) return;
     const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
@@ -43,7 +81,14 @@ export default function RegisterPage() {
       return;
     }
     setError(null);
-    setDbsFile(file);
+    if (file.type.startsWith("image/")) {
+      setCompressing(true);
+      const compressed = await compressImage(file);
+      setCompressing(false);
+      setDbsFile(compressed);
+    } else {
+      setDbsFile(file);
+    }
   }
 
   function validateStep(): string | null {
@@ -272,7 +317,12 @@ export default function RegisterPage() {
                     background:  dbsFile ? "var(--color-gold-subtle)" : "var(--color-surface)",
                   }}
                 >
-                  {dbsFile ? (
+                  {compressing ? (
+                    <div>
+                      <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Compressing image…</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>Just a moment</p>
+                    </div>
+                  ) : dbsFile ? (
                     <div>
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: "var(--color-gold-light)" }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -281,7 +331,9 @@ export default function RegisterPage() {
                       </div>
                       <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{dbsFile.name}</p>
                       <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-                        {(dbsFile.size / 1024).toFixed(0)} KB · Click to change
+                        {dbsFile.size < 1024 * 1024
+                          ? `${(dbsFile.size / 1024).toFixed(0)} KB`
+                          : `${(dbsFile.size / (1024 * 1024)).toFixed(1)} MB`} · Click to change
                       </p>
                     </div>
                   ) : (
@@ -292,7 +344,7 @@ export default function RegisterPage() {
                         </svg>
                       </div>
                       <p className="text-[14px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Drop your DBS certificate here</p>
-                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>PDF or image · max 10 MB · or click to browse</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>PDF or image · or click to browse</p>
                     </div>
                   )}
                 </button>
@@ -328,8 +380,8 @@ export default function RegisterPage() {
           {step < 3 ? (
             <Button onClick={next}>Continue →</Button>
           ) : (
-            <Button variant="gold" onClick={submit} disabled={loading}>
-              {loading ? "Submitting…" : "Complete registration"}
+            <Button variant="gold" onClick={submit} disabled={loading || compressing}>
+              {loading ? "Submitting…" : compressing ? "Compressing…" : "Complete registration"}
             </Button>
           )}
         </div>

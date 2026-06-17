@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AdminNav } from "./AdminNav";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </form>
       </header>
+
+      <AdminNav />
 
       {/* Page content */}
       <main className="flex-1 flex flex-col">
