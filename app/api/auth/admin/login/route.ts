@@ -4,8 +4,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
 import { createHash, randomInt } from "crypto";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
@@ -59,6 +57,7 @@ export async function POST(request: Request) {
     );
 
     // Send OTP via Resend
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: email,
