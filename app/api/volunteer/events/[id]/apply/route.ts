@@ -41,16 +41,21 @@ export async function POST(
 
   const service = createServiceClient();
 
-  // Get volunteer (with compliance check + email for the confirmation)
+  // Get volunteer
   const { data: volunteer } = await service
     .from("volunteers")
-    .select("id, gender, first_name, email, volunteer_compliance ( refinitiv_status )")
+    .select("id, gender, first_name, email")
     .eq("auth_user_id", user.id)
     .single();
 
   if (!volunteer) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
 
-  const compliance = (volunteer as { volunteer_compliance?: { refinitiv_status?: string } | null }).volunteer_compliance;
+  const { data: compliance } = await service
+    .from("volunteer_compliance")
+    .select("refinitiv_status")
+    .eq("volunteer_id", volunteer.id)
+    .single();
+
   if (compliance?.refinitiv_status !== "clear") {
     return NextResponse.json({ error: "Account not verified" }, { status: 403 });
   }
