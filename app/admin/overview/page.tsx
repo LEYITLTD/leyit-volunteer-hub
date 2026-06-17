@@ -13,15 +13,16 @@ type Stats = {
   activity:        Activity[];
 };
 
+const UK_TZ = "Europe/London";
+
 function fmtActivityTime(ts: string) {
-  const d    = new Date(ts);
-  const now  = new Date();
-  const sameDay =
-    d.getDate() === now.getDate() &&
-    d.getMonth() === now.getMonth() &&
-    d.getFullYear() === now.getFullYear();
-  if (sameDay) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const d   = new Date(ts);
+  const now = new Date();
+  // Compare dates in UK time
+  const dStr   = d.toLocaleDateString("en-GB",   { timeZone: UK_TZ });
+  const nowStr = now.toLocaleDateString("en-GB", { timeZone: UK_TZ });
+  if (dStr === nowStr) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: UK_TZ });
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: UK_TZ });
 }
 
 function StatCard({

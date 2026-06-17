@@ -21,10 +21,10 @@ export async function GET() {
     service.from("volunteers").select("*", { count: "exact", head: true }),
   ]);
 
-  // Activity feed — merge 3 streams
-  const [newVolunteers, confirmations, publishedEvents] = await Promise.all([
+  // Activity feed — merge 4 streams
+  const [newVolunteers, confirmations, publishedEvents, approvals] = await Promise.all([
     service.from("volunteers")
-      .select("id, first_name, last_name, gender, created_at")
+      .select("id, first_name, last_name, created_at")
       .order("created_at", { ascending: false })
       .limit(15),
 
@@ -36,10 +36,16 @@ export async function GET() {
       .limit(15),
 
     service.from("events")
-      .select("id, name, published_at, created_at")
+      .select("id, name, published_at")
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .limit(10),
+
+    service.from("volunteer_compliance")
+      .select("id, approved_at, volunteers(first_name, last_name)")
+      .not("approved_at", "is", null)
+      .order("approved_at", { ascending: false })
+      .limit(15),
   ]);
 
   type ActivityItem = { id: string; type: string; name: string; action: string; timestamp: string };
@@ -50,7 +56,7 @@ export async function GET() {
       id:        `signup-${v.id}`,
       type:      "signup",
       name:      `${v.first_name} ${v.last_name}`,
-      action:    `Registered as a ${v.gender === "male" ? "brother" : v.gender === "female" ? "sister" : "volunteer"}`,
+      action:    "New volunteer sign-up",
       timestamp: v.created_at,
     });
   }
@@ -76,6 +82,19 @@ export async function GET() {
       name:      e.name,
       action:    "Published",
       timestamp: e.published_at,
+    });
+  }
+
+  for (const c of approvals.data ?? []) {
+    if (!c.approved_at) continue;
+    const vol = c.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!vol) continue;
+    activity.push({
+      id:        `approval-${c.id}`,
+      type:      "approval",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    "Compliance approved",
+      timestamp: c.approved_at,
     });
   }
 
