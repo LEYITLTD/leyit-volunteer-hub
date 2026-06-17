@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { AddressAutocomplete } from "@/components/ui/AddressAutocomplete";
 
 type Step = 1 | 2 | 3;
 const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate"];
@@ -225,7 +226,7 @@ export default function RegisterPage() {
             </div>
             <Input label="Password" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} hint="Min 8 characters" required className="sm:col-span-2" />
             <Input label="Confirm password" type="password" value={form.confirmPassword} onChange={(e) => set("confirmPassword", e.target.value)} required className="sm:col-span-2" />
-            <Input label="Address" value={form.address} onChange={(e) => set("address", e.target.value)} required className="sm:col-span-2" />
+            <AddressAutocomplete label="Address" value={form.address} onChange={(v) => set("address", v)} required className="sm:col-span-2" />
           </div>
         )}
 
