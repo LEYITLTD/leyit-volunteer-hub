@@ -42,15 +42,16 @@ export async function GET() {
       .limit(10),
   ]);
 
-  type ActivityItem = { id: string; type: string; description: string; timestamp: string };
+  type ActivityItem = { id: string; type: string; name: string; action: string; timestamp: string };
   const activity: ActivityItem[] = [];
 
   for (const v of newVolunteers.data ?? []) {
     activity.push({
-      id:          `signup-${v.id}`,
-      type:        "signup",
-      description: `${v.first_name} ${v.last_name} registered as a ${v.gender === "male" ? "brother" : v.gender === "female" ? "sister" : "volunteer"}`,
-      timestamp:   v.created_at,
+      id:        `signup-${v.id}`,
+      type:      "signup",
+      name:      `${v.first_name} ${v.last_name}`,
+      action:    `Registered as a ${v.gender === "male" ? "brother" : v.gender === "female" ? "sister" : "volunteer"}`,
+      timestamp: v.created_at,
     });
   }
 
@@ -59,20 +60,22 @@ export async function GET() {
     const event = (a.event_roles as unknown as { events: { name: string } } | null)?.events;
     if (!vol || !event || !a.confirmed_at) continue;
     activity.push({
-      id:          `confirm-${a.id}`,
-      type:        "confirmed",
-      description: `${vol.first_name} ${vol.last_name} confirmed for ${event.name}`,
-      timestamp:   a.confirmed_at,
+      id:        `confirm-${a.id}`,
+      type:      "confirmed",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    `Confirmed for ${event.name}`,
+      timestamp: a.confirmed_at,
     });
   }
 
   for (const e of publishedEvents.data ?? []) {
     if (!e.published_at) continue;
     activity.push({
-      id:          `event-${e.id}`,
-      type:        "event",
-      description: `${e.name} was published`,
-      timestamp:   e.published_at,
+      id:        `event-${e.id}`,
+      type:      "event",
+      name:      e.name,
+      action:    "Published",
+      timestamp: e.published_at,
     });
   }
 

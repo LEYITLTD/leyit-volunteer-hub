@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-type Activity = { id: string; type: string; description: string; timestamp: string };
+type Activity = { id: string; type: string; name: string; action: string; timestamp: string };
 type Stats = {
   totalEvents:     number;
   approvedMale:    number;
@@ -13,48 +13,16 @@ type Stats = {
   activity:        Activity[];
 };
 
-function timeAgo(ts: string) {
-  const diff = Date.now() - new Date(ts).getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins  < 1)  return "Just now";
-  if (mins  < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days  < 7)  return `${days}d ago`;
-  return new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+function fmtActivityTime(ts: string) {
+  const d    = new Date(ts);
+  const now  = new Date();
+  const sameDay =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+  if (sameDay) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
-
-const ACTIVITY_ICON: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
-  signup: {
-    color: "#4CAF50",
-    bg:    "#1A2E1A",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-      </svg>
-    ),
-  },
-  confirmed: {
-    color: "#5BA4CF",
-    bg:    "#1A263A",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-    ),
-  },
-  event: {
-    color: "var(--color-gold)",
-    bg:    "var(--color-gold-subtle)",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 2 15 22 11 13 2 9 22 2"/>
-      </svg>
-    ),
-  },
-};
 
 function StatCard({
   label, value, icon, href, color, bgColor, warn,
@@ -193,45 +161,55 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Activity log */}
-          <div className="rounded-xl border overflow-hidden max-w-[560px]" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <div className="px-5 py-4 border-b" style={{ borderColor: "var(--color-card-border)" }}>
-              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Activity</h2>
-              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Sign-ups, confirmations & events</p>
-            </div>
+          <div
+            className="rounded-xl border max-w-[560px]"
+            style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", padding: "20px" }}
+          >
+            <h2
+              className="uppercase font-bold"
+              style={{ fontSize: "13px", letterSpacing: ".07em", color: "var(--color-text-muted)", margin: "0 0 6px" }}
+            >
+              Activity log
+            </h2>
 
             {data.activity.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
-              </div>
+              <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
             ) : (
-              <div className="divide-y" style={{ borderColor: "var(--color-card-border)" }}>
-                {data.activity.map((item, i) => {
-                  const cfg = ACTIVITY_ICON[item.type] ?? ACTIVITY_ICON.signup;
-                  return (
-                    <div key={item.id} className="flex items-start gap-3 px-5 py-3.5">
-                      <div className="flex flex-col items-center flex-shrink-0 self-stretch">
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: cfg.bg, color: cfg.color }}
-                        >
-                          {cfg.icon}
-                        </div>
-                        {i < data.activity.length - 1 && (
-                          <div className="flex-1 w-px mt-1" style={{ background: "var(--color-card-border)" }} />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <p className="text-[13px] leading-snug" style={{ color: "var(--color-text-primary)" }}>
-                          {item.description}
-                        </p>
-                        <p className="text-[11px] mt-0.5 tabular-nums" style={{ color: "var(--color-text-muted)" }}>
-                          {timeAgo(item.timestamp)}
-                        </p>
-                      </div>
+              data.activity.map((item, i) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    padding: "11px 0",
+                    borderBottom: i < data.activity.length - 1 ? "1px solid var(--color-card-border)" : "none",
+                  }}
+                >
+                  {/* Time column */}
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-muted)",
+                      fontVariantNumeric: "tabular-nums",
+                      width: "42px",
+                      flexShrink: 0,
+                      paddingTop: "1px",
+                    }}
+                  >
+                    {fmtActivityTime(item.timestamp)}
+                  </span>
+
+                  {/* Content */}
+                  <div>
+                    <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--color-text-primary)" }}>
+                      {item.name}
+                    </span>
+                    <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "1px" }}>
+                      {item.action}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </>

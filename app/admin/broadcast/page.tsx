@@ -1,47 +1,37 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 
 type Scope  = "global" | "event";
 type Gender = "all" | "male" | "female";
 type Event  = { id: string; name: string; event_start: string };
 type Step   = "compose" | "confirm" | "done";
 
-const GENDER_OPTIONS: { value: Gender; label: string }[] = [
-  { value: "all",    label: "Everyone" },
-  { value: "male",   label: "Male only" },
-  { value: "female", label: "Female only" },
-];
-
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function BroadcastPage() {
-  const [scope,      setScope]      = useState<Scope>("global");
-  const [gender,     setGender]     = useState<Gender>("all");
-  const [eventId,    setEventId]    = useState("");
-  const [events,     setEvents]     = useState<Event[]>([]);
-  const [count,      setCount]      = useState<number | null>(null);
+  const [scope,        setScope]        = useState<Scope>("global");
+  const [gender,       setGender]       = useState<Gender>("all");
+  const [eventId,      setEventId]      = useState("");
+  const [events,       setEvents]       = useState<Event[]>([]);
+  const [count,        setCount]        = useState<number | null>(null);
   const [countLoading, setCountLoading] = useState(false);
 
-  const [subject,    setSubject]    = useState("");
-  const [message,    setMessage]    = useState("");
-  const [sending,    setSending]    = useState(false);
-  const [error,      setError]      = useState<string | null>(null);
-  const [step,       setStep]       = useState<Step>("compose");
-  const [sentCount,  setSentCount]  = useState(0);
+  const [subject,   setSubject]   = useState("");
+  const [message,   setMessage]   = useState("");
+  const [sending,   setSending]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+  const [step,      setStep]      = useState<Step>("compose");
+  const [sentCount, setSentCount] = useState(0);
 
-  // Load events for the event picker
   useEffect(() => {
     fetch("/api/admin/events")
       .then(r => r.json())
       .then(d => setEvents(Array.isArray(d) ? d.map((e: { id: string; name: string; event_start: string }) => ({ id: e.id, name: e.name, event_start: e.event_start })) : []));
   }, []);
 
-  // Fetch recipient count whenever audience changes
   const fetchCount = useCallback(() => {
     if (scope === "event" && !eventId) { setCount(null); return; }
     setCountLoading(true);
@@ -77,31 +67,53 @@ export default function BroadcastPage() {
   }
 
   function reset() {
-    setScope("global");
-    setGender("all");
-    setEventId("");
-    setSubject("");
-    setMessage("");
-    setError(null);
-    setStep("compose");
-    setSentCount(0);
+    setScope("global"); setGender("all"); setEventId("");
+    setSubject(""); setMessage(""); setError(null);
+    setStep("compose"); setSentCount(0);
   }
 
-  const canSend = subject.trim() && message.trim() && (count ?? 0) > 0 && (scope === "global" || eventId);
+  const canSend   = subject.trim() && message.trim() && (count ?? 0) > 0 && (scope === "global" || eventId);
+  const sendLabel = countLoading ? "Counting…" : count === null ? "—" : count === 0 ? "No recipients" : `${count}`;
 
-  const recipientLabel =
-    countLoading ? "Counting…"
-    : count === null ? "—"
-    : count === 0 ? "No recipients"
-    : `${count} ${count === 1 ? "volunteer" : "volunteers"}`;
+  const selectedEvent = events.find(e => e.id === eventId);
 
-  const selectStyle = {
-    borderColor: "var(--color-input-border)",
-    background:  "var(--color-input-bg)",
-    color:       "var(--color-text-primary)",
+  const GENDER_OPTS: { value: Gender; label: string }[] = [
+    { value: "all",    label: "Everyone" },
+    { value: "male",   label: "Brothers only" },
+    { value: "female", label: "Sisters only" },
+  ];
+
+  // Shared card style
+  const card: React.CSSProperties = {
+    background:   "var(--color-card)",
+    border:       "1px solid var(--color-card-border)",
+    borderRadius: "12px",
+    padding:      "22px",
   };
 
-  // ── Done screen ──────────────────────────────────────────────────────────
+  const labelStyle: React.CSSProperties = {
+    fontSize:      "11px",
+    fontWeight:    600,
+    textTransform: "uppercase",
+    letterSpacing: ".06em",
+    color:         "var(--color-text-muted)",
+    display:       "block",
+  };
+
+  const fieldStyle: React.CSSProperties = {
+    width:        "100%",
+    border:       "1px solid var(--color-input-border)",
+    borderRadius: "8px",
+    padding:      "9px 11px",
+    fontSize:     "14px",
+    background:   "var(--color-input-bg)",
+    color:        "var(--color-text-primary)",
+    marginTop:    "5px",
+    marginBottom: "16px",
+    outline:      "none",
+  };
+
+  // ── Done ────────────────────────────────────────────────────────────────────
   if (step === "done") {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
@@ -111,217 +123,236 @@ export default function BroadcastPage() {
               <polyline points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </div>
-          <h2 className="font-display text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
-            Email sent
-          </h2>
+          <h2 className="font-display text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>Email sent</h2>
           <p className="text-[14px] mb-6" style={{ color: "var(--color-text-secondary)" }}>
             Your message was delivered to <strong>{sentCount}</strong> {sentCount === 1 ? "volunteer" : "volunteers"}.
           </p>
-          <Button variant="outline" onClick={reset}>Send another</Button>
+          <button
+            onClick={reset}
+            style={{ border: "1px solid var(--color-card-border)", color: "var(--color-text-secondary)", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600, background: "transparent", cursor: "pointer" }}
+          >
+            Send another
+          </button>
         </div>
       </div>
     );
   }
 
-  // ── Confirm screen ────────────────────────────────────────────────────────
+  // ── Confirm ──────────────────────────────────────────────────────────────────
   if (step === "confirm") {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-[420px] rounded-2xl border p-6" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <h2 className="text-[16px] font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>
-            Confirm broadcast
-          </h2>
+        <div className="w-full max-w-[420px]" style={card}>
+          <h2 className="text-[16px] font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>Confirm broadcast</h2>
           <p className="text-[13px] mb-5" style={{ color: "var(--color-text-secondary)" }}>
             This will send an email to <strong>{count}</strong> {(count ?? 0) === 1 ? "volunteer" : "volunteers"}. This cannot be undone.
           </p>
-
-          <div className="rounded-xl p-4 mb-5 space-y-2" style={{ background: "#1C1916", border: "1px solid var(--color-card-border)" }}>
+          <div className="rounded-xl p-4 mb-5 space-y-2" style={{ background: "var(--color-bg)", border: "1px solid var(--color-card-border)" }}>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-0.5" style={{ color: "var(--color-text-muted)" }}>To</p>
-              <p className="text-[13px]" style={{ color: "var(--color-text-primary)" }}>{recipientLabel}</p>
+              <p style={{ ...labelStyle, marginBottom: "2px" }}>To</p>
+              <p className="text-[13px]" style={{ color: "var(--color-text-primary)" }}>{count} volunteers{selectedEvent ? ` — ${selectedEvent.name}` : ""}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-0.5" style={{ color: "var(--color-text-muted)" }}>Subject</p>
+              <p style={{ ...labelStyle, marginBottom: "2px" }}>Subject</p>
               <p className="text-[13px]" style={{ color: "var(--color-text-primary)" }}>{subject}</p>
             </div>
           </div>
-
           {error && (
-            <p className="text-[12px] rounded-lg px-3 py-2.5 mb-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
-              {error}
-            </p>
+            <p className="text-[12px] rounded-lg px-3 py-2.5 mb-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>{error}</p>
           )}
-
           <div className="flex gap-3">
             <button
               onClick={() => setStep("compose")}
-              className="flex-1 text-[13px] font-semibold py-2.5 rounded-lg"
-              style={{ border: "1px solid var(--color-card-border)", color: "var(--color-text-secondary)" }}
+              style={{ flex: 1, border: "1px solid var(--color-card-border)", color: "var(--color-text-secondary)", borderRadius: "8px", padding: "11px 20px", fontSize: "14px", fontWeight: 600, background: "transparent", cursor: "pointer" }}
             >
               Back
             </button>
-            <Button variant="gold" onClick={handleSend} disabled={sending} className="flex-1">
+            <button
+              onClick={handleSend}
+              disabled={sending}
+              style={{ flex: 1, background: "var(--color-gold)", color: "#1A1714", border: "none", borderRadius: "8px", padding: "11px 20px", fontSize: "14px", fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1 }}
+            >
               {sending ? "Sending…" : `Send to ${count}`}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Compose screen ────────────────────────────────────────────────────────
+  // ── Compose ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
       <div className="mb-6">
-        <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-          Broadcast Email
-        </h1>
-        <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-          Send a message to volunteers directly from the platform.
+        <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Broadcast Email</h1>
+        <p className="text-[14px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+          Compose and send a message to your volunteers.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 items-start">
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "18px", alignItems: "start" }}>
 
         {/* Left: compose */}
-        <div className="space-y-5">
+        <div style={card}>
+
+          {/* Audience scope */}
+          <label style={labelStyle}>Audience</label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", margin: "5px 0 16px", padding: "4px", background: "var(--color-bg)", borderRadius: "8px" }}>
+            {(["global", "event"] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => { setScope(s); if (s === "global") setEventId(""); }}
+                style={{
+                  padding:      "8px 0",
+                  borderRadius: "6px",
+                  fontSize:     "12px",
+                  fontWeight:   600,
+                  cursor:       "pointer",
+                  transition:   "all .15s",
+                  background:   scope === s ? "var(--color-card)" : "transparent",
+                  color:        scope === s ? "var(--color-text-primary)" : "var(--color-text-muted)",
+                  border:       scope === s ? "1px solid var(--color-card-border)" : "1px solid transparent",
+                }}
+              >
+                {s === "global" ? "All volunteers" : "By event"}
+              </button>
+            ))}
+          </div>
+
+          {/* Event picker */}
+          {scope === "event" && (
+            <>
+              <label style={labelStyle}>Event</label>
+              <select
+                value={eventId}
+                onChange={e => setEventId(e.target.value)}
+                style={{ ...fieldStyle, appearance: "none" }}
+              >
+                <option value="">Select event…</option>
+                {events.map(e => (
+                  <option key={e.id} value={e.id}>{e.name} — {fmtDate(e.event_start)}</option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {/* Gender */}
+          <label style={labelStyle}>Gender filter</label>
+          <div style={{ display: "flex", gap: "6px", margin: "5px 0 16px" }}>
+            {GENDER_OPTS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setGender(opt.value)}
+                style={{
+                  flex:         1,
+                  padding:      "8px 6px",
+                  borderRadius: "8px",
+                  fontSize:     "12px",
+                  fontWeight:   600,
+                  cursor:       "pointer",
+                  background:   gender === opt.value ? "var(--color-gold-subtle)" : "transparent",
+                  color:        gender === opt.value ? "var(--color-gold)" : "var(--color-text-muted)",
+                  border:       `1px solid ${gender === opt.value ? "var(--color-gold)" : "var(--color-card-border)"}`,
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
 
           {/* Subject */}
-          <div className="rounded-xl border p-5" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-3" style={{ color: "var(--color-text-muted)" }}>Subject</p>
-            <Input
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              placeholder="e.g. Important update for volunteers"
-            />
-          </div>
+          <label style={labelStyle}>Subject line</label>
+          <input
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="e.g. Final briefing & arrival times"
+            style={fieldStyle}
+          />
 
-          {/* Message */}
-          <div className="rounded-xl border p-5" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-3" style={{ color: "var(--color-text-muted)" }}>Message</p>
-            <textarea
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              placeholder="Write your message here…"
-              rows={10}
-              className="w-full text-[14px] rounded-lg px-3 py-3 resize-y outline-none border transition-colors"
-              style={{
-                borderColor: "var(--color-input-border)",
-                background:  "var(--color-input-bg)",
-                color:       "var(--color-text-primary)",
-                minHeight:   "200px",
-              }}
-            />
-          </div>
-        </div>
+          {/* Body */}
+          <label style={labelStyle}>
+            Body{" "}
+            <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--color-text-muted)", fontWeight: 500 }}>· supports plain text</span>
+          </label>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            placeholder="Dear volunteer, …"
+            rows={7}
+            style={{ ...fieldStyle, resize: "vertical", lineHeight: "1.5", minHeight: "160px" }}
+          />
 
-        {/* Right: audience + send */}
-        <div className="space-y-4">
-
-          {/* Audience card */}
-          <div className="rounded-xl border p-5" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-4" style={{ color: "var(--color-text-muted)" }}>
-              Recipients
-            </p>
-
-            {/* Scope toggle */}
-            <div className="grid grid-cols-2 gap-2 mb-4 p-1 rounded-lg" style={{ background: "#1C1916" }}>
-              {(["global", "event"] as const).map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setScope(s); if (s === "global") setEventId(""); }}
-                  className="py-2 rounded-md text-[12px] font-semibold transition-all"
-                  style={{
-                    background: scope === s ? "var(--color-card)" : "transparent",
-                    color:      scope === s ? "var(--color-text-primary)" : "var(--color-text-muted)",
-                    border:     scope === s ? "1px solid var(--color-card-border)" : "1px solid transparent",
-                  }}
-                >
-                  {s === "global" ? "All volunteers" : "By event"}
-                </button>
-              ))}
-            </div>
-
-            {/* Event picker */}
-            {scope === "event" && (
-              <div className="mb-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-secondary)" }}>Event</p>
-                <select
-                  value={eventId}
-                  onChange={e => setEventId(e.target.value)}
-                  className="w-full min-h-[44px] border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] appearance-none"
-                  style={selectStyle}
-                >
-                  <option value="">Select an event…</option>
-                  {events.map(e => (
-                    <option key={e.id} value={e.id}>{e.name} — {fmtDate(e.event_start)}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Gender filter */}
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-secondary)" }}>Gender</p>
-              <div className="flex flex-col gap-1.5">
-                {GENDER_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setGender(opt.value)}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-[13px] transition-all"
-                    style={{
-                      background:   gender === opt.value ? "var(--color-gold-subtle)" : "transparent",
-                      color:        gender === opt.value ? "var(--color-gold)" : "var(--color-text-secondary)",
-                      border:       `1px solid ${gender === opt.value ? "var(--color-gold)" : "var(--color-card-border)"}`,
-                    }}
-                  >
-                    <span
-                      className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
-                      style={{ borderColor: gender === opt.value ? "var(--color-gold)" : "var(--color-text-muted)" }}
-                    >
-                      {gender === opt.value && (
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-gold)" }} />
-                      )}
-                    </span>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recipient count */}
-            <div
-              className="mt-4 rounded-lg px-3 py-2.5 flex items-center justify-between"
-              style={{ background: "#1C1916", border: "1px solid var(--color-card-border)" }}
-            >
-              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Recipients</span>
-              <span
-                className="text-[13px] font-semibold tabular-nums"
-                style={{ color: (count ?? 0) > 0 ? "var(--color-gold)" : "var(--color-text-muted)" }}
-              >
-                {recipientLabel}
-              </span>
-            </div>
-          </div>
-
-          {/* Send button */}
           {error && (
-            <p className="text-[12px] rounded-lg px-3 py-2.5" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
+            <p style={{ fontSize: "12px", color: "var(--color-error)", background: "var(--color-error-bg)", borderRadius: "8px", padding: "10px 12px", marginBottom: "14px" }}>
               {error}
             </p>
           )}
 
-          <Button
-            variant="gold"
-            fullWidth
-            disabled={!canSend}
-            onClick={() => { setError(null); setStep("confirm"); }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-            {canSend ? `Send to ${count} ${(count ?? 0) === 1 ? "volunteer" : "volunteers"}` : "Select recipients & write message"}
-          </Button>
+          {/* Buttons */}
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => { setError(null); setStep("confirm"); }}
+              disabled={!canSend}
+              style={{
+                background:   "var(--color-gold)",
+                color:        "#1A1714",
+                border:       "none",
+                borderRadius: "8px",
+                padding:      "11px 20px",
+                fontSize:     "14px",
+                fontWeight:   600,
+                cursor:       canSend ? "pointer" : "not-allowed",
+                opacity:      canSend ? 1 : 0.5,
+                display:      "flex",
+                alignItems:   "center",
+                gap:          "8px",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Send now
+            </button>
+          </div>
+        </div>
+
+        {/* Right: preview */}
+        <div style={card}>
+          <h3 style={{ fontSize: "13px", textTransform: "uppercase", letterSpacing: ".07em", color: "var(--color-text-muted)", fontWeight: 700, margin: "0 0 14px" }}>
+            Preview
+          </h3>
+
+          {/* Email preview frame */}
+          <div style={{ border: "1px solid var(--color-card-border)", borderRadius: "10px", overflow: "hidden" }}>
+            {/* Email header bar */}
+            <div style={{ background: "#1A1714", padding: "12px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ width: "24px", height: "24px", background: "var(--color-gold)", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1A1714" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-gold)", letterSpacing: ".06em", textTransform: "uppercase" }}>Eman Channel</span>
+            </div>
+            {/* Email body */}
+            <div style={{ padding: "16px" }}>
+              <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "10px" }}>
+                {subject || <span style={{ color: "var(--color-text-muted)", fontWeight: 400, fontStyle: "italic" }}>Subject preview</span>}
+              </div>
+              <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: "1.6", whiteSpace: "pre-wrap", minHeight: "80px" }}>
+                {message || <span style={{ color: "var(--color-text-muted)", fontStyle: "italic" }}>Your email body will appear here as you type…</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Sending to */}
+          <div style={{ background: "var(--color-bg)", borderRadius: "8px", padding: "11px 13px", marginTop: "14px", fontSize: "12.5px", color: "var(--color-text-secondary)" }}>
+            Sending to:{" "}
+            <strong style={{ color: countLoading ? "var(--color-text-muted)" : (count ?? 0) > 0 ? "var(--color-gold)" : "var(--color-text-muted)" }}>
+              {countLoading ? "counting…" : count === null ? "select an event" : `${count} volunteer${count === 1 ? "" : "s"}`}
+            </strong>
+            {selectedEvent && <span> — {selectedEvent.name}</span>}
+          </div>
         </div>
       </div>
     </div>
