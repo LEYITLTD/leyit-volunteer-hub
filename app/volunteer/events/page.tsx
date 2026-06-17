@@ -104,7 +104,7 @@ function EventCard({
   onApply: (event: Event) => void;
 }) {
   const app       = event.myApplication;
-  const appBadge  = app ? (APP_STATUS[app.status] ?? APP_STATUS.applied) : null;
+  const appBadge  = app ? (APP_STATUS[app.status] ?? null) : null;
   const hasRoles  = event.eligibleRoles.length > 0;
   const allFull   = hasRoles && event.eligibleRoles.every((r) => r.appliedCount >= r.capacity);
 
