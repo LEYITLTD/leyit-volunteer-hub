@@ -16,14 +16,14 @@ export async function GET(
     .from("volunteers")
     .select(`
       id, first_name, last_name, email, phone, address,
-      date_of_birth, nationality, emergency_contact_name,
+      date_of_birth, nationality, gender, emergency_contact_name,
       emergency_contact_phone, dietary_requirements, medical_info,
       age_verified, created_at,
       volunteer_compliance (
         dbs_status, dbs_document_url, dbs_uploaded_at, dbs_expiry_date,
         dbs_reviewed_at, dbs_rejection_reason,
-        refinitiv_status, overall_status,
-        approved_at
+        refinitiv_status, refinitiv_screened_at, refinitiv_rejection_reason,
+        overall_status, approved_at
       )
     `)
     .eq("id", id)

@@ -7,15 +7,17 @@ import { useParams, useRouter } from "next/navigation";
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
 type Compliance = {
-  dbs_status:           string | null;
-  dbs_document_url:     string | null;
-  dbs_uploaded_at:      string | null;
-  dbs_expiry_date:      string | null;
-  dbs_reviewed_at:      string | null;
-  dbs_rejection_reason: string | null;
-  refinitiv_status:     string | null;
-  overall_status:       string | null;
-  approved_at:          string | null;
+  dbs_status:                string | null;
+  dbs_document_url:          string | null;
+  dbs_uploaded_at:           string | null;
+  dbs_expiry_date:           string | null;
+  dbs_reviewed_at:           string | null;
+  dbs_rejection_reason:      string | null;
+  refinitiv_status:          string | null;
+  refinitiv_screened_at:     string | null;
+  refinitiv_rejection_reason: string | null;
+  overall_status:            string | null;
+  approved_at:               string | null;
 };
 
 type Volunteer = {
@@ -53,6 +55,13 @@ const DBS_BADGE: Record<string, { label: string; bg: string; color: string }> = 
   pending:      { label: "Pending review", bg: "#3A2E1A", color: "#C4973A" },
   verified:     { label: "Verified",       bg: "#1A2E1A", color: "#4CAF50" },
   rejected:     { label: "Rejected",       bg: "#2E1A1A", color: "#E57373" },
+};
+
+const REFINITIV_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  pending:        { label: "Pending",        bg: "#3A2E1A", color: "#C4973A" },
+  clear:          { label: "Clear",          bg: "#1A2E1A", color: "#4CAF50" },
+  possible_match: { label: "Possible match", bg: "#3A2E1A", color: "#C4973A" },
+  high_risk:      { label: "High risk",      bg: "#2E1A1A", color: "#E57373" },
 };
 
 const OVERALL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
@@ -400,6 +409,227 @@ function RejectModal({
   );
 }
 
+/* ─── Refinitiv Approve Modal ────────────────────────────────────────────── */
+
+function RefinitivApproveModal({
+  volunteer,
+  dbsStatus,
+  approvalTemplate,
+  onClose,
+  onDone,
+}: {
+  volunteer: Volunteer;
+  dbsStatus: string;
+  approvalTemplate: Template | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr]               = useState<string | null>(null);
+
+  const willApprove = dbsStatus === "verified";
+  const previewHtml = approvalTemplate && willApprove
+    ? renderTemplate(approvalTemplate.body_html, { first_name: volunteer.first_name })
+    : "";
+
+  async function submit() {
+    setSubmitting(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/refinitiv-approve`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Overlay onClose={onClose}>
+      <div
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl overflow-y-auto"
+        style={{ background: "var(--color-card)", maxHeight: "92dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="px-6 py-4 flex items-center justify-between border-b"
+          style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
+        >
+          <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Mark Refinitiv as clear
+          </h2>
+          <button onClick={onClose} className="text-[20px] leading-none" style={{ color: "var(--color-text-muted)" }}>×</button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-5">
+          <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>
+            Manually marking the Refinitiv check as{" "}
+            <strong style={{ color: "#4CAF50" }}>clear</strong> for{" "}
+            <strong style={{ color: "var(--color-text-primary)" }}>
+              {volunteer.first_name} {volunteer.last_name}
+            </strong>.
+          </p>
+
+          <div
+            className="rounded-xl p-4 text-[13px] leading-relaxed"
+            style={{
+              background: willApprove ? "#1A2E1A" : "#3A2E1A",
+              color:      willApprove ? "#4CAF50"  : "#C4973A",
+            }}
+          >
+            {willApprove
+              ? `DBS is already verified — this will fully approve ${volunteer.first_name}'s application and send the approval email immediately.`
+              : `DBS is not yet verified — Refinitiv will be marked clear but the full approval won't trigger until DBS is also approved.`}
+          </div>
+
+          {willApprove && previewHtml && (
+            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-card-border)" }}>
+              <p
+                className="text-[10px] font-semibold uppercase tracking-widest px-4 py-2 border-b"
+                style={{ color: "var(--color-text-muted)", borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
+              >
+                Email that will be sent
+              </p>
+              <iframe srcDoc={previewHtml} className="w-full border-0" style={{ height: "220px" }} title="Approval email preview" />
+            </div>
+          )}
+
+          {err && <p className="text-[13px]" style={{ color: "var(--color-error)" }}>{err}</p>}
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="text-[13px] px-4 py-2 rounded-xl border"
+              style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="text-[13px] px-5 py-2 rounded-xl font-semibold transition-opacity"
+              style={{ background: "var(--color-gold)", color: "#1A1714", opacity: submitting ? 0.6 : 1 }}
+            >
+              {submitting ? "Saving…" : "Mark as Clear"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+/* ─── Refinitiv Reject Modal ─────────────────────────────────────────────── */
+
+function RefinitivRejectModal({
+  volunteer,
+  onClose,
+  onDone,
+}: {
+  volunteer: Volunteer;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [reason,     setReason]   = useState("");
+  const [submitting, setSubmit]   = useState(false);
+  const [err, setErr]             = useState<string | null>(null);
+
+  async function submit() {
+    setSubmit(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/refinitiv-reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+      setSubmit(false);
+    }
+  }
+
+  return (
+    <Overlay onClose={onClose}>
+      <div
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl overflow-y-auto"
+        style={{ background: "var(--color-card)", maxHeight: "92dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="px-6 py-4 flex items-center justify-between border-b"
+          style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
+        >
+          <div>
+            <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              Mark Refinitiv as high risk
+            </h2>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+              {volunteer.first_name} {volunteer.last_name} · {volunteer.email}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-[22px] leading-none" style={{ color: "var(--color-text-muted)" }}>×</button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-5">
+          <div
+            className="rounded-xl p-4 text-[13px] leading-relaxed"
+            style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}
+          >
+            This will set {volunteer.first_name}&apos;s overall compliance to{" "}
+            <strong>Rejected</strong>. No email is sent automatically — notify the volunteer separately if needed.
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              Internal notes <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Name matched against sanctions list — case ref #..."
+              rows={4}
+              className="border rounded-xl px-3 py-2.5 text-[13px] resize-none leading-relaxed"
+              style={{
+                borderColor: "var(--color-input-border)",
+                background:  "var(--color-input-bg)",
+                color:       "var(--color-text-primary)",
+              }}
+            />
+          </div>
+
+          {err && <p className="text-[13px]" style={{ color: "var(--color-error)" }}>{err}</p>}
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 text-[13px] px-4 py-2.5 rounded-xl border"
+              style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="flex-1 text-[13px] px-4 py-2.5 rounded-xl font-semibold transition-opacity"
+              style={{ background: "#B33A3A", color: "#fff", opacity: submitting ? 0.5 : 1 }}
+            >
+              {submitting ? "Saving…" : "Mark as High Risk"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
 /* ─── Overlay ────────────────────────────────────────────────────────────── */
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -424,7 +654,7 @@ export default function VolunteerDetailPage() {
   const [dbsUrl, setDbsUrl]         = useState<string | null>(null);
   const [templates, setTemplates]   = useState<Template[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [modal, setModal]           = useState<"approve" | "reject" | null>(null);
+  const [modal, setModal]           = useState<"approve" | "reject" | "refinitiv-approve" | "refinitiv-reject" | null>(null);
   const [success, setSuccess]       = useState<string | null>(null);
 
   function load() {
@@ -659,18 +889,60 @@ export default function VolunteerDetailPage() {
             style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
           >
             <div
-              className="px-5 py-3.5 border-b"
+              className="px-5 py-3.5 border-b flex items-center justify-between"
               style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
             >
               <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Refinitiv check</h2>
+              <Badge map={REFINITIV_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
             </div>
-            <div className="p-5">
-              <Badge map={DBS_BADGE} value={compliance?.refinitiv_status ?? "not_uploaded"} />
-              {compliance?.refinitiv_status === "pending" || !compliance?.refinitiv_status ? (
-                <p className="text-[13px] mt-3" style={{ color: "var(--color-text-muted)" }}>
-                  Awaiting Refinitiv screening.
+            <div className="p-5 flex flex-col gap-4">
+              {compliance?.refinitiv_screened_at && (
+                <Field label="Last reviewed" value={fmt(compliance.refinitiv_screened_at)} />
+              )}
+
+              {compliance?.refinitiv_status === "clear" && (
+                <div
+                  className="rounded-xl p-3 text-[13px]"
+                  style={{ background: "#1A2E1A", color: "#4CAF50" }}
+                >
+                  Refinitiv check passed — name and DOB cleared.
+                </div>
+              )}
+
+              {compliance?.refinitiv_status === "high_risk" && (
+                <div
+                  className="rounded-xl p-3 text-[13px]"
+                  style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}
+                >
+                  Marked as high risk.
+                  {compliance.refinitiv_rejection_reason && (
+                    <p className="mt-1 opacity-80">{compliance.refinitiv_rejection_reason}</p>
+                  )}
+                </div>
+              )}
+
+              {(!compliance?.refinitiv_status || compliance.refinitiv_status === "pending") && (
+                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
+                  Run a manual Refinitiv world-check on this volunteer&apos;s name and date of birth, then record the result below.
                 </p>
-              ) : null}
+              )}
+
+              <div className="flex flex-col gap-2 pt-1 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+                <button
+                  onClick={() => setModal("refinitiv-approve")}
+                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
+                  style={{ background: "var(--color-gold)", color: "#1A1714" }}
+                >
+                  Mark as Clear
+                </button>
+                <button
+                  onClick={() => setModal("refinitiv-reject")}
+                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold border transition-opacity"
+                  style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
+                >
+                  Mark as High Risk
+                </button>
+              </div>
             </div>
           </section>
         </div>
@@ -692,6 +964,26 @@ export default function VolunteerDetailPage() {
           rejectTemplate={rejectTpl}
           onClose={() => setModal(null)}
           onDone={() => handleDone(`DBS rejected. Rejection email sent to ${volunteer.email}.`)}
+        />
+      )}
+      {modal === "refinitiv-approve" && (
+        <RefinitivApproveModal
+          volunteer={volunteer}
+          dbsStatus={dbsStatus}
+          approvalTemplate={approveTpl}
+          onClose={() => setModal(null)}
+          onDone={() => handleDone(
+            dbsStatus === "verified"
+              ? `Refinitiv cleared for ${volunteer.first_name}. Approval email sent.`
+              : `Refinitiv marked as clear. Awaiting DBS verification before full approval.`
+          )}
+        />
+      )}
+      {modal === "refinitiv-reject" && (
+        <RefinitivRejectModal
+          volunteer={volunteer}
+          onClose={() => setModal(null)}
+          onDone={() => handleDone(`Refinitiv marked as high risk for ${volunteer.first_name}.`)}
         />
       )}
     </div>
