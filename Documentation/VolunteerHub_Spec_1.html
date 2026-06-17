@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VolunteerHub — Technical Specification</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#111827;font-size:14px;line-height:1.6}
+a{color:#2563eb;text-decoration:none}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;position:sticky;top:0;height:100vh;overflow-y:auto;background:#fff;border-right:1px solid #e5e7eb;padding:1.25rem 1rem;flex-shrink:0}
+.sidebar-logo{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:#1e3a8a;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb}
+.nav-section{font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin:1rem 0 .375rem}
+.nav-link{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;font-size:13px;color:#374151;cursor:pointer;transition:background .15s;margin-bottom:1px}
+.nav-link:hover,.nav-link.active{background:#eff6ff;color:#1d4ed8}
+.nav-link svg{flex-shrink:0;width:15px;height:15px;opacity:.6}
+.main{flex:1;padding:2rem;max-width:820px}
+.page-header{margin-bottom:2rem}
+.page-title{font-size:26px;font-weight:700;color:#1e3a8a;margin-bottom:4px}
+.page-sub{font-size:14px;color:#6b7280}
+.meta-row{display:flex;gap:12px;margin-top:.75rem;flex-wrap:wrap}
+.meta-chip{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;padding:3px 10px;font-size:12px}
+.section{margin-bottom:2rem}
+.section-title{font-size:18px;font-weight:700;color:#1e3a8a;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #bfdbfe;display:flex;align-items:center;gap:8px}
+.section-title svg{width:20px;height:20px;opacity:.7}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:1rem 1.25rem;margin-bottom:.875rem}
+.card-title{font-size:13px;font-weight:600;color:#374151;margin-bottom:.625rem;display:flex;align-items:center;gap:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.875rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.875rem}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.875rem}
+.stat-card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:.875rem 1rem}
+.stat-label{font-size:11px;color:#6b7280;margin-bottom:3px}
+.stat-val{font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f8fafc}
+th{padding:8px 10px;font-size:11px;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #e5e7eb}
+td{padding:8px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:#fafafa}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;white-space:nowrap}
+.bg{background:#dcfce7;color:#15803d}
+.br{background:#fee2e2;color:#dc2626}
+.ba{background:#fef9c3;color:#92400e}
+.bb{background:#dbeafe;color:#1d4ed8}
+.bn{background:#f3f4f6;color:#4b5563}
+.bp{background:#ede9fe;color:#5b21b6}
+.note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:.75rem 1rem;font-size:12px;color:#1d4ed8;margin:.75rem 0;line-height:1.6}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.75rem 1rem;font-size:12px;color:#92400e;margin:.75rem 0}
+.bullet-list{list-style:none;padding:0}
+.bullet-list li{padding:4px 0 4px 16px;position:relative;font-size:13px;color:#374151;border-bottom:1px solid #f9fafb}
+.bullet-list li:last-child{border-bottom:none}
+.bullet-list li::before{content:"•";position:absolute;left:0;color:#93c5fd}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:.5rem 0}
+.flow-step{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;font-size:12px;color:#1e3a8a;font-weight:500}
+.flow-arrow{color:#9ca3af;font-size:14px}
+.db-table{margin-bottom:1.5rem}
+.db-table-name{font-size:13px;font-weight:700;color:#1e3a8a;background:#eff6ff;border:1px solid #bfdbfe;padding:6px 12px;border-radius:6px 6px 0 0;display:inline-block;margin-bottom:0}
+.db-table table{border:1px solid #e5e7eb;border-radius:0 6px 6px 6px}
+.cost-total{background:#1e3a8a;color:#fff;border-radius:10px;padding:1rem 1.25rem;margin-top:1rem}
+.cost-total .label{font-size:12px;opacity:.7;margin-bottom:3px}
+.cost-total .val{font-size:24px;font-weight:700}
+.struck{text-decoration:line-through;color:#9ca3af;font-size:11px;margin-left:4px}
+.tag{display:inline-block;background:#f3f4f6;border-radius:4px;padding:1px 6px;font-size:11px;font-family:monospace;color:#374151}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.print-btn{position:fixed;bottom:1.5rem;right:1.5rem;background:#1e3a8a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(30,58,138,.3)}
+.print-btn:hover{background:#1e40af}
+@media print{.sidebar,.print-btn{display:none}.main{padding:0}.section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    VolunteerHub
+  </div>
+
+  <div class="nav-section">Platform</div>
+  <a class="nav-link active" href="#overview">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Overview
+  </a>
+
+  <div class="nav-section">Features</div>
+  <a class="nav-link" href="#registration">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Registration & Login
+  </a>
+  <a class="nav-link" href="#compliance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Compliance
+  </a>
+  <a class="nav-link" href="#events">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Events
+  </a>
+  <a class="nav-link" href="#email">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    Email System
+  </a>
+  <a class="nav-link" href="#checkin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    QR Check-in
+  </a>
+  <a class="nav-link" href="#points">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Points & Time Logic
+  </a>
+  <a class="nav-link" href="#reporting">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Reporting
+  </a>
+
+  <div class="nav-section">Technical</div>
+  <a class="nav-link" href="#architecture">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6M15.7 6.3l-7.4 11.4"/></svg>
+    Architecture
+  </a>
+  <a class="nav-link" href="#database">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    Database Schema
+  </a>
+  <a class="nav-link" href="#costs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Costs
+  </a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="page-title">VolunteerHub — Technical Specification</div>
+  <div class="page-sub">Feature requirements, database design &amp; cost estimate</div>
+  <div class="meta-row">
+    <span class="meta-chip">Version 1.0</span>
+    <span class="meta-chip">June 2026</span>
+    <span class="meta-chip">~700 volunteers</span>
+    <span class="meta-chip">~100 per event</span>
+  </div>
+</div>
+
+<!-- ─── OVERVIEW ──────────────────────────────────────────────── -->
+<div class="section" id="overview">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Overview
+  </div>
+
+  <div class="card">
+    <p style="color:#374151;margin-bottom:.75rem;">VolunteerHub replaces the current patchwork of Ticket Tailor, Microsoft Forms, Zapier, Google Sheets and manual WhatsApp management with a single unified platform. One login, one database, one dashboard.</p>
+    <table>
+      <thead><tr><th>Replaced with</th><th>VolunteerHub feature</th></tr></thead>
+      <tbody>
+        <tr><td>Ticket Tailor</td><td>Built-in registration + waitlist management</td></tr>
+        <tr><td>Microsoft Forms (vetting)</td><td>Volunteer account + DBS compliance module</td></tr>
+        <tr><td>Zapier</td><td>Direct database writes + event triggers</td></tr>
+        <tr><td>Google Sheets master list</td><td>Live reporting dashboard + CSV exports</td></tr>
+        <tr><td>Manual email drafting</td><td>Resend-powered template engine + pre-event blast with PDF attachments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid3">
+    <div class="stat-card"><div class="stat-label">Max volunteers</div><div class="stat-val" style="color:#1e3a8a">700</div></div>
+    <div class="stat-card"><div class="stat-label">Volunteers per event</div><div class="stat-val" style="color:#1e3a8a">~100</div></div>
+    <div class="stat-card"><div class="stat-label">Emails per month</div><div class="stat-val" style="color:#1e3a8a">1–2k</div></div>
+  </div>
+</div>
+
+<!-- ─── REGISTRATION ───────────────────────────────────────────── -->
+<div class="section" id="registration">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Registration &amp; Volunteer Login
+  </div>
+
+  <div class="card">
+    <div class="card-title">Registration form fields</div>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>First &amp; last name</td><td>Text</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+        <tr><td>Email address</td><td>Email</td><td><span class="badge bg">Yes</span></td><td>Becomes login username</td></tr>
+        <tr><td>Password</td><td>Password</td><td><span class="badge bg">Yes</span></td><td>Min 8 chars, confirmed twice</td></tr>
+        <tr><td>Date of birth</td><td>Date</td><td><span class="badge bg">Yes</span></td><td>Auto-validates age ≥ 16</td></tr>
+        <tr><td>Phone number</td><td>Tel</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+        <tr><td>Home address</td><td>Text</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+        <tr><td>Emergency contact name</td><td>Text</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+        <tr><td>Emergency contact phone</td><td>Tel</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+        <tr><td>Dietary requirements</td><td>Text</td><td><span class="badge bn">No</span></td><td>Used for wristband assignment at event entry</td></tr>
+        <tr><td>Medical information</td><td>Textarea</td><td><span class="badge bn">No</span></td><td>Admin-visible only, never shared</td></tr>
+        <tr><td>DBS certificate upload</td><td>File (PDF/JPG)</td><td><span class="badge bn">No</span></td><td>Can be uploaded later via volunteer login</td></tr>
+        <tr><td>Age confirmation (16+)</td><td>Checkbox</td><td><span class="badge bg">Yes</span></td><td>Legal requirement</td></tr>
+        <tr><td>Privacy policy agreement</td><td>Checkbox</td><td><span class="badge bg">Yes</span></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Volunteer login portal — what volunteers can do once logged in</div>
+    <ul class="bullet-list">
+      <li>View their current compliance status and any outstanding actions (e.g. "Upload your DBS certificate to complete registration")</li>
+      <li>Upload or re-upload their DBS certificate at any time without contacting admin</li>
+      <li>Browse published events and apply for available roles</li>
+      <li>View their personal QR code for event check-in (only visible once confirmed for an event)</li>
+      <li>Track their points balance, current reward tier and full points transaction history</li>
+      <li>Update profile — phone, address, emergency contact, dietary requirements, medical info</li>
+    </ul>
+  </div>
+
+  <div class="flow">
+    <span class="flow-step">Register</span><span class="flow-arrow">→</span>
+    <span class="flow-step">Upload DBS</span><span class="flow-arrow">→</span>
+    <span class="flow-step">Admin approves DBS</span><span class="flow-arrow">→</span>
+    <span class="flow-step">Compliance approved</span><span class="flow-arrow">→</span>
+    <span class="flow-step">Welcome email sent</span><span class="flow-arrow">→</span>
+    <span class="flow-step">Can apply to events</span>
+  </div>
+</div>
+
+<!-- ─── COMPLIANCE ────────────────────────────────────────────── -->
+<div class="section" id="compliance">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Compliance — DBS &amp; Refinitiv World-Check
+  </div>
+
+  <p style="color:#374151;margin-bottom:.875rem;font-size:13px;">Both checks are done once at registration and reused across all events. Neither check needs to be repeated unless a DBS certificate expires or a Refinitiv flag changes. A volunteer cannot check in to any event unless <strong>both</strong> checks pass.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">① DBS Check — manual admin review</div>
+      <ul class="bullet-list">
+        <li>Volunteer uploads their DBS certificate (PDF or image) at registration or later via their login portal</li>
+        <li>Admin is notified in the Compliance tab — document is visible in the dashboard</li>
+        <li>Admin reviews and clicks <strong>Approve</strong> or <strong>Reject</strong></li>
+        <li>Admin enters the DBS expiry date at point of approval</li>
+        <li>Automated reminder emails sent at 60 and 30 days before expiry</li>
+        <li>On expiry, status reverts to <span class="badge ba">Pending</span> until renewed and re-approved</li>
+        <li>All decisions logged with admin name and timestamp</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">② Refinitiv World-Check (LSEG) — API auto-screen</div>
+      <ul class="bullet-list">
+        <li>System automatically calls the LSEG World-Check One API the moment a volunteer submits their registration</li>
+        <li>API is passed: full name, date of birth, nationality</li>
+        <li>Response is one of: <span class="badge bg">CLEAR</span>, <span class="badge ba">POSSIBLE_MATCH</span>, or <span class="badge br">HIGH_RISK</span></li>
+        <li><span class="badge bg">CLEAR</span> → auto-passed, no admin action needed, marked green in dashboard</li>
+        <li><span class="badge ba">POSSIBLE_MATCH</span> / <span class="badge br">HIGH_RISK</span> → flagged in the Compliance panel for manual review</li>
+        <li>Admin clicks <strong>Review</strong> to see match details (name, category, risk level, source), then either clears ("not same person") or rejects the volunteer</li>
+        <li>All Refinitiv decisions logged with admin name and timestamp for audit</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.25rem;">
+    <div class="card-title">Combined compliance status logic</div>
+    <table>
+      <thead><tr><th>DBS Status</th><th>Refinitiv Status</th><th>Overall Compliance</th><th>Can apply to events?</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge bn">Not uploaded</span></td><td>Any</td><td><span class="badge ba">Pending</span></td><td>No</td></tr>
+        <tr><td><span class="badge ba">Uploaded — awaiting review</span></td><td>Any</td><td><span class="badge ba">Pending</span></td><td>No</td></tr>
+        <tr><td><span class="badge bg">Verified</span></td><td><span class="badge bn">Pending (API running)</span></td><td><span class="badge ba">Pending</span></td><td>No</td></tr>
+        <tr><td><span class="badge bg">Verified</span></td><td><span class="badge bg">Clear</span></td><td><span class="badge bg">Approved</span></td><td>Yes — full access</td></tr>
+        <tr><td><span class="badge bg">Verified</span></td><td><span class="badge bg">Possible match (admin cleared)</span></td><td><span class="badge bg">Approved</span></td><td>Yes — full access</td></tr>
+        <tr><td><span class="badge br">Rejected</span></td><td>Any</td><td><span class="badge br">Rejected</span></td><td>No — notified by email</td></tr>
+        <tr><td>Any</td><td><span class="badge br">High risk (not cleared)</span></td><td><span class="badge br">Rejected</span></td><td>No — notified by email</td></tr>
+        <tr><td><span class="badge ba">Expired</span></td><td>Any</td><td><span class="badge ba">Pending</span></td><td>No — renewal reminder sent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">A volunteer cannot check in to any event unless their overall status is <strong>Approved</strong>. The QR scanner validates this in real time at the door. Refinitiv cost is managed separately — contact LSEG for a commercial subscription to World-Check One before integration begins.</div>
+</div>
+
+<!-- ─── EVENTS ─────────────────────────────────────────────────── -->
+<div class="section" id="events">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Multi-Event Management
+  </div>
+
+  <div class="card">
+    <div class="card-title">Event lifecycle</div>
+    <div class="flow">
+      <span class="flow-step">Admin creates event</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Sets roles + capacities</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Saves as Draft</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Publishes → email to all approved volunteers</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Volunteers apply</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Admin confirms applications</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Event day (Active)</span><span class="flow-arrow">→</span>
+      <span class="flow-step">Completed + post-event email</span>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Admin can</div>
+      <ul class="bullet-list">
+        <li>Create events with name, date/time, venue, description</li>
+        <li>Add multiple roles (Ushers, Welcome Team, Packaging, etc.) each with a capacity limit</li>
+        <li>Set bonus QR station time windows per role</li>
+        <li>Publish to notify all approved volunteers by email</li>
+        <li>View and manage all applications per event, filtered by role or status</li>
+        <li>Confirm, decline or waitlist applications</li>
+        <li>See real-time attendance on event day</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Volunteers can</div>
+      <ul class="bullet-list">
+        <li>See all published events in their portal</li>
+        <li>Apply to a specific event and select a preferred role</li>
+        <li>View their confirmation status and personal QR code</li>
+        <li>Cancel their application (frees the spot for the next waitlisted person)</li>
+        <li>See how many points they earned at each past event</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Waitlist logic</div>
+    <ul class="bullet-list">
+      <li>When a role is at capacity, new applications are automatically waitlisted with a position number stored in the database</li>
+      <li>When a confirmed volunteer cancels, the next person on the waitlist for that role is auto-notified by email with a link to confirm their place</li>
+      <li>They have 48 hours to confirm before it moves to the next person (configurable)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ─── EMAIL ──────────────────────────────────────────────────── -->
+<div class="section" id="email">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    Email System
+  </div>
+
+  <div class="card">
+    <div class="card-title">Provider — Resend (Pro plan)</div>
+    <div class="grid3" style="margin-bottom:.75rem;">
+      <div class="stat-card"><div class="stat-label">Monthly emails included</div><div class="stat-val" style="color:#5b21b6;font-size:18px;">50,000</div></div>
+      <div class="stat-card"><div class="stat-label">Daily limit</div><div class="stat-val" style="color:#5b21b6;font-size:18px;">None</div></div>
+      <div class="stat-card"><div class="stat-label">Monthly cost</div><div class="stat-val" style="color:#15803d;font-size:18px;">~£16</div></div>
+    </div>
+    <p style="font-size:12px;color:#6b7280;">Resend Pro handles their event-day spikes (100 confirmation emails at once) without the 100/day cap of the free tier. Developer-friendly REST API, great deliverability, and a clean dashboard to monitor sends.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Automated email triggers</div>
+    <table>
+      <thead><tr><th>Trigger</th><th>Recipient</th><th>Contains</th><th>Timing</th></tr></thead>
+      <tbody>
+        <tr><td>Registration submitted</td><td>Volunteer</td><td>Confirmation, next steps, DBS upload prompt</td><td>Immediate</td></tr>
+        <tr><td>DBS not uploaded after 7 days</td><td>Volunteer</td><td>Reminder to upload DBS certificate</td><td>7 days after registration</td></tr>
+        <tr><td>DBS expiry approaching</td><td>Volunteer</td><td>Reminder to renew certificate</td><td>60 days &amp; 30 days before expiry</td></tr>
+        <tr><td>Compliance approved</td><td>Volunteer</td><td>Welcome message, what to expect next</td><td>Immediate on admin approval</td></tr>
+        <tr><td>New event published</td><td>All approved volunteers</td><td>Event details, roles available, link to apply</td><td>Immediate on publish</td></tr>
+        <tr><td>Application confirmed</td><td>Volunteer</td><td>Event details, role, personal QR code (PNG attachment)</td><td>Immediate on confirmation</td></tr>
+        <tr><td>Waitlist spot opened</td><td>Next waitlisted volunteer</td><td>Notification + confirm link (48hr window)</td><td>Immediate when spot opens</td></tr>
+        <tr><td>Post-event thank you</td><td>All attended volunteers</td><td>Points earned at event, total balance, current tier</td><td>24 hours after event ends</td></tr>
+        <tr><td>Reward tier reached</td><td>Volunteer</td><td>Congratulations + tier details</td><td>Immediate when threshold crossed</td></tr>
+        <tr><td>Compliance rejected</td><td>Volunteer</td><td>Decision notification</td><td>Immediate on rejection</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pre-event email blast — admin-composed from the web app</div>
+    <ul class="bullet-list">
+      <li>Admin selects an event, then clicks <strong>"Send email to confirmed volunteers"</strong></li>
+      <li>Composes subject line and body in a rich-text editor built into the dashboard</li>
+      <li>Attaches one or more PDF files by uploading directly in the composer (stored in Cloudflare R2, sent as email attachments via Resend)</li>
+      <li>A preview shows the full email and recipient count before sending</li>
+      <li>Sends only to volunteers with status = <span class="badge bg">Confirmed</span> for that event</li>
+      <li>Full send log stored: subject, timestamp, attachment filenames, recipient count</li>
+      <li>All past campaigns visible in an <strong>Email History</strong> section per event</li>
+    </ul>
+    <div class="note" style="margin-top:.75rem;">PDF files are uploaded to Cloudflare R2 storage, which generates a signed URL. Resend then attaches the file to the outgoing email. The volunteer receives a genuine email attachment — no links to click.</div>
+  </div>
+</div>
+
+<!-- ─── CHECK-IN ────────────────────────────────────────────────── -->
+<div class="section" id="checkin">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    QR Code Check-in
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Entry check-in</div>
+      <ul class="bullet-list">
+        <li>Each confirmed volunteer receives a unique QR code by email as a PNG attachment</li>
+        <li>QR encodes a secure UUID token unique to that volunteer + event combination</li>
+        <li>Admin scans at the door using the Check-in tab on any phone or tablet</li>
+        <li>System validates: compliance = Approved, application status = Confirmed, token is authentic</li>
+        <li>Successful scan → checked in + 100 attendance points awarded</li>
+        <li>Duplicate scan → blocked with "Already checked in" message</li>
+        <li>Volunteer without approval → denied entry, message shown to admin</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Bonus QR stations</div>
+      <ul class="bullet-list">
+        <li>4 self-service stations placed around the venue — Setup, Packaging, Social Media, Cleanup</li>
+        <li>Each station has a different QR code encoding its station type</li>
+        <li>Volunteer scans with their phone camera</li>
+        <li>System checks: (a) entry check-in already completed, (b) current time is within the station's valid window, (c) not already claimed for this event</li>
+        <li>Outside time window → scan rejected, no points</li>
+        <li>Cleanup station enforces sign-out: only valid after event end time</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─── POINTS ──────────────────────────────────────────────────── -->
+<div class="section" id="points">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Points System &amp; Time Logic
+  </div>
+
+  <div class="card">
+    <div class="card-title">Points categories</div>
+    <table>
+      <thead><tr><th>Category</th><th>Points</th><th>Trigger</th><th>Time window logic</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Early bird</strong></td>
+          <td><span class="badge bp">+50</span></td>
+          <td>Application confirmed</td>
+          <td>Only awarded if <span class="tag">confirmed_at ≤ event_date − 14 days</span> (configurable per event)</td>
+        </tr>
+        <tr>
+          <td><strong>Attendance</strong></td>
+          <td><span class="badge bp">+100</span></td>
+          <td>Entry QR scan</td>
+          <td>Valid from <span class="tag">doors_open</span> to <span class="tag">event_start + 90 min</span></td>
+        </tr>
+        <tr>
+          <td><strong>Setup station</strong></td>
+          <td><span class="badge bp">+100</span></td>
+          <td>Setup QR scan</td>
+          <td>Valid between <span class="tag">event_start − 2h</span> and <span class="tag">event_start − 15 min</span> only</td>
+        </tr>
+        <tr>
+          <td><strong>Packaging session</strong></td>
+          <td><span class="badge bp">+100</span></td>
+          <td>Packaging QR scan</td>
+          <td>Custom window set by admin per event (e.g. 10:00–14:00)</td>
+        </tr>
+        <tr>
+          <td><strong>Social media post</strong></td>
+          <td><span class="badge bp">+150</span></td>
+          <td>Social media QR scan</td>
+          <td>Valid during event hours: <span class="tag">event_start</span> to <span class="tag">event_end</span></td>
+        </tr>
+        <tr>
+          <td><strong>Post-event cleanup</strong></td>
+          <td><span class="badge bp">+150</span></td>
+          <td>Cleanup QR scan</td>
+          <td>Valid only <em>after</em> <span class="tag">event_end</span> — enforces actual participation in cleanup</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Time window enforcement rules</div>
+      <ul class="bullet-list">
+        <li>Each bonus station has <span class="tag">station_window_start</span> and <span class="tag">station_window_end</span> stored in <span class="tag">event_roles</span> — set by admin when creating the event</li>
+        <li>At scan time, server checks: <span class="tag">now() BETWEEN window_start AND window_end</span></li>
+        <li>Outside the window → scan rejected: "This station is not currently active"</li>
+        <li>Entry check-in must exist before any bonus station points can be awarded</li>
+        <li>Points are deduplicated: each category can only be earned once per volunteer per event</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Reward tiers &amp; ledger</div>
+      <ul class="bullet-list">
+        <li>Every award and deduction is written to <span class="tag">points_transactions</span> — append-only, cannot be edited</li>
+        <li>Total points = <span class="tag">SUM(amount)</span> per volunteer, calculated in real time</li>
+        <li><span class="badge bg">Certificate</span> at 100+ pts</li>
+        <li><span class="badge bb">Silver badge</span> at 250+ pts</li>
+        <li><span class="badge ba">Gold badge</span> at 400+ pts</li>
+        <li>Admin can manually award bonus points or deductions with a written reason</li>
+        <li>Congratulations email sent automatically when a volunteer crosses a tier threshold</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─── REPORTING ───────────────────────────────────────────────── -->
+<div class="section" id="reporting">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Reporting
+  </div>
+
+  <div class="note">All reports are accessible from the admin dashboard and can be exported as CSV (for Excel) or PDF. This directly replaces the current Google Sheets master list.</div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <div class="card-title">Report 1 — Master Volunteer List <span class="badge bn" style="margin-left:4px;">Replaces Google Sheets</span></div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:.75rem;">Live, filterable table of all 700 volunteers. Exportable to CSV at any time.</p>
+    <div class="chip-row">
+      <span class="badge bn">Name</span><span class="badge bn">Email</span><span class="badge bn">Phone</span><span class="badge bn">DOB</span><span class="badge bn">DBS Status</span><span class="badge bn">DBS Expiry</span><span class="badge bn">Compliance Status</span><span class="badge bn">Total Events</span><span class="badge bn">Total Points</span><span class="badge bn">Reward Tier</span><span class="badge bn">Registration Date</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 2 — Event Summary Report</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:.75rem;">Per event. Also auto-generated as a PDF 24 hours after the event ends.</p>
+    <ul class="bullet-list">
+      <li>Total applications, confirmations, attendance and no-shows with attendance rate %</li>
+      <li>Role breakdown — each role with filled/capacity count</li>
+      <li>Check-in timeline — first arrival, last arrival, peak window</li>
+      <li>Points distributed by category (early bird, attendance, each station)</li>
+      <li>Bonus station utilisation — how many volunteers used each station</li>
+      <li>No-show list with name, email and phone for follow-up</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 3 — Compliance Audit Report</div>
+    <ul class="bullet-list">
+      <li>Volunteers by status: Approved, Pending, Rejected</li>
+      <li>DBS expiry warnings — buckets of 30 / 60 / 90 days</li>
+      <li>Full approval and rejection log with admin name and timestamp</li>
+      <li>Rejected volunteer list with date — for safeguarding records</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 4 — Points &amp; Rewards Report</div>
+    <ul class="bullet-list">
+      <li>Full leaderboard with rank, name, total points, tier breakdown by category</li>
+      <li>Points issued per event — which event contributed most</li>
+      <li>Volunteers near a tier threshold (e.g. within 20 pts of Gold)</li>
+      <li>Reward redemption log — who received what, issued by whom, date</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 5 — Individual Volunteer Report Card</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:.5rem;">Accessible by admin per volunteer, and also visible to the volunteer in their own portal.</p>
+    <ul class="bullet-list">
+      <li>Events applied for, confirmed, and attended with dates</li>
+      <li>Full points transaction history (type, amount, event, timestamp)</li>
+      <li>Compliance history — DBS upload date, review date, approval date</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 6 — Email Campaign History</div>
+    <ul class="bullet-list">
+      <li>All manually-sent pre-event blasts per event: subject, date, recipient count, attachments</li>
+      <li>Automated email delivery log: sent/delivered/bounced per volunteer per trigger</li>
+      <li>Open rates and click rates per campaign (via Resend dashboard)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report 7 — No-show &amp; Waitlist Patterns</div>
+    <ul class="bullet-list">
+      <li>Volunteers with 2+ no-shows flagged automatically for admin awareness</li>
+      <li>Waitlist conversion rate per event</li>
+      <li>Average time from application to confirmation</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ─── ARCHITECTURE ───────────────────────────────────────────── -->
+<div class="section" id="architecture">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6M15.7 6.3l-7.4 11.4"/></svg>
+    System Architecture &amp; Tech Stack
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Frontend</strong></td><td>Next.js (React)</td><td>Admin dashboard + volunteer portal</td><td>Single codebase serves both interfaces; server-side rendering; excellent routing</td></tr>
+        <tr><td><strong>Backend / API</strong></td><td>Next.js API routes (Node.js)</td><td>All business logic, auth, integrations</td><td>Co-located with frontend — no separate server to maintain</td></tr>
+        <tr><td><strong>Database</strong></td><td>PostgreSQL via Supabase</td><td>All application data</td><td>Managed Postgres, built-in auth, real-time, row-level security</td></tr>
+        <tr><td><strong>Authentication</strong></td><td>Supabase Auth</td><td>Volunteer + admin login</td><td>Handles email/password, sessions, JWTs out of the box</td></tr>
+        <tr><td><strong>File storage</strong></td><td>Cloudflare R2</td><td>DBS certificates + email PDF attachments</td><td>No egress fees, 10GB free tier, S3-compatible API</td></tr>
+        <tr><td><strong>Email</strong></td><td>Resend (Pro)</td><td>All transactional + campaign emails</td><td>No daily cap, great deliverability, developer-friendly API, PDF attachments</td></tr>
+        <tr><td><strong>QR Codes</strong></td><td>qrcode.js (server-side)</td><td>Generate volunteer check-in QR codes</td><td>Open source, outputs PNG ready for email attachment</td></tr>
+        <tr><td><strong>Hosting</strong></td><td>Vercel</td><td>Frontend + API hosting</td><td>Zero-config Next.js, auto-scaling, global CDN</td></tr>
+        <tr><td><strong>CI/CD</strong></td><td>GitHub → Vercel</td><td>Automated deployment on code push</td><td>One-click rollbacks, staging environments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Security</div>
+    <ul class="bullet-list">
+      <li>DBS certificates stored in a private R2 bucket — never publicly accessible; served via signed URLs that expire</li>
+      <li>All API keys stored as environment variables — never in code</li>
+      <li>Role-based access control: volunteers cannot access admin routes; coordinators cannot access compliance data</li>
+      <li>Supabase row-level security (RLS) ensures volunteers can only query their own records at the database level</li>
+      <li>HTTPS everywhere — Vercel provides automatic SSL</li>
+      <li>Admin activity log is append-only and cannot be edited or deleted</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ─── DATABASE ────────────────────────────────────────────────── -->
+<div class="section" id="database">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    Database Schema
+  </div>
+
+  <div class="note">PostgreSQL via Supabase. All primary keys are UUIDs. 12 tables total. Row-level security enabled on all tables.</div>
+
+  <div class="card" style="margin-top:.75rem;">
+  <div class="db-table">
+    <div class="db-table-name">volunteers</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td>Auto-generated</td></tr>
+      <tr><td><span class="tag">first_name</span>, <span class="tag">last_name</span></td><td>TEXT NOT NULL</td><td></td></tr>
+      <tr><td><span class="tag">email</span></td><td>TEXT UNIQUE NOT NULL</td><td>Login identifier</td></tr>
+      <tr><td><span class="tag">password_hash</span></td><td>TEXT</td><td>Managed by Supabase Auth</td></tr>
+      <tr><td><span class="tag">phone</span>, <span class="tag">address</span></td><td>TEXT</td><td></td></tr>
+      <tr><td><span class="tag">date_of_birth</span></td><td>DATE NOT NULL</td><td>Age validation + Refinitiv (if added later)</td></tr>
+      <tr><td><span class="tag">nationality</span></td><td>TEXT NOT NULL</td><td>ISO country code</td></tr>
+      <tr><td><span class="tag">emergency_contact_name</span>, <span class="tag">emergency_contact_phone</span></td><td>TEXT</td><td></td></tr>
+      <tr><td><span class="tag">dietary_requirements</span></td><td>TEXT</td><td>Wristband assignment at events</td></tr>
+      <tr><td><span class="tag">medical_info</span></td><td>TEXT</td><td>Admin-visible only</td></tr>
+      <tr><td><span class="tag">age_verified</span></td><td>BOOLEAN DEFAULT false</td><td>Set true on registration checkbox</td></tr>
+      <tr><td><span class="tag">is_active</span></td><td>BOOLEAN DEFAULT true</td><td>Soft-delete flag</td></tr>
+      <tr><td><span class="tag">created_at</span>, <span class="tag">updated_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">volunteer_compliance</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">volunteer_id</span></td><td>UUID FK → volunteers</td><td>1-to-1 relationship</td></tr>
+      <tr><td><span class="tag">dbs_document_url</span></td><td>TEXT</td><td>Cloudflare R2 path — served via signed URL</td></tr>
+      <tr><td><span class="tag">dbs_uploaded_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">dbs_status</span></td><td>ENUM('not_uploaded','pending','verified','rejected')</td><td></td></tr>
+      <tr><td><span class="tag">dbs_expiry_date</span></td><td>DATE</td><td>Admin enters at point of approval</td></tr>
+      <tr><td><span class="tag">dbs_reviewed_by</span></td><td>UUID FK → admins</td><td>Which admin approved/rejected</td></tr>
+      <tr><td><span class="tag">dbs_reviewed_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">refinitiv_case_id</span></td><td>TEXT</td><td>LSEG case reference number</td></tr>
+      <tr><td><span class="tag">refinitiv_status</span></td><td>ENUM('pending','clear','possible_match','high_risk')</td><td>Set by API response on registration</td></tr>
+      <tr><td><span class="tag">refinitiv_screened_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">refinitiv_override_by</span></td><td>UUID FK → admins</td><td>Set if admin manually cleared a match</td></tr>
+      <tr><td><span class="tag">refinitiv_override_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">overall_status</span></td><td>ENUM('pending','approved','rejected')</td><td>Requires BOTH checks to pass</td></tr>
+      <tr><td><span class="tag">approved_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">approved_by</span></td><td>UUID FK → admins</td><td></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">admins</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">first_name</span>, <span class="tag">last_name</span>, <span class="tag">email</span></td><td>TEXT NOT NULL</td><td></td></tr>
+      <tr><td><span class="tag">role</span></td><td>ENUM('super_admin','admin','coordinator')</td><td>Controls access level</td></tr>
+      <tr><td><span class="tag">is_active</span></td><td>BOOLEAN DEFAULT true</td><td></td></tr>
+      <tr><td><span class="tag">created_at</span>, <span class="tag">last_login</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">events</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">name</span>, <span class="tag">description</span>, <span class="tag">venue_name</span>, <span class="tag">venue_address</span></td><td>TEXT</td><td></td></tr>
+      <tr><td><span class="tag">event_start</span>, <span class="tag">event_end</span></td><td>TIMESTAMPTZ NOT NULL</td><td>Controls all station time windows</td></tr>
+      <tr><td><span class="tag">doors_open</span></td><td>TIMESTAMPTZ</td><td>Entry QR valid from this time</td></tr>
+      <tr><td><span class="tag">status</span></td><td>ENUM('draft','published','active','completed','cancelled')</td><td></td></tr>
+      <tr><td><span class="tag">early_bird_cutoff_days</span></td><td>INT DEFAULT 14</td><td>Days before event that early bird award closes</td></tr>
+      <tr><td><span class="tag">created_by</span></td><td>UUID FK → admins</td><td></td></tr>
+      <tr><td><span class="tag">published_at</span></td><td>TIMESTAMPTZ</td><td>Set when admin clicks Publish</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">event_roles</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">event_id</span></td><td>UUID FK → events</td><td></td></tr>
+      <tr><td><span class="tag">role_name</span></td><td>TEXT NOT NULL</td><td>e.g. "Ushers", "Packaging", "Social Media"</td></tr>
+      <tr><td><span class="tag">capacity</span></td><td>INT NOT NULL</td><td>Max volunteers for this role</td></tr>
+      <tr><td><span class="tag">station_type</span></td><td>ENUM('entry','setup','packaging','social_media','cleanup','general')</td><td>Maps to bonus QR station</td></tr>
+      <tr><td><span class="tag">station_window_start</span>, <span class="tag">station_window_end</span></td><td>TIMESTAMPTZ</td><td>Valid QR scan window — enforced at scan time</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">event_applications</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">volunteer_id</span></td><td>UUID FK → volunteers</td><td></td></tr>
+      <tr><td><span class="tag">event_id</span></td><td>UUID FK → events</td><td></td></tr>
+      <tr><td><span class="tag">role_id</span></td><td>UUID FK → event_roles</td><td></td></tr>
+      <tr><td><span class="tag">status</span></td><td>ENUM('applied','confirmed','waitlisted','declined','no_show','cancelled')</td><td></td></tr>
+      <tr><td><span class="tag">applied_at</span>, <span class="tag">confirmed_at</span></td><td>TIMESTAMPTZ</td><td><span class="tag">confirmed_at</span> used for early bird check</td></tr>
+      <tr><td><span class="tag">qr_token</span></td><td>UUID UNIQUE</td><td>Encoded in volunteer's check-in QR code</td></tr>
+      <tr><td><span class="tag">waitlist_position</span></td><td>INT</td><td>NULL if not waitlisted</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">check_ins</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">application_id</span></td><td>UUID FK → event_applications</td><td></td></tr>
+      <tr><td><span class="tag">volunteer_id</span>, <span class="tag">event_id</span></td><td>UUID FK</td><td>Denormalised for query speed</td></tr>
+      <tr><td><span class="tag">station</span></td><td>ENUM('entry','exit','setup','packaging','social_media','cleanup')</td><td></td></tr>
+      <tr><td><span class="tag">scanned_at</span></td><td>TIMESTAMPTZ DEFAULT now()</td><td></td></tr>
+      <tr><td><span class="tag">within_time_window</span></td><td>BOOLEAN</td><td>false = scan rejected, no points</td></tr>
+      <tr><td><span class="tag">points_awarded</span></td><td>INT</td><td>0 if outside window or duplicate</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">points_transactions <span style="font-weight:400;font-size:12px;color:#6b7280;">— append-only, never edited</span></div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">volunteer_id</span></td><td>UUID FK → volunteers</td><td></td></tr>
+      <tr><td><span class="tag">event_id</span></td><td>UUID FK → events</td><td>NULL for manual awards</td></tr>
+      <tr><td><span class="tag">check_in_id</span></td><td>UUID FK → check_ins</td><td>NULL for non-scan awards</td></tr>
+      <tr><td><span class="tag">type</span></td><td>ENUM('early_bird','attendance','setup','packaging','social_media','cleanup','manual_bonus','deduction')</td><td></td></tr>
+      <tr><td><span class="tag">amount</span></td><td>INT NOT NULL</td><td>Positive = award, negative = deduction</td></tr>
+      <tr><td><span class="tag">earned_at</span></td><td>TIMESTAMPTZ DEFAULT now()</td><td></td></tr>
+      <tr><td><span class="tag">description</span></td><td>TEXT</td><td>Required for manual entries</td></tr>
+      <tr><td><span class="tag">awarded_by</span></td><td>UUID FK → admins</td><td>NULL for auto-awarded points</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">email_campaigns</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">created_by</span></td><td>UUID FK → admins</td><td></td></tr>
+      <tr><td><span class="tag">event_id</span></td><td>UUID FK → events</td><td>NULL for general campaigns</td></tr>
+      <tr><td><span class="tag">subject</span>, <span class="tag">body_html</span></td><td>TEXT</td><td></td></tr>
+      <tr><td><span class="tag">attachment_urls</span></td><td>JSONB</td><td>Array of R2 signed URLs for PDF attachments</td></tr>
+      <tr><td><span class="tag">recipient_count</span></td><td>INT</td><td></td></tr>
+      <tr><td><span class="tag">sent_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+      <tr><td><span class="tag">status</span></td><td>ENUM('draft','sent','partial_fail','failed')</td><td></td></tr>
+      <tr><td><span class="tag">resend_batch_id</span></td><td>TEXT</td><td>For delivery tracking via Resend webhook</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">reward_redemptions</div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">volunteer_id</span></td><td>UUID FK → volunteers</td><td></td></tr>
+      <tr><td><span class="tag">reward_tier</span></td><td>ENUM('certificate','silver_badge','gold_badge')</td><td></td></tr>
+      <tr><td><span class="tag">points_at_redemption</span></td><td>INT</td><td>Snapshot at time of issue</td></tr>
+      <tr><td><span class="tag">issued_by</span></td><td>UUID FK → admins</td><td></td></tr>
+      <tr><td><span class="tag">notes</span></td><td>TEXT</td><td>e.g. "Signed book given at Annual Conference"</td></tr>
+      <tr><td><span class="tag">status</span></td><td>ENUM('pending','issued')</td><td></td></tr>
+      <tr><td><span class="tag">redeemed_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="db-table">
+    <div class="db-table-name">activity_log <span style="font-weight:400;font-size:12px;color:#6b7280;">— append-only, audit trail</span></div>
+    <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
+      <tr><td><span class="tag">actor_type</span></td><td>ENUM('admin','volunteer','system')</td><td></td></tr>
+      <tr><td><span class="tag">actor_id</span></td><td>UUID</td><td>ID of admin/volunteer/system that triggered the event</td></tr>
+      <tr><td><span class="tag">event_id</span>, <span class="tag">volunteer_id</span></td><td>UUID FK</td><td>Nullable — depends on action type</td></tr>
+      <tr><td><span class="tag">action_type</span></td><td>TEXT NOT NULL</td><td>e.g. "dbs_approved", "event_published", "email_sent"</td></tr>
+      <tr><td><span class="tag">description</span></td><td>TEXT</td><td>Human-readable summary</td></tr>
+      <tr><td><span class="tag">metadata</span></td><td>JSONB</td><td>Extra context (attachment names, etc.)</td></tr>
+      <tr><td><span class="tag">created_at</span></td><td>TIMESTAMPTZ DEFAULT now()</td><td></td></tr>
+    </tbody></table>
+  </div>
+  </div>
+</div>
+
+<!-- ─── COSTS ───────────────────────────────────────────────────── -->
+<div class="section" id="costs">
+  <div class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Cost Breakdown
+  </div>
+
+  <div class="card">
+    <div class="card-title">Monthly infrastructure — at your scale</div>
+    <table>
+      <thead><tr><th>Service</th><th>Plan</th><th>Monthly</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Vercel</strong></td>
+          <td>Hobby (free)</td>
+          <td><span class="badge bg">£0</span></td>
+          <td>100 volunteers/event is well within free limits. Note: Hobby is technically personal use — if commercial use rights matter, upgrade to Pro at £17/month</td>
+        </tr>
+        <tr>
+          <td><strong>Supabase</strong></td>
+          <td>Free <em>or</em> Pro</td>
+          <td><span class="badge bg">£0</span> <span style="color:#9ca3af;">/ £20</span></td>
+          <td>700 volunteers is a tiny database — well within 500MB free tier. Caveat: free projects pause after 1 week of inactivity. Solve with a scheduled ping, or upgrade to Pro (£20/month) for daily backups + no pausing</td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare R2</strong></td>
+          <td>Free tier</td>
+          <td><span class="badge bg">£0</span></td>
+          <td>10GB free, no egress fees. ~700 DBS certs + PDFs ≈ 2GB total. Stays free unless storage exceeds 10GB</td>
+        </tr>
+        <tr>
+          <td><strong>Resend</strong></td>
+          <td>Pro (50k emails/month)</td>
+          <td><span class="badge bb">~£16</span></td>
+          <td>No daily send cap — handles 100 confirmation emails going out at once on event day. 50,000/month is 25× your actual volume so plenty of headroom</td>
+        </tr>
+        <tr style="background:#f8fafc;">
+          <td style="font-weight:700;">Total / month</td>
+          <td></td>
+          <td style="font-weight:700;color:#15803d;">£16–36</td>
+          <td style="font-size:12px;">Lower end = Supabase free. Upper end = Supabase Pro for reliability. Either way far below the original £59–80 estimate.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2" style="margin-bottom:.875rem;">
+    <div class="cost-total">
+      <div class="label">Annual infrastructure cost</div>
+      <div class="val">£192–432 /yr</div>
+      <div style="font-size:12px;opacity:.7;margin-top:4px;">vs original estimate of £700–960/yr</div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title">Development estimate</div>
+      <table>
+        <thead><tr><th>Scenario</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>UK freelance developer(s)</td><td style="font-weight:600;">£45,000–70,000</td></tr>
+          <tr><td>Offshore team</td><td style="font-weight:600;">£15,000–28,000</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:#6b7280;margin-top:.5rem;">Development is a one-time cost. From Year 2 you only pay infrastructure (£192–432/yr).</p>
+    </div>
+  </div>
+
+  <div class="warn">The original spec also listed Refinitiv and WhatsApp costs — these have been removed as requested. Both can be added as optional integrations later without affecting the core platform architecture.</div>
+</div>
+
+</main>
+</div>
+
+<button class="print-btn" onclick="window.print()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  Print / Save PDF
+</button>
+
+<script>
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(l => { l.classList.toggle('active', l.getAttribute('href') === '#' + id); });
+    }
+  });
+}, { threshold: 0.2 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

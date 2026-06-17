@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   Design Tokens — Nūr theme
+   (warm gold #A8854A on espresso #1A1714 chrome,
+    warm off-white #F7F4EE pages)
+───────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand chrome */
+  --color-chrome:           #1A1714;
+  --color-gold:             #A8854A;
+  --color-gold-muted:       #C9A227;
+  --color-gold-light:       #F1EAD9;
+  --color-gold-subtle:      #F3EFE6;
+
+  /* Page & surface */
+  --color-bg:               #F7F4EE;
+  --color-surface:          #FDFCFA;
+
+  /* Cards */
+  --color-card:             #FFFFFF;
+  --color-card-border:      #EAE6DD;
+  --color-card-header-bg:   #FAF7F1;
+
+  /* Text */
+  --color-text-primary:     #1C1917;
+  --color-text-secondary:   #78716C;
+  --color-text-muted:       #A8A29E;
+  --color-text-label:       #B8B0A0;
+  --color-text-warm:        #57534E;
+  --color-text-inverse:     #F3E9D2;
+
+  /* Inputs */
+  --color-input-border:          #D9D2C5;
+  --color-input-bg:              #FDFCFA;
+  --color-input-border-disabled: #ECE6DA;
+  --color-input-bg-disabled:     #F5F1E9;
+
+  /* Dividers */
+  --color-divider:          #EFEAE0;
+  --color-divider-subtle:   #F4EFE6;
+
+  /* Status — Success */
+  --color-success:          #15803D;
+  --color-success-bg:       #DCFCE7;
+
+  /* Status — Warning */
+  --color-warning:          #92400E;
+  --color-warning-bg:       #FEF9C3;
+  --color-warning-border:   #FDE68A;
+  --color-warning-subtle:   #FBBF77;
+
+  /* Status — Error */
+  --color-error:            #DC2626;
+  --color-error-bg:         #FEE2E2;
+  --color-error-border:     #FBD5D5;
+  --color-error-surface:    #FEF6F6;
+
+  /* Status — Info */
+  --color-info:             #1D4ED8;
+  --color-info-bg:          #DBEAFE;
+
+  /* Points / tier */
+  --color-points:           #5B21B6;
+  --color-points-bg:        #EDE9FE;
+
+  /* Nav (on dark chrome) */
+  --color-nav-active-bg:    rgba(168, 133, 74, 0.15);
+  --color-nav-active-fg:    #F3E9D2;
+  --color-nav-inactive-fg:  rgba(255, 255, 255, 0.6);
+  --color-nav-divider:      rgba(255, 255, 255, 0.08);
+
+  /* Gradients */
+  --gradient-gold:          linear-gradient(90deg, #C9A227, #A8854A);
+  --gradient-auth-bg:       radial-gradient(circle at 50% 0%, #FBF8F1 0%, #F2ECE0 70%);
+
+  /* Border radius */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   14px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card:  0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-toast: 0 10px 30px rgba(21, 128, 61, 0.28);
+
+  /* Fonts — overridden at runtime by next/font CSS variables */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'Hanken Grotesk', system-ui, sans-serif;
 }
 
+/* ── Tailwind v4 theme mapping ── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Colors exposed as bg-*, text-*, border-* utilities */
+  --color-chrome:         var(--color-chrome);
+  --color-gold:           var(--color-gold);
+  --color-gold-light:     var(--color-gold-light);
+  --color-gold-subtle:    var(--color-gold-subtle);
+  --color-bg:             var(--color-bg);
+  --color-surface:        var(--color-surface);
+  --color-card:           var(--color-card);
+  --color-card-border:    var(--color-card-border);
+  --color-text-primary:   var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted:     var(--color-text-muted);
+  --color-text-warm:      var(--color-text-warm);
+  --color-divider:        var(--color-divider);
+  --color-divider-subtle: var(--color-divider-subtle);
+  --color-success:        var(--color-success);
+  --color-success-bg:     var(--color-success-bg);
+  --color-warning:        var(--color-warning);
+  --color-warning-bg:     var(--color-warning-bg);
+  --color-error:          var(--color-error);
+  --color-error-bg:       var(--color-error-bg);
+  --color-info:           var(--color-info);
+  --color-info-bg:        var(--color-info-bg);
+  --color-points:         var(--color-points);
+  --color-points-bg:      var(--color-points-bg);
+  --color-input-border:   var(--color-input-border);
+
+  /* Font families as font-display / font-ui utilities */
+  --font-display: var(--font-cormorant, 'Cormorant Garamond', Georgia, serif);
+  --font-ui:      var(--font-hanken, 'Hanken Grotesk', system-ui, sans-serif);
+
+  /* Border radius as rounded-* utilities */
+  --radius-sm:   var(--radius-sm);
+  --radius-md:   var(--radius-md);
+  --radius-lg:   var(--radius-lg);
+  --radius-xl:   var(--radius-xl);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base reset & defaults ── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+input, select, textarea, button { font-family: inherit; }
+::placeholder { color: var(--color-text-muted); }
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-gold) !important;
+  box-shadow: 0 0 0 3px rgba(168, 133, 74, 0.15);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-gold);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: #E0D9CB;
+  border-radius: 6px;
+  border: 2px solid var(--color-bg);
+}
+
+/* ── Animations ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(.8); opacity: 0; }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-toast-in { animation: toast-in 0.25s ease; }
+.animate-pop      { animation: pop 0.4s ease; }
