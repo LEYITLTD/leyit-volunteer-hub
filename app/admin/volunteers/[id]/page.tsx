@@ -712,8 +712,8 @@ export default function VolunteerDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Right column — compliance — first in DOM so it's at top on mobile */}
-        <div className="order-first lg:order-last lg:col-span-2 flex flex-col gap-5">
+        {/* Right column — compliance */}
+        <div className="lg:col-span-2 flex flex-col gap-5">
           {/* Refinitiv — primary action, show first */}
           <section
             className="rounded-2xl border overflow-hidden"
@@ -757,21 +757,20 @@ export default function VolunteerDetailPage() {
                   Last reviewed {fmt(compliance.refinitiv_screened_at)}
                 </p>
               )}
-              {/* Action buttons — side by side */}
-              <div className="flex gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+              <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
                 <button
                   onClick={() => setModal("refinitiv-approve")}
-                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-opacity"
+                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
                   style={{ background: "var(--color-gold)", color: "#1A1714" }}
                 >
-                  Clear ✓
+                  Mark as Clear
                 </button>
                 <button
                   onClick={() => setModal("refinitiv-reject")}
-                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold border transition-opacity"
-                  style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
+                  className="w-full py-2 text-[12px] font-medium"
+                  style={{ color: "#9E5555", background: "transparent" }}
                 >
-                  High Risk
+                  Mark as High Risk
                 </button>
               </div>
             </div>
@@ -834,20 +833,20 @@ export default function VolunteerDetailPage() {
                 <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No document uploaded yet.</p>
               )}
               {isPending && (
-                <div className="flex gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+                <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
                   <button
                     onClick={() => setModal("approve")}
-                    className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold"
+                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
                     style={{ background: "var(--color-gold)", color: "#1A1714" }}
                   >
-                    Approve
+                    Approve DBS
                   </button>
                   <button
                     onClick={() => setModal("reject")}
-                    className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold border"
-                    style={{ borderColor: "#B33A3A", color: "#E57373", background: "#2E1A1A" }}
+                    className="w-full py-2 text-[12px] font-medium"
+                    style={{ color: "#9E5555", background: "transparent" }}
                   >
-                    Reject
+                    Reject DBS
                   </button>
                 </div>
               )}
