@@ -31,7 +31,6 @@ const GENDER: Record<string, { label: string; bg: string; color: string }> = {
   female: { label: "Female", bg: "#2D1A2E", color: "#CF5BA4" },
 };
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  applied:    { label: "Applied",    bg: "#3A2E1A", color: "#C4973A" },
   confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#4CAF50" },
   waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#5BA4CF" },
   declined:   { label: "Declined",   bg: "#2E1A1A", color: "#E57373" },
@@ -162,7 +161,7 @@ export default function EventDetailPage() {
           { label: "Fill rate",    value: `${fillRate}%` },
         ].map(({ label, value, gold }) => (
           <div key={label} className="rounded-xl border p-4 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <p className="font-display text-[22px] sm:text-[26px] font-bold" style={{ color: gold ? "var(--color-gold)" : "var(--color-text-primary)" }}>
+            <p className="font-ui text-[22px] sm:text-[26px] font-bold tabular-nums" style={{ color: gold ? "var(--color-gold)" : "var(--color-text-primary)" }}>
               {value}
             </p>
             <p className="text-[10px] uppercase tracking-[0.06em] mt-0.5" style={{ color: "var(--color-text-muted)" }}>{label}</p>
@@ -244,7 +243,7 @@ export default function EventDetailPage() {
                 </thead>
                 <tbody>
                   {event.event_applications.map((app, i) => {
-                    const badge = APP_STATUS[app.status] ?? APP_STATUS.applied;
+                    const badge = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
                     return (
                       <tr key={app.id} style={{ borderBottom: i < event.event_applications.length - 1 ? "1px solid var(--color-card-border)" : undefined }}>
                         <td className="px-5 py-3">

@@ -142,6 +142,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* Prevent text size inflation on iOS */
   -webkit-text-size-adjust: 100%;
+  /* Always use lining (flat-baseline) numerals globally */
+  font-variant-numeric: lining-nums;
 }
 
 input, select, textarea, button { font-family: inherit; }

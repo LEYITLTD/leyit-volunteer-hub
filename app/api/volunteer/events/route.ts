@@ -18,11 +18,16 @@ export async function GET() {
 
   const { data: volunteer } = await service
     .from("volunteers")
-    .select("id, gender")
+    .select("id, gender, volunteer_compliance ( refinitiv_status )")
     .eq("auth_user_id", user.id)
     .single();
 
   if (!volunteer) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
+
+  const compliance = (volunteer as { volunteer_compliance?: { refinitiv_status?: string } | null }).volunteer_compliance;
+  if (compliance?.refinitiv_status !== "clear") {
+    return NextResponse.json({ error: "Account not verified" }, { status: 403 });
+  }
 
   // Fetch published/active events with roles and this volunteer's applications
   const { data: events, error } = await service

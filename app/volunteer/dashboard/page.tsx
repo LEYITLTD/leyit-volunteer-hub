@@ -113,7 +113,7 @@ export default function VolunteerDashboard() {
         ].map(({ label, value, gold }) => (
           <div key={label} className="rounded-xl border p-4 sm:p-5 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
             <p
-              className="font-display text-[24px] sm:text-[28px] font-bold"
+              className="font-ui text-[24px] sm:text-[28px] font-bold tabular-nums"
               style={{ color: gold ? "var(--color-gold)" : "var(--color-text-primary)" }}
             >
               {value}
@@ -129,7 +129,7 @@ export default function VolunteerDashboard() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1" style={{ color: "var(--color-text-muted)" }}>Volunteer points</p>
-              <p className="font-display text-[42px] sm:text-[48px] font-bold leading-none" style={{ color: "var(--color-gold)" }}>
+              <p className="font-ui text-[42px] sm:text-[48px] font-bold leading-none tabular-nums" style={{ color: "var(--color-gold)" }}>
                 {POINTS.toLocaleString()}
               </p>
             </div>

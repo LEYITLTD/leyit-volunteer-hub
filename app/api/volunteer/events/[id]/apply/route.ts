@@ -41,14 +41,19 @@ export async function POST(
 
   const service = createServiceClient();
 
-  // Get volunteer (with email + name for the confirmation email)
+  // Get volunteer (with compliance check + email for the confirmation)
   const { data: volunteer } = await service
     .from("volunteers")
-    .select("id, gender, first_name, email")
+    .select("id, gender, first_name, email, volunteer_compliance ( refinitiv_status )")
     .eq("auth_user_id", user.id)
     .single();
 
   if (!volunteer) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
+
+  const compliance = (volunteer as { volunteer_compliance?: { refinitiv_status?: string } | null }).volunteer_compliance;
+  if (compliance?.refinitiv_status !== "clear") {
+    return NextResponse.json({ error: "Account not verified" }, { status: 403 });
+  }
 
   // Check event is published/active (fetch details for the email)
   const { data: event } = await service
@@ -97,8 +102,9 @@ export async function POST(
     .not("status", "in", '("cancelled","declined")');
 
   const isFull      = (activeCount ?? 0) >= role.capacity;
-  const status      = isFull ? "waitlisted" : "applied";
+  const status      = isFull ? "waitlisted" : "confirmed";
   const waitlistPos = isFull ? (activeCount ?? 0) - role.capacity + 1 : null;
+  const now         = new Date().toISOString();
 
   const { data: application, error: insErr } = await service
     .from("event_applications")
@@ -107,7 +113,8 @@ export async function POST(
       event_id:          eventId,
       role_id:           roleId,
       status,
-      applied_at:        new Date().toISOString(),
+      applied_at:        now,
+      confirmed_at:      isFull ? null : now,
       waitlist_position: waitlistPos,
     })
     .select()
@@ -126,7 +133,7 @@ export async function POST(
     if (tpl) {
       const statusNote = isFull
         ? `You've been added to the waitlist at position ${waitlistPos}. We'll let you know as soon as a spot opens up.`
-        : "Your application is being reviewed — we'll be in touch to confirm your place soon.";
+        : "Your spot is confirmed — we look forward to seeing you there!";
 
       const vars = {
         first_name:  volunteer.first_name,

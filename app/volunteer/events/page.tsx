@@ -41,7 +41,6 @@ function fmtTime(d: string) {
 }
 
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  applied:    { label: "Applied",    bg: "#3A2E1A", color: "#C4973A" },
   confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#4CAF50" },
   waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#5BA4CF" },
   declined:   { label: "Declined",   bg: "#2E1A1A", color: "#E57373" },
@@ -185,9 +184,14 @@ function EventCard({
                 {event.eligibleRoles.find((r) => r.id === app.role_id)?.role_name ?? ""}
               </span>
             </div>
-            {(app.status === "applied" || app.status === "waitlisted") && (
+            {app.status === "waitlisted" && (
               <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                We'll be in touch
+                We'll let you know if a spot opens
+              </span>
+            )}
+            {app.status === "confirmed" && (
+              <span className="text-[11px]" style={{ color: "#4CAF50" }}>
+                You're in!
               </span>
             )}
           </>
@@ -438,7 +442,7 @@ export default function BrowseEventsPage() {
     setToast(
       waitlisted
         ? `You've been added to the waitlist for ${event.name}.`
-        : `Application sent for ${event.name}! We'll confirm soon.`,
+        : `You're confirmed for ${event.name}!`,
     );
     load();
   }
