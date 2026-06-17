@@ -5,14 +5,16 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 type AdminUser = {
-  id:              string;
-  email:           string;
-  full_name:       string | null;
-  created_at:      string;
-  last_sign_in_at: string | null;
+  id:         string;
+  first_name: string;
+  last_name:  string;
+  email:      string;
+  role:       string;
+  created_at: string;
+  last_login: string | null;
 };
 
-type Creds = { email: string; password: string };
+type Creds = { email: string };
 
 function fmtDate(d: string | null) {
   if (!d) return "Never";
@@ -30,7 +32,6 @@ export default function SettingsPage() {
   const [submitting,  setSubmitting]  = useState(false);
   const [formError,   setFormError]   = useState<string | null>(null);
   const [creds,       setCreds]       = useState<Creds | null>(null);
-  const [copied,      setCopied]      = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -44,7 +45,6 @@ export default function SettingsPage() {
     setEmail("");
     setFormError(null);
     setCreds(null);
-    setCopied(false);
     setModal(true);
   }
 
@@ -66,10 +66,11 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create account");
-      setCreds({ email: data.email, password: data.password });
+      setCreds({ email: data.email });
+      const parts = fullName.trim().split(" ");
       setAdmins(a => [
         ...a,
-        { id: data.id, email: data.email, full_name: data.full_name, created_at: new Date().toISOString(), last_sign_in_at: null },
+        { id: data.id, first_name: parts[0], last_name: parts.slice(1).join(" ") || "", email: data.email, role: "admin", created_at: new Date().toISOString(), last_login: null },
       ]);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Failed to create account");
@@ -78,16 +79,9 @@ export default function SettingsPage() {
     }
   }
 
-  async function copyPassword() {
-    if (!creds) return;
-    await navigator.clipboard.writeText(creds.password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   return (
     <>
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[720px] mx-auto w-full">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
         <div className="mb-6">
           <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
             Settings
@@ -133,19 +127,17 @@ export default function SettingsPage() {
               {admins.map(admin => (
                 <div key={admin.id} className="px-5 py-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    {admin.full_name && (
-                      <p className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
-                        {admin.full_name}
-                      </p>
-                    )}
-                    <p className="text-[12px] truncate" style={{ color: admin.full_name ? "var(--color-text-muted)" : "var(--color-text-primary)" }}>
+                    <p className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
+                      {admin.first_name} {admin.last_name}
+                    </p>
+                    <p className="text-[12px] truncate" style={{ color: "var(--color-text-muted)" }}>
                       {admin.email}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-[10px] uppercase tracking-[0.06em] mb-0.5" style={{ color: "var(--color-text-muted)" }}>Last sign in</p>
                     <p className="text-[11px] tabular-nums" style={{ color: "var(--color-text-secondary)" }}>
-                      {fmtDate(admin.last_sign_in_at)}
+                      {fmtDate(admin.last_login)}
                     </p>
                   </div>
                 </div>
@@ -167,58 +159,30 @@ export default function SettingsPage() {
             style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
           >
             {creds ? (
-              /* ---- Credentials screen ---- */
+              /* ---- Email sent confirmation ---- */
               <>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#1A2E1A" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#1A2E1A" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </div>
-                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                  <h2 className="text-[16px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
                     Account created
                   </h2>
+                  <p className="text-[13px] leading-relaxed mb-1" style={{ color: "var(--color-text-secondary)" }}>
+                    Login details have been emailed to
+                  </p>
+                  <p className="text-[13px] font-medium mb-5" style={{ color: "var(--color-gold)" }}>
+                    {creds.email}
+                  </p>
+                  <p className="text-[11px] leading-relaxed mb-6" style={{ color: "var(--color-text-muted)" }}>
+                    They'll be asked to set a new password when they first sign in.
+                  </p>
+                  <Button variant="gold" fullWidth onClick={closeModal}>
+                    Done
+                  </Button>
                 </div>
-
-                <p className="text-[12px] mb-4 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                  Share these credentials securely. The user will be asked to set a new password on first login.
-                </p>
-
-                <div
-                  className="rounded-xl p-4 mb-5 space-y-3"
-                  style={{ background: "#1C1916", border: "1px solid var(--color-card-border)" }}
-                >
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-1" style={{ color: "var(--color-text-muted)" }}>
-                      Email
-                    </p>
-                    <p className="text-[13px] font-mono" style={{ color: "var(--color-text-primary)" }}>{creds.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>
-                      Temporary password
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-[14px] font-mono font-medium flex-1 tracking-wide" style={{ color: "var(--color-gold)" }}>
-                        {creds.password}
-                      </p>
-                      <button
-                        onClick={copyPassword}
-                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-md flex-shrink-0 transition-all"
-                        style={{
-                          background: copied ? "#1A2E1A" : "var(--color-gold-subtle)",
-                          color:      copied ? "#4CAF50" : "var(--color-gold)",
-                        }}
-                      >
-                        {copied ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <Button variant="gold" fullWidth onClick={closeModal}>
-                  Done
-                </Button>
               </>
             ) : (
               /* ---- Create form ---- */

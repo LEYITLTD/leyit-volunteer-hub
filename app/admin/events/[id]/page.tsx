@@ -107,7 +107,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[900px] mx-auto w-full">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
 
       {/* Back */}
       <Link href="/admin/events" className="inline-flex items-center gap-1.5 text-[13px] mb-5" style={{ color: "var(--color-text-secondary)" }}>

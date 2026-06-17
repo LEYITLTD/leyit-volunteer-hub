@@ -456,7 +456,7 @@ export default function BrowseEventsPage() {
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[720px] mx-auto w-full">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
       <div className="mb-6">
         <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
           Events

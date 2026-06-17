@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 import { randomBytes } from "crypto";
+import { Resend } from "resend";
 
 function generatePassword(): string {
   const upper  = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -20,20 +21,14 @@ export async function GET() {
   if (error) return error;
 
   const service = createServiceClient();
-  const { data: { users }, error: listErr } = await service.auth.admin.listUsers({ page: 1, perPage: 100 });
-  if (listErr) return NextResponse.json({ error: listErr.message }, { status: 500 });
+  const { data, error: dbErr } = await service
+    .from("admins")
+    .select("id, first_name, last_name, email, role, created_at, last_login")
+    .eq("is_active", true)
+    .order("created_at");
 
-  const admins = users
-    .filter(u => u.app_metadata?.role === "admin")
-    .map(u => ({
-      id:              u.id,
-      email:           u.email,
-      full_name:       u.user_metadata?.full_name ?? null,
-      created_at:      u.created_at,
-      last_sign_in_at: u.last_sign_in_at ?? null,
-    }));
-
-  return NextResponse.json(admins);
+  if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(request: Request) {
@@ -60,5 +55,41 @@ export async function POST(request: Request) {
 
   if (createErr) return NextResponse.json({ error: createErr.message }, { status: 400 });
 
-  return NextResponse.json({ id: data.user.id, email, full_name, password });
+  // Insert into admins table (linked by email)
+  const nameParts  = full_name.trim().split(" ");
+  const firstName  = nameParts[0];
+  const lastName   = nameParts.slice(1).join(" ") || "";
+  await service.from("admins").insert({ first_name: firstName, last_name: lastName, email, role: "admin", is_active: true });
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  await resend.emails.send({
+    from:    process.env.RESEND_FROM_EMAIL!,
+    to:      email,
+    subject: "Your Eman Channel admin account is ready",
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1714;background:#fff;padding:32px 24px;border-radius:12px;">
+        <img src="https://volunteer-hub-leyitltds-projects.vercel.app/assets/logo-gold.png" alt="Eman Channel" style="height:36px;margin-bottom:28px;" />
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 8px;">Welcome, ${full_name}</h2>
+        <p style="font-size:14px;color:#5C5550;margin:0 0 24px;line-height:1.6;">
+          An admin account has been created for you on the Eman Channel Volunteer Hub.
+          Use the credentials below to sign in — you'll be asked to set a new password straight away.
+        </p>
+        <div style="background:#F5F2EE;border-radius:10px;padding:20px 20px 16px;margin-bottom:24px;">
+          <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9E9690;margin:0 0 4px;">Email</p>
+          <p style="font-size:14px;font-family:monospace;margin:0 0 16px;color:#1A1714;">${email}</p>
+          <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9E9690;margin:0 0 4px;">Temporary password</p>
+          <p style="font-size:16px;font-family:monospace;font-weight:700;margin:0;color:#B8861B;letter-spacing:0.04em;">${password}</p>
+        </div>
+        <a href="https://volunteer-hub-leyitltds-projects.vercel.app/admin-login"
+           style="display:inline-block;background:#B8861B;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;margin-bottom:24px;">
+          Sign in to your account →
+        </a>
+        <p style="font-size:12px;color:#9E9690;margin:0;">
+          If you weren't expecting this email, contact <a href="mailto:admin@emanchannel.tv" style="color:#B8861B;">admin@emanchannel.tv</a>.
+        </p>
+      </div>
+    `,
+  });
+
+  return NextResponse.json({ id: data.user.id, email, full_name });
 }

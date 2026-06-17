@@ -155,7 +155,7 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[860px] mx-auto w-full">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-6 flex-col sm:flex-row">
         <div>
