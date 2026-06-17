@@ -187,72 +187,52 @@ export default function AdminOverviewPage() {
         </div>
       ) : data ? (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-start">
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            {STAT_CARDS.map(s => <StatCard key={s.label} {...s} />)}
+          </div>
 
-            {/* Left: stat cards + summary */}
-            <div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {STAT_CARDS.map(s => <StatCard key={s.label} {...s} />)}
-              </div>
-
-              <div
-                className="rounded-xl border px-5 py-3.5 flex items-center justify-between gap-4"
-                style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
-              >
-                <span className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>
-                  Total registered volunteers
-                </span>
-                <span className="font-ui text-[18px] font-bold tabular-nums" style={{ color: "var(--color-text-primary)" }}>
-                  {data.totalVolunteers.toLocaleString()}
-                </span>
-              </div>
+          {/* Activity log */}
+          <div className="rounded-xl border overflow-hidden max-w-[560px]" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+            <div className="px-5 py-4 border-b" style={{ borderColor: "var(--color-card-border)" }}>
+              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Activity</h2>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Sign-ups, confirmations & events</p>
             </div>
 
-            {/* Right: activity log */}
-            <div className="rounded-xl border overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-              <div className="px-4 py-3.5 border-b" style={{ borderColor: "var(--color-card-border)" }}>
-                <h2 className="text-[12px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Activity</h2>
-                <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-                  Sign-ups, confirmations & events
-                </p>
+            {data.activity.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
               </div>
-
-              {data.activity.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
-                </div>
-              ) : (
-                <div className="divide-y" style={{ borderColor: "var(--color-card-border)" }}>
-                  {data.activity.map((item, i) => {
-                    const cfg = ACTIVITY_ICON[item.type] ?? ACTIVITY_ICON.signup;
-                    return (
-                      <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-                        <div className="flex flex-col items-center flex-shrink-0 self-stretch">
-                          <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ background: cfg.bg, color: cfg.color }}
-                          >
-                            {cfg.icon}
-                          </div>
-                          {i < data.activity.length - 1 && (
-                            <div className="flex-1 w-px mt-1" style={{ background: "var(--color-card-border)" }} />
-                          )}
+            ) : (
+              <div className="divide-y" style={{ borderColor: "var(--color-card-border)" }}>
+                {data.activity.map((item, i) => {
+                  const cfg = ACTIVITY_ICON[item.type] ?? ACTIVITY_ICON.signup;
+                  return (
+                    <div key={item.id} className="flex items-start gap-3 px-5 py-3.5">
+                      <div className="flex flex-col items-center flex-shrink-0 self-stretch">
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: cfg.bg, color: cfg.color }}
+                        >
+                          {cfg.icon}
                         </div>
-                        <div className="flex-1 min-w-0 pt-0.5">
-                          <p className="text-[12px] leading-snug" style={{ color: "var(--color-text-primary)" }}>
-                            {item.description}
-                          </p>
-                          <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: "var(--color-text-muted)" }}>
-                            {timeAgo(item.timestamp)}
-                          </p>
-                        </div>
+                        {i < data.activity.length - 1 && (
+                          <div className="flex-1 w-px mt-1" style={{ background: "var(--color-card-border)" }} />
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-[13px] leading-snug" style={{ color: "var(--color-text-primary)" }}>
+                          {item.description}
+                        </p>
+                        <p className="text-[11px] mt-0.5 tabular-nums" style={{ color: "var(--color-text-muted)" }}>
+                          {timeAgo(item.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </>
       ) : (
