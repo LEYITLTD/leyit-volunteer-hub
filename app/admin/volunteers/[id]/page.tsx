@@ -27,6 +27,7 @@ type Volunteer = {
   address:                 string;
   date_of_birth:           string;
   nationality:             string;
+  gender:                  "male" | "female" | null;
   emergency_contact_name:  string;
   emergency_contact_phone: string;
   dietary_requirements:    string | null;
@@ -522,6 +523,7 @@ export default function VolunteerDetailPage() {
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Date of birth"  value={fmt(volunteer.date_of_birth)} />
+              <Field label="Gender"         value={volunteer.gender ? volunteer.gender.charAt(0).toUpperCase() + volunteer.gender.slice(1) : "—"} />
               <Field label="Nationality"    value={volunteer.nationality} />
               <Field label="Phone"          value={volunteer.phone} />
               <Field label="Address"        value={volunteer.address} />

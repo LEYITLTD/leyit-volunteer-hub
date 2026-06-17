@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     const address          = (formData.get("address") as string)?.trim();
     const emergencyName    = (formData.get("emergencyName") as string)?.trim();
     const emergencyPhone   = (formData.get("emergencyPhone") as string)?.trim();
+    const gender           = (formData.get("gender") as string)?.trim() || null;
     const dietary          = (formData.get("dietary") as string)?.trim() || null;
     const medical          = (formData.get("medical") as string)?.trim() || null;
     const ageConfirmed     = formData.get("ageConfirmed") === "true";
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
         address,
         date_of_birth:           dateOfBirth,
         nationality,
+        gender,
         emergency_contact_name:  emergencyName,
         emergency_contact_phone: emergencyPhone,
         dietary_requirements:    dietary,

@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   {
-    section: "Platform",
+    section: "My Hub",
     links: [
       {
-        href: "/admin/overview",
-        label: "Overview",
+        href: "/volunteer/dashboard",
+        label: "Dashboard",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -22,36 +22,11 @@ const NAV = [
     ],
   },
   {
-    section: "Volunteers",
-    links: [
-      {
-        href: "/admin/volunteers",
-        label: "All Volunteers",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-        ),
-      },
-      {
-        href: "/admin/compliance",
-        label: "Compliance",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        ),
-        soon: true,
-      },
-    ],
-  },
-  {
     section: "Events",
     links: [
       {
-        href: "/admin/events",
-        label: "Manage Events",
+        href: "/volunteer/events",
+        label: "Browse Events",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
@@ -61,8 +36,19 @@ const NAV = [
         soon: true,
       },
       {
-        href: "/admin/checkin",
-        label: "QR Check-in",
+        href: "/volunteer/applications",
+        label: "My Applications",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        ),
+        soon: true,
+      },
+      {
+        href: "/volunteer/qr-code",
+        label: "My QR Code",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -75,36 +61,11 @@ const NAV = [
     ],
   },
   {
-    section: "Communications",
+    section: "Points",
     links: [
       {
-        href: "/admin/email-templates",
-        label: "Email Templates",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-            <polyline points="22,6 12,13 2,6" />
-          </svg>
-        ),
-      },
-      {
-        href: "/admin/broadcast",
-        label: "Broadcast Email",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        ),
-        soon: true,
-      },
-    ],
-  },
-  {
-    section: "Points & Rewards",
-    links: [
-      {
-        href: "/admin/points",
-        label: "Leaderboard",
+        href: "/volunteer/points",
+        label: "Points & Rewards",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -115,30 +76,24 @@ const NAV = [
     ],
   },
   {
-    section: "Reports",
+    section: "Account",
     links: [
       {
-        href: "/admin/reports",
-        label: "Reports",
+        href: "/volunteer/profile",
+        label: "My Profile",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
           </svg>
         ),
         soon: true,
       },
-    ],
-  },
-  {
-    section: "Settings",
-    links: [
       {
-        href: "/admin/settings",
-        label: "Settings",
+        href: "/volunteer/documents",
+        label: "Documents & DBS",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         ),
         soon: true,
@@ -159,7 +114,7 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
           <span className="text-[11px] font-semibold uppercase tracking-[0.1em] block" style={{ color: "var(--color-gold)" }}>
             VolunteerHub
           </span>
-          <span className="text-[10px]" style={{ color: "#6B6259" }}>Admin Portal</span>
+          <span className="text-[10px]" style={{ color: "#6B6259" }}>Volunteer Portal</span>
         </div>
       </div>
 
@@ -170,7 +125,7 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] px-2 mb-1" style={{ color: "#6B6259" }}>
               {section}
             </p>
-            {links.map(({ href, label, icon, soon }) => {
+            {links.map(({ href, label, icon, soon }: { href: string; label: string; icon: React.ReactNode; soon?: boolean }) => {
               const active = path === href || path.startsWith(href + "/");
               return (
                 <Link
@@ -224,7 +179,7 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
   );
 }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function VolunteerShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -276,7 +231,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
           <Image src="/assets/logo-gold.png" alt="LUL" width={28} height={28} className="h-7 w-auto object-contain" />
           <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>VolunteerHub</span>
-          <span className="text-[11px] ml-auto" style={{ color: "#6B6259" }}>Admin</span>
         </header>
 
         <main className="flex-1 flex flex-col overflow-auto">{children}</main>

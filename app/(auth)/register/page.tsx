@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
     phone: "", dateOfBirth: "", nationality: "United Kingdom",
+    gender: "" as "male" | "female" | "",
     addressLine1: "", addressLine2: "", city: "", county: "", postcode: "",
     emergencyName: "", emergencyPhone: "",
     dietary: "", medical: "",
@@ -110,6 +111,7 @@ export default function RegisterPage() {
       if (!form.email || !form.email.includes("@"))    return "Please enter a valid email address.";
       if (!form.phone)                                  return "Please enter a phone number.";
       if (!form.dateOfBirth)                            return "Please enter your date of birth.";
+      if (!form.gender)                                 return "Please select your gender.";
       if (!form.addressLine1)                            return "Please enter your address (line 1).";
       if (!form.city)                                    return "Please enter your city or town.";
       if (!form.postcode)                                return "Please enter your postcode.";
@@ -151,6 +153,7 @@ export default function RegisterPage() {
       fd.append("phone",           form.phone);
       fd.append("dateOfBirth",     form.dateOfBirth);
       fd.append("nationality",     form.nationality);
+      fd.append("gender",           form.gender);
       fd.append("address", [form.addressLine1, form.addressLine2, form.city, form.county, form.postcode].filter(Boolean).join("\n"));
       fd.append("emergencyName",   form.emergencyName);
       fd.append("emergencyPhone",  form.emergencyPhone);
@@ -226,6 +229,34 @@ export default function RegisterPage() {
             <Input label="Email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
             <Input label="Phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
             <Input label="Date of birth" type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
+                Gender <span style={{ color: "var(--color-error)" }}>*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["male", "female"] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => set("gender", g)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-md)] border text-[14px] font-medium transition-colors"
+                    style={{
+                      borderColor: form.gender === g ? "var(--color-gold)" : "var(--color-input-border)",
+                      background:  form.gender === g ? "var(--color-gold-subtle)" : "var(--color-input-bg)",
+                      color:       form.gender === g ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    }}
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                      style={{ borderColor: form.gender === g ? "var(--color-gold)" : "var(--color-input-border)" }}
+                    >
+                      {form.gender === g && <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-gold)" }} />}
+                    </span>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">Nationality</label>
               <select
