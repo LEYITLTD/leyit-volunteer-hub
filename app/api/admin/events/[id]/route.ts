@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: Params) {
       *,
       event_roles ( * ),
       event_applications (
-        id, status, applied_at, confirmed_at, waitlist_position,
+        id, role_id, status, applied_at, confirmed_at, waitlist_position,
         volunteers ( id, first_name, last_name, email )
       )
     `)
