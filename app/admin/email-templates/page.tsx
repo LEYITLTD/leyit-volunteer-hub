@@ -12,10 +12,11 @@ type Template = {
 };
 
 const VARIABLE_HINTS: Record<string, string[]> = {
-  registration_dbs_uploaded: ["{{first_name}}"],
-  registration_dbs_required: ["{{first_name}}"],
-  dbs_rejected:              ["{{first_name}}", "{{reason}}"],
-  application_approved:      ["{{first_name}}"],
+  registration_dbs_uploaded:    ["{{first_name}}"],
+  registration_dbs_required:    ["{{first_name}}"],
+  dbs_rejected:                 ["{{first_name}}", "{{reason}}"],
+  application_approved:         ["{{first_name}}"],
+  event_application_received:   ["{{first_name}}", "{{event_name}}", "{{event_date}}", "{{event_time}}", "{{city}}", "{{role_name}}", "{{status_note}}"],
 };
 
 export default function EmailTemplatesPage() {
