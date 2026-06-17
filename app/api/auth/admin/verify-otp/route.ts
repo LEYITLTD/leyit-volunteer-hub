@@ -78,8 +78,7 @@ export async function POST(request: Request) {
     );
 
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: normalEmail,
-      token: linkData.properties.hashed_token,
+      token_hash: linkData.properties.hashed_token,
       type: "magiclink",
     });
 
