@@ -11,12 +11,15 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(
-      `https://api.getAddress.io/autocomplete/${encodeURIComponent(q)}?api-key=${key}&all=true`,
+      `https://api.getAddress.io/autocomplete/${encodeURIComponent(q)}?api-key=${key}`,
       { next: { revalidate: 0 } },
     );
-    if (!res.ok) return NextResponse.json({ suggestions: [] });
     const data = await res.json();
-    return NextResponse.json({ suggestions: data.suggestions ?? [] });
+    // GetAddress.io returns { Message: "Unauthorized" } when key is invalid
+    if (!res.ok || data.Message || !Array.isArray(data.suggestions)) {
+      return NextResponse.json({ suggestions: [], error: data.Message ?? "Lookup unavailable" });
+    }
+    return NextResponse.json({ suggestions: data.suggestions });
   } catch {
     return NextResponse.json({ suggestions: [] });
   }

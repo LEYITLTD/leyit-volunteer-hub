@@ -22,6 +22,7 @@ export function AddressAutocomplete({ onSelect }: Props) {
   const [loading, setLoading]   = useState(false);
   const [fetching, setFetching] = useState(false);
   const [open, setOpen]         = useState(false);
+  const [apiError, setApiError] = useState(false);
   const [highlighted, setHL]    = useState(-1);
   const containerRef            = useRef<HTMLDivElement>(null);
   const debounceRef             = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,9 +44,11 @@ export function AddressAutocomplete({ onSelect }: Props) {
     if (val.length < 3) { setSuggs([]); setOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
+      setApiError(false);
       try {
         const res  = await fetch(`/api/address-search?q=${encodeURIComponent(val)}`);
         const data = await res.json();
+        if (data.error) { setApiError(true); setSuggs([]); setOpen(false); return; }
         setSuggs(data.suggestions ?? []);
         setOpen((data.suggestions?.length ?? 0) > 0);
       } catch {
@@ -115,6 +118,12 @@ export function AddressAutocomplete({ onSelect }: Props) {
           )}
         </div>
       </div>
+
+      {apiError && (
+        <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>
+          Address lookup unavailable — please fill in the fields below manually.
+        </p>
+      )}
 
       {open && suggestions.length > 0 && (
         <ul
