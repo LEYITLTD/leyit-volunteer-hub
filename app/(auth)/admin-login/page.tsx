@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,14 +17,16 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Sign in failed");
-      window.location.href = data.redirect ?? "/volunteer/dashboard";
+      if (data.status === "otp_required") {
+        window.location.href = `/admin-verify?email=${encodeURIComponent(email)}`;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
@@ -47,11 +49,14 @@ export default function LoginPage() {
         className="w-full bg-card border border-card-border rounded-xl p-5 sm:p-7"
         style={{ boxShadow: "var(--shadow-card)" }}
       >
+        <div className="inline-flex items-center gap-1.5 bg-gold-subtle text-gold text-[11px] font-semibold uppercase tracking-[0.08em] px-2.5 py-1 rounded-full mb-4">
+          Admin portal
+        </div>
         <h1 className="font-display text-[28px] font-semibold text-text-primary mb-1">
-          Welcome back
+          Admin sign in
         </h1>
         <p className="text-[14px] text-text-secondary mb-6">
-          Sign in to VolunteerHub
+          A verification code will be sent to your email.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -59,7 +64,7 @@ export default function LoginPage() {
             id="email"
             type="email"
             label="Email"
-            placeholder="you@email.com"
+            placeholder="you@lul.org"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -82,29 +87,17 @@ export default function LoginPage() {
             </p>
           )}
 
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+          <Button type="submit" variant="gold" fullWidth disabled={loading}>
+            {loading ? "Sending code…" : "Continue →"}
           </Button>
         </form>
-
-        <p className="text-center mt-5 text-[13px] text-text-secondary">
-          New volunteer?{" "}
-          <Link
-            href="/register"
-            className="text-gold font-semibold hover:underline"
-          >
-            Register here
-          </Link>
-        </p>
-        <p className="text-center mt-2">
-          <Link
-            href="/admin-login"
-            className="text-[12px] text-text-muted hover:text-text-secondary"
-          >
-            Admin login
-          </Link>
-        </p>
       </div>
+
+      <p className="text-center mt-5">
+        <Link href="/login" className="text-[13px] text-text-muted hover:text-text-secondary">
+          ← Volunteer login
+        </Link>
+      </p>
     </div>
   );
 }
