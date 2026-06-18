@@ -106,7 +106,7 @@ export async function POST(_req: Request, { params }: Params) {
     );
   }
 
-  // Send phase — use path: signedUrl so Resend fetches the file directly
+  // Send phase — bucket is public so we use getPublicUrl (no auth required, Resend can fetch directly)
   for (let i = 0; i < unique.length; i += CONCURRENCY) {
     const batch = unique.slice(i, i + CONCURRENCY);
     await Promise.all(
@@ -116,11 +116,11 @@ export async function POST(_req: Request, { params }: Params) {
 
         try {
           const storagePath = `${id}/certs/${v.id}.png`;
-          const { data: signed, error: signErr } = await service.storage
+          const { data: publicData } = service.storage
             .from("certificates")
-            .createSignedUrl(storagePath, 3600); // 1 hour — plenty for Resend to fetch
+            .getPublicUrl(storagePath);
 
-          if (signErr || !signed?.signedUrl) throw new Error(`Signed URL failed: ${signErr?.message}`);
+          if (!publicData?.publicUrl) throw new Error("Could not get public URL");
 
           const { data: sendData, error: sendErr } = await resend.emails.send({
             from:    process.env.RESEND_FROM_EMAIL!,
@@ -146,7 +146,7 @@ export async function POST(_req: Request, { params }: Params) {
             `,
             attachments: [{
               filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
-              path:     signed.signedUrl,
+              path:     publicData.publicUrl,
             }],
           });
 
