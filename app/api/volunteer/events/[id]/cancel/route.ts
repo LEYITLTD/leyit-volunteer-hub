@@ -50,7 +50,7 @@ export async function POST(
   // Cancel the application
   const { error: updateErr } = await service
     .from("event_applications")
-    .update({ status: "cancelled" })
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancelled_by: "volunteer" })
     .eq("id", application.id);
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });

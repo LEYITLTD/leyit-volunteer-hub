@@ -403,13 +403,15 @@ function EventCard({
   const app      = event.myApplication;
   const hasRoles = event.eligibleRoles.length > 0;
   const allFull  = hasRoles && event.eligibleRoles.every(r => r.appliedCount >= r.capacity);
-  const canApply = !app && hasRoles && !allFull;
+
+  const isInactive = !app || app.status === "cancelled" || app.status === "declined";
+  const canApply   = isInactive && hasRoles && !allFull;
 
   const totalCapacity = event.eligibleRoles.reduce((s, r) => s + r.capacity, 0);
   const totalApplied  = event.eligibleRoles.reduce((s, r) => s + r.appliedCount, 0);
   const pct           = totalCapacity > 0 ? Math.min((totalApplied / totalCapacity) * 100, 100) : 0;
 
-  const appStyle   = app ? (APP_STATUS[app.status] ?? APP_STATUS.declined) : null;
+  const appStyle     = app && !isInactive ? (APP_STATUS[app.status] ?? null) : null;
   const isConfirmed  = app?.status === "confirmed";
   const isWaitlisted = app?.status === "waitlisted";
   const isActive     = isConfirmed || isWaitlisted;
