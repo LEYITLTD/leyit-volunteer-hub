@@ -21,7 +21,7 @@ export async function GET() {
     service.from("volunteers").select("*", { count: "exact", head: true }),
   ]);
 
-  // Activity feed + leaderboard — 11 streams in parallel
+  // Activity feed + leaderboard — 15 streams in parallel
   const [
     newVolunteers,
     applications,
@@ -34,6 +34,10 @@ export async function GET() {
     checkOuts,
     broadcasts,
     allPoints,
+    dbsSubmitted,
+    dbsApproved,
+    dbsRejected,
+    certSends,
   ] = await Promise.all([
     // New volunteer registrations
     service.from("volunteers")
@@ -108,6 +112,35 @@ export async function GET() {
     // All points for leaderboard aggregation
     service.from("points_transactions")
       .select("volunteer_id, amount, earned_at, volunteers(first_name, last_name)"),
+
+    // DBS document submitted by volunteer
+    service.from("volunteer_compliance")
+      .select("id, dbs_uploaded_at, volunteers(first_name, last_name)")
+      .not("dbs_uploaded_at", "is", null)
+      .order("dbs_uploaded_at", { ascending: false })
+      .limit(15),
+
+    // DBS approved by admin
+    service.from("volunteer_compliance")
+      .select("id, dbs_reviewed_at, volunteers(first_name, last_name)")
+      .eq("dbs_status", "verified")
+      .not("dbs_reviewed_at", "is", null)
+      .order("dbs_reviewed_at", { ascending: false })
+      .limit(15),
+
+    // DBS rejected by admin
+    service.from("volunteer_compliance")
+      .select("id, dbs_reviewed_at, volunteers(first_name, last_name)")
+      .eq("dbs_status", "rejected")
+      .not("dbs_reviewed_at", "is", null)
+      .order("dbs_reviewed_at", { ascending: false })
+      .limit(15),
+
+    // Certificate batches sent
+    service.from("certificate_send_logs")
+      .select("id, event_name, recipient_count, sent_at")
+      .order("sent_at", { ascending: false })
+      .limit(10),
   ]);
 
   type ActivityItem = { id: string; type: string; name: string; action: string; timestamp: string };
@@ -251,6 +284,59 @@ export async function GET() {
       name:      `${vol.first_name} ${vol.last_name}`,
       action:    `Awarded ${pt.amount} point${pt.amount === 1 ? "" : "s"}`,
       timestamp: earned,
+    });
+  }
+
+  for (const d of dbsSubmitted.data ?? []) {
+    const ts  = (d as unknown as Record<string, unknown>).dbs_uploaded_at as string | null;
+    const vol = d.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!ts || !vol) continue;
+    activity.push({
+      id:        `dbs-submit-${d.id}`,
+      type:      "dbs_submitted",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    "Submitted DBS document",
+      timestamp: ts,
+    });
+  }
+
+  for (const d of dbsApproved.data ?? []) {
+    const ts  = (d as unknown as Record<string, unknown>).dbs_reviewed_at as string | null;
+    const vol = d.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!ts || !vol) continue;
+    activity.push({
+      id:        `dbs-approved-${d.id}`,
+      type:      "dbs_approved",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    "DBS approved",
+      timestamp: ts,
+    });
+  }
+
+  for (const d of dbsRejected.data ?? []) {
+    const ts  = (d as unknown as Record<string, unknown>).dbs_reviewed_at as string | null;
+    const vol = d.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!ts || !vol) continue;
+    activity.push({
+      id:        `dbs-rejected-${d.id}`,
+      type:      "dbs_rejected",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    "DBS rejected",
+      timestamp: ts,
+    });
+  }
+
+  for (const c of certSends.data ?? []) {
+    const ts    = (c as unknown as Record<string, unknown>).sent_at as string | null;
+    const name  = (c as unknown as Record<string, unknown>).event_name as string | null;
+    const count = (c as unknown as Record<string, unknown>).recipient_count as number;
+    if (!ts) continue;
+    activity.push({
+      id:        `cert-${c.id}`,
+      type:      "certificate",
+      name:      name ?? "Event",
+      action:    `Certificates sent to ${count} volunteer${count === 1 ? "" : "s"}`,
+      timestamp: ts,
     });
   }
 

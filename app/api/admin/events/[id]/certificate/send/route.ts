@@ -133,5 +133,13 @@ export async function POST(_req: Request, { params }: Params) {
   const sent   = results.filter(r => r.ok).length;
   const failed = results.filter(r => !r.ok);
 
+  if (sent > 0) {
+    void service.from("certificate_send_logs").insert({
+      event_id:        id,
+      event_name:      eventName,
+      recipient_count: sent,
+    });
+  }
+
   return NextResponse.json({ sent, failed, total: unique.length });
 }
