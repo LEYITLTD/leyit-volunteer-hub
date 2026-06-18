@@ -111,7 +111,7 @@ export async function POST(_req: Request, { params }: Params) {
             `,
             attachments: [{
               filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.pdf`,
-              content:  pdf,
+              content:  pdf.toString("base64"),
             }],
           });
 
