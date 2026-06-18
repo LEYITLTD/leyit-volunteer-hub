@@ -23,12 +23,12 @@ export async function GET() {
     .from("volunteers")
     .select(`
       first_name, last_name, gender, date_of_birth,
-      volunteer_compliance ( refinitiv_status )
+      volunteer_compliance ( lseg_status )
     `);
 
   const toExport = (volunteers ?? []).filter(v => {
     const comp = Array.isArray(v.volunteer_compliance) ? v.volunteer_compliance[0] : v.volunteer_compliance;
-    return !comp?.refinitiv_status || comp.refinitiv_status !== "clear";
+    return !comp?.lseg_status || comp.lseg_status !== "clear";
   });
 
   const headers = [

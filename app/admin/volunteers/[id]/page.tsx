@@ -13,9 +13,9 @@ type Compliance = {
   dbs_expiry_date:           string | null;
   dbs_reviewed_at:           string | null;
   dbs_rejection_reason:      string | null;
-  refinitiv_status:          string | null;
-  refinitiv_screened_at:     string | null;
-  refinitiv_rejection_reason: string | null;
+  lseg_status:          string | null;
+  lseg_screened_at:     string | null;
+  lseg_rejection_reason: string | null;
   overall_status:            string | null;
   approved_at:               string | null;
 };
@@ -726,11 +726,11 @@ export default function VolunteerDetailPage() {
                 <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>LSEG check</h2>
                 <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>World-Check name &amp; DOB screening</p>
               </div>
-              <Badge map={LSEG_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
+              <Badge map={LSEG_BADGE} value={compliance?.lseg_status ?? "pending"} />
             </div>
             <div className="p-5 flex flex-col gap-3">
               {/* Status callout */}
-              {compliance?.refinitiv_status === "clear" && (
+              {compliance?.lseg_status === "clear" && (
                 <div className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: "#DCFCE7" }}>
                   <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
@@ -738,22 +738,22 @@ export default function VolunteerDetailPage() {
                   <p className="text-[13px]" style={{ color: "#15803D" }}>Cleared — no matches found on LSEG World-Check.</p>
                 </div>
               )}
-              {compliance?.refinitiv_status === "high_risk" && (
+              {compliance?.lseg_status === "high_risk" && (
                 <div className="rounded-xl p-3" style={{ background: "#FEE2E2", border: "1px solid #FBD5D5" }}>
                   <p className="text-[13px] font-semibold" style={{ color: "#DC2626" }}>Marked as high risk</p>
-                  {compliance.refinitiv_rejection_reason && (
-                    <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "#B91C1C" }}>{compliance.refinitiv_rejection_reason}</p>
+                  {compliance.lseg_rejection_reason && (
+                    <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "#B91C1C" }}>{compliance.lseg_rejection_reason}</p>
                   )}
                 </div>
               )}
-              {(!compliance?.refinitiv_status || compliance.refinitiv_status === "pending") && (
+              {(!compliance?.lseg_status || compliance.lseg_status === "pending") && (
                 <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
                   Search this volunteer&apos;s name and date of birth on LSEG World-Check, then record the result here.
                 </p>
               )}
-              {compliance?.refinitiv_screened_at && (
+              {compliance?.lseg_screened_at && (
                 <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                  Last reviewed {fmt(compliance.refinitiv_screened_at)}
+                  Last reviewed {fmt(compliance.lseg_screened_at)}
                 </p>
               )}
               <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>

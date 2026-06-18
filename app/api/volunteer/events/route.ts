@@ -26,11 +26,11 @@ export async function GET() {
 
   const { data: compliance } = await service
     .from("volunteer_compliance")
-    .select("refinitiv_status")
+    .select("lseg_status")
     .eq("volunteer_id", volunteer.id)
     .single();
 
-  if (compliance?.refinitiv_status !== "clear") {
+  if (compliance?.lseg_status !== "clear") {
     return NextResponse.json({ error: "Account not verified" }, { status: 403 });
   }
 

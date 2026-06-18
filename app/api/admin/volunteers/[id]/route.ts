@@ -22,7 +22,7 @@ export async function GET(
       volunteer_compliance (
         dbs_status, dbs_document_url, dbs_uploaded_at, dbs_expiry_date,
         dbs_reviewed_at, dbs_rejection_reason,
-        refinitiv_status, refinitiv_screened_at, refinitiv_rejection_reason,
+        lseg_status, lseg_screened_at, lseg_rejection_reason,
         overall_status, approved_at
       )
     `)

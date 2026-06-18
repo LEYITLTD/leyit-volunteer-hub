@@ -19,11 +19,11 @@ export async function POST(
   const { error: updErr } = await service
     .from("volunteer_compliance")
     .update({
-      refinitiv_status:           "high_risk",
-      refinitiv_rejection_reason: null,
-      refinitiv_screened_at:      new Date().toISOString(),
-      refinitiv_override_by:      null,
-      refinitiv_override_at:      null,
+      lseg_status:           "high_risk",
+      lseg_rejection_reason: null,
+      lseg_screened_at:      new Date().toISOString(),
+      lseg_override_by:      null,
+      lseg_override_at:      null,
     })
     .eq("volunteer_id", id);
 

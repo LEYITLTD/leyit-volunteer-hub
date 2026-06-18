@@ -1,5 +1,5 @@
 export type DbsStatus = "not_uploaded" | "pending" | "verified" | "rejected" | "expired";
-/** LSEG World-Check screening status (DB column: refinitiv_status) */
+/** LSEG World-Check screening status (DB column: lseg_status) */
 export type LsegStatus = "pending" | "clear" | "possible_match" | "high_risk";
 /** @deprecated Use LsegStatus */
 export type RefinitivStatus = LsegStatus;
@@ -39,11 +39,11 @@ export interface VolunteerCompliance {
   dbs_expiry_date?: string;
   dbs_reviewed_by?: string;
   dbs_reviewed_at?: string;
-  refinitiv_case_id?: string;
-  refinitiv_status: LsegStatus;
-  refinitiv_screened_at?: string;
-  refinitiv_override_by?: string;
-  refinitiv_override_at?: string;
+  lseg_case_id?: string;
+  lseg_status: LsegStatus;
+  lseg_screened_at?: string;
+  lseg_override_by?: string;
+  lseg_override_at?: string;
   overall_status: ComplianceStatus;
   approved_at?: string;
   approved_by?: string;

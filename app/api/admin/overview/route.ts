@@ -10,14 +10,14 @@ export async function GET() {
 
   const [events, approvedMale, approvedFemale, pendingChecks, totalVolunteers] = await Promise.all([
     service.from("events").select("*", { count: "exact", head: true }),
-    service.from("volunteers").select("volunteer_compliance!inner(refinitiv_status)", { count: "exact", head: true })
+    service.from("volunteers").select("volunteer_compliance!inner(lseg_status)", { count: "exact", head: true })
       .eq("gender", "male")
-      .eq("volunteer_compliance.refinitiv_status", "clear"),
-    service.from("volunteers").select("volunteer_compliance!inner(refinitiv_status)", { count: "exact", head: true })
+      .eq("volunteer_compliance.lseg_status", "clear"),
+    service.from("volunteers").select("volunteer_compliance!inner(lseg_status)", { count: "exact", head: true })
       .eq("gender", "female")
-      .eq("volunteer_compliance.refinitiv_status", "clear"),
+      .eq("volunteer_compliance.lseg_status", "clear"),
     service.from("volunteer_compliance").select("*", { count: "exact", head: true })
-      .in("refinitiv_status", ["pending", "possible_match", "high_risk"]),
+      .in("lseg_status", ["pending", "possible_match", "high_risk"]),
     service.from("volunteers").select("*", { count: "exact", head: true }),
   ]);
 

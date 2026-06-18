@@ -23,10 +23,10 @@ export async function POST(
   const { data: updated, error: updErr } = await service
     .from("volunteer_compliance")
     .update({
-      refinitiv_status:      "clear",
-      refinitiv_screened_at: new Date().toISOString(),
-      refinitiv_override_by: admin?.id ?? null,
-      refinitiv_override_at: new Date().toISOString(),
+      lseg_status:      "clear",
+      lseg_screened_at: new Date().toISOString(),
+      lseg_override_by: admin?.id ?? null,
+      lseg_override_at: new Date().toISOString(),
     })
     .eq("volunteer_id", id)
     .select("overall_status")

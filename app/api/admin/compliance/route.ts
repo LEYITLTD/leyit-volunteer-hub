@@ -11,9 +11,9 @@ export async function GET() {
   // 1. Auto-expire LSEG records older than 1 year
   await service
     .from("volunteer_compliance")
-    .update({ refinitiv_status: "pending", overall_status: "pending" })
-    .eq("refinitiv_status", "clear")
-    .lt("refinitiv_screened_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
+    .update({ lseg_status: "pending", overall_status: "pending" })
+    .eq("lseg_status", "clear")
+    .lt("lseg_screened_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
 
   // 2. Fetch all volunteers with their compliance
   const { data: volunteers, error: vErr } = await service
@@ -22,7 +22,7 @@ export async function GET() {
       id, first_name, last_name, email, gender, date_of_birth, nationality,
       volunteer_compliance (
         dbs_status, dbs_document_url, dbs_uploaded_at, dbs_rejection_reason,
-        refinitiv_status, refinitiv_screened_at, refinitiv_rejection_reason,
+        lseg_status, lseg_screened_at, lseg_rejection_reason,
         overall_status
       )
     `)
@@ -36,10 +36,10 @@ export async function GET() {
   }));
 
   // Stats
-  const lsegApproved   = rows.filter(v => v.compliance?.refinitiv_status === "clear").length;
+  const lsegApproved   = rows.filter(v => v.compliance?.lseg_status === "clear").length;
   const dbsPending     = rows.filter(v => v.compliance?.dbs_status === "pending").length;
   const dbsNotUploaded = rows.filter(v => !v.compliance?.dbs_status || v.compliance.dbs_status === "not_uploaded").length;
-  const lsegFlags      = rows.filter(v => v.compliance?.refinitiv_status === "high_risk").length;
+  const lsegFlags      = rows.filter(v => v.compliance?.lseg_status === "high_risk").length;
 
   // DBS review queue
   const dbsReview   = rows.filter(v => v.compliance?.dbs_status === "pending");
@@ -47,7 +47,7 @@ export async function GET() {
 
   // LSEG queue: needs screening (pending/null or high_risk)
   const lsegPending = rows.filter(v => {
-    const s = v.compliance?.refinitiv_status;
+    const s = v.compliance?.lseg_status;
     return !s || s === "pending" || s === "high_risk";
   });
 
@@ -56,6 +56,6 @@ export async function GET() {
     dbsReview,
     notUploaded,
     lsegPending,
-    lsegFlags: rows.filter(v => v.compliance?.refinitiv_status === "high_risk"),
+    lsegFlags: rows.filter(v => v.compliance?.lseg_status === "high_risk"),
   });
 }

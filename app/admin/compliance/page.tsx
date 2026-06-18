@@ -10,9 +10,9 @@ type VolunteerCompliance = {
   dbs_document_url:          string | null;
   dbs_uploaded_at:           string | null;
   dbs_rejection_reason:      string | null;
-  refinitiv_status:          string | null;
-  refinitiv_screened_at:     string | null;
-  refinitiv_rejection_reason: string | null;
+  lseg_status:          string | null;
+  lseg_screened_at:     string | null;
+  lseg_rejection_reason: string | null;
   overall_status:            string | null;
 };
 
@@ -357,7 +357,7 @@ function LsegPanel({
   }
 
   // Pending list excludes high_risk (shown in flags)
-  const pendingOnly = lsegPending.filter(v => v.compliance?.refinitiv_status !== "high_risk");
+  const pendingOnly = lsegPending.filter(v => v.compliance?.lseg_status !== "high_risk");
 
   return (
     <div style={{ background: "#fff", border: "1px solid #EAE6DD", borderRadius: 12, padding: 20, position: "relative" }}>
@@ -445,12 +445,12 @@ function LsegPanel({
 
           {expanded === v.id && (
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-              {v.compliance?.refinitiv_rejection_reason && (
+              {v.compliance?.lseg_rejection_reason && (
                 <div style={{
                   fontSize: 12.5, color: "#B91C1C",
                   background: "#FEE2E2", borderRadius: 8, padding: "8px 10px",
                 }}>
-                  {v.compliance.refinitiv_rejection_reason}
+                  {v.compliance.lseg_rejection_reason}
                 </div>
               )}
               <div style={{ display: "flex", gap: 8 }}>

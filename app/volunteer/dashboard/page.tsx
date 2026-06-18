@@ -10,7 +10,7 @@ type Volunteer = {
   first_name: string;
   last_name:  string;
   email:      string;
-  volunteer_compliance: { refinitiv_status: string | null } | null;
+  volunteer_compliance: { lseg_status: string | null } | null;
 };
 
 type UpcomingEvent = {

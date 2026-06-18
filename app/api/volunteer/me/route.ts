@@ -23,7 +23,7 @@ export async function GET() {
       date_of_birth, nationality, created_at,
       volunteer_compliance (
         dbs_status, overall_status, dbs_uploaded_at,
-        dbs_expiry_date, dbs_rejection_reason, refinitiv_status
+        dbs_expiry_date, dbs_rejection_reason, lseg_status
       )
     `)
     .eq("auth_user_id", user.id)
