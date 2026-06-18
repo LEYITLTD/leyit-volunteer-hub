@@ -138,7 +138,7 @@ export default function BroadcastPage() {
   // ── Shared styles ─────────────────────────────────────────────────────────
   const card: React.CSSProperties = {
     background: "var(--color-card)", border: "1px solid var(--color-card-border)",
-    borderRadius: "12px", padding: "22px",
+    borderRadius: "12px", padding: "28px",
   };
   const labelStyle: React.CSSProperties = {
     fontSize: "11px", fontWeight: 600, textTransform: "uppercase",
@@ -146,8 +146,8 @@ export default function BroadcastPage() {
   };
   const fieldStyle: React.CSSProperties = {
     width: "100%", border: "1px solid var(--color-input-border)", borderRadius: "8px",
-    padding: "9px 11px", fontSize: "14px", background: "var(--color-input-bg)",
-    color: "var(--color-text-primary)", marginTop: "5px", marginBottom: "16px", outline: "none",
+    padding: "10px 13px", fontSize: "14px", background: "var(--color-input-bg)",
+    color: "var(--color-text-primary)", marginTop: "6px", marginBottom: "18px", outline: "none",
   };
 
   // ── Done ─────────────────────────────────────────────────────────────────
@@ -216,11 +216,11 @@ export default function BroadcastPage() {
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
       <div className="mb-6">
-        <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Broadcast Email</h1>
+        <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>Broadcast Email</h1>
         <p className="text-[14px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>Compose and send a message to your volunteers.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "18px", alignItems: "start" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-5 items-start">
 
         {/* ── Left: compose ── */}
         <div style={card}>

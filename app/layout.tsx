@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Hanken_Grotesk } from "next/font/google";
+import { Montserrat, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  weight: ["500", "600", "700"],
+const montserrat = Montserrat({
+  weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
-  variable: "--font-cormorant",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${hanken.variable} h-full`}
+      className={`${montserrat.variable} ${hanken.variable} h-full`}
     >
       <body className="min-h-full antialiased">{children}</body>
     </html>

@@ -86,7 +86,7 @@
   --shadow-toast: 0 10px 30px rgba(21, 128, 61, 0.28);
 
   /* Fonts — overridden at runtime by next/font CSS variables */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Montserrat', system-ui, sans-serif;
   --font-ui:      'Hanken Grotesk', system-ui, sans-serif;
 }
 
@@ -120,7 +120,7 @@
   --color-input-border:   var(--color-input-border);
 
   /* Font families as font-display / font-ui utilities */
-  --font-display: var(--font-cormorant, 'Cormorant Garamond', Georgia, serif);
+  --font-display: var(--font-montserrat, 'Montserrat', system-ui, sans-serif);
   --font-ui:      var(--font-hanken, 'Hanken Grotesk', system-ui, sans-serif);
 
   /* Border radius as rounded-* utilities */
