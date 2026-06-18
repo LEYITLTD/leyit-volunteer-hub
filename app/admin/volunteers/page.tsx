@@ -20,25 +20,25 @@ type Volunteer = {
 };
 
 const DBS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
-  not_uploaded: { label: "No DBS",   bg: "#2C2825", color: "#C5BFB8" },
-  pending:      { label: "Pending",  bg: "#3A2E1A", color: "#F0B94A" },
-  verified:     { label: "Verified", bg: "#1A2E1A", color: "#7DE882" },
-  rejected:     { label: "Rejected", bg: "#2E1A1A", color: "#FF8E8E" },
+  not_uploaded: { label: "No DBS",   bg: "#F3EFE6", color: "#9E9690" },
+  pending:      { label: "Pending",  bg: "#FEF9C3", color: "#92400E" },
+  verified:     { label: "Verified", bg: "#DCFCE7", color: "#15803D" },
+  rejected:     { label: "Rejected", bg: "#FEE2E2", color: "#DC2626" },
 };
 
 const OVERALL_LABELS: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pending",  bg: "#3A2E1A", color: "#F0B94A" },
-  approved: { label: "Approved", bg: "#1A2E1A", color: "#7DE882" },
-  rejected: { label: "Rejected", bg: "#2E1A1A", color: "#FF8E8E" },
+  pending:  { label: "Pending",  bg: "#FEF9C3", color: "#92400E" },
+  approved: { label: "Approved", bg: "#DCFCE7", color: "#15803D" },
+  rejected: { label: "Rejected", bg: "#FEE2E2", color: "#DC2626" },
 };
 
 function Badge({ map, value }: { map: typeof DBS_LABELS; value: string | null }) {
   const v   = value ?? "not_uploaded";
-  const cfg = map[v] ?? { label: v, bg: "#2C2825", color: "#C5BFB8" };
+  const cfg = map[v] ?? { label: v, bg: "#F3EFE6", color: "#9E9690" };
   return (
     <span
-      className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-      style={{ background: cfg.bg, color: cfg.color }}
+      className="text-[10.5px] font-semibold whitespace-nowrap"
+      style={{ background: cfg.bg, color: cfg.color, padding: "2px 8px", borderRadius: 6 }}
     >
       {cfg.label}
     </span>
@@ -80,11 +80,11 @@ export default function VolunteersPage() {
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-[22px] sm:text-[24px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <h1 className="text-[28px] sm:text-[30px] font-semibold" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
             Volunteers
           </h1>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-            {volunteers.length} registered
+            {volunteers.length} registered · search and filter the roster
           </p>
         </div>
         <input
@@ -173,12 +173,12 @@ export default function VolunteersPage() {
           >
             <table className="w-full text-[13px] border-collapse">
               <thead>
-                <tr style={{ background: "var(--color-card-header-bg)", borderBottom: "1px solid var(--color-card-border)" }}>
-                  {["Name", "Email", "Registered", "DBS", "Status", ""].map((h) => (
+                <tr style={{ background: "#FAF7F1", borderBottom: "1px solid #EFEAE0" }}>
+                  {["Volunteer", "Registered", "DBS", "Status", ""].map((h) => (
                     <th
                       key={h}
-                      className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.06em]"
-                      style={{ color: "var(--color-text-muted)" }}
+                      className="text-left px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.06em]"
+                      style={{ color: "#8A8276" }}
                     >
                       {h}
                     </th>
@@ -186,43 +186,55 @@ export default function VolunteersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((v, i) => (
-                  <tr
-                    key={v.id}
-                    style={{ borderTop: i > 0 ? "1px solid var(--color-card-border)" : undefined }}
-                  >
-                    <td className="px-5 py-3.5">
-                      <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>
-                        {v.first_name} {v.last_name}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5" style={{ color: "var(--color-text-secondary)" }}>
-                      {v.email}
-                    </td>
-                    <td className="px-5 py-3.5" style={{ color: "var(--color-text-muted)" }}>
-                      {new Date(v.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge map={DBS_LABELS} value={v.volunteer_compliance?.dbs_status ?? null} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge map={OVERALL_LABELS} value={v.volunteer_compliance?.overall_status ?? null} />
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <Link
-                        href={`/admin/volunteers/${v.id}`}
-                        className="text-[12px] px-3 py-1.5 rounded-lg border"
-                        style={{
-                          borderColor: "var(--color-gold)",
-                          color:       "var(--color-gold)",
-                          background:  "var(--color-gold-subtle)",
-                        }}
-                      >
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((v, i) => {
+                  const initials = `${v.first_name[0] ?? ""}${v.last_name[0] ?? ""}`.toUpperCase();
+                  return (
+                    <tr
+                      key={v.id}
+                      style={{ borderTop: i > 0 ? "1px solid #F4EFE6" : undefined }}
+                    >
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div style={{
+                            width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                            background: "#EFEAE0", color: "#7A6A4A",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 12, fontWeight: 700,
+                          }}>
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[13.5px] leading-tight" style={{ color: "#1C1917" }}>
+                              {v.first_name} {v.last_name}
+                            </p>
+                            <p className="text-[12px] truncate" style={{ color: "#A8A29E" }}>{v.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-[13px]" style={{ color: "var(--color-text-muted)" }}>
+                        {new Date(v.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Badge map={DBS_LABELS} value={v.volunteer_compliance?.dbs_status ?? null} />
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Badge map={OVERALL_LABELS} value={v.volunteer_compliance?.overall_status ?? null} />
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Link
+                          href={`/admin/volunteers/${v.id}`}
+                          className="text-[12px] font-semibold px-3 py-1.5 rounded-lg"
+                          style={{
+                            background: "var(--color-gold-subtle)",
+                            color:      "var(--color-gold)",
+                          }}
+                        >
+                          Review →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

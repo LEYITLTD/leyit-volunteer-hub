@@ -40,23 +40,23 @@ type CheckInRow = {
 /* ─── Badge maps ─────────────────────────────────────────────────────────── */
 
 const STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  draft:     { label: "Draft",     bg: "#2C2825", color: "#C5BFB8" },
-  published: { label: "Published", bg: "#1A263A", color: "#88CCFF" },
-  active:    { label: "Active",    bg: "#1A2E1A", color: "#7DE882" },
-  completed: { label: "Completed", bg: "#2C2825", color: "#6B6259" },
-  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#FF8E8E" },
+  draft:     { label: "Draft",     bg: "#F3EFE6", color: "#9E9690" },
+  published: { label: "Published", bg: "#DBEAFE", color: "#1D4ED8" },
+  active:    { label: "Active",    bg: "#DCFCE7", color: "#15803D" },
+  completed: { label: "Completed", bg: "#F3EFE6", color: "#78716C" },
+  cancelled: { label: "Cancelled", bg: "#FEE2E2", color: "#DC2626" },
 };
 const GENDER: Record<string, { label: string; bg: string; color: string }> = {
-  any:    { label: "Any",    bg: "#2C2825", color: "#C5BFB8" },
-  male:   { label: "Male",   bg: "#1A263A", color: "#88CCFF" },
-  female: { label: "Female", bg: "#2D1A2E", color: "#EE7DC8" },
+  any:    { label: "Any",    bg: "#F3EFE6", color: "#78716C" },
+  male:   { label: "Male",   bg: "#DBEAFE", color: "#1D4ED8" },
+  female: { label: "Female", bg: "#FCE7F3", color: "#9D174D" },
 };
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#7DE882" },
-  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#88CCFF" },
-  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#FF8E8E" },
-  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#C5BFB8" },
-  no_show:    { label: "No show",    bg: "#2E1A1A", color: "#FF8E8E" },
+  confirmed:  { label: "Confirmed",  bg: "#DCFCE7", color: "#15803D" },
+  waitlisted: { label: "Waitlisted", bg: "#DBEAFE", color: "#1D4ED8" },
+  declined:   { label: "Declined",   bg: "#FEE2E2", color: "#DC2626" },
+  cancelled:  { label: "Cancelled",  bg: "#F3EFE6", color: "#9E9690" },
+  no_show:    { label: "No show",    bg: "#FEE2E2", color: "#DC2626" },
 };
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -505,12 +505,12 @@ function CheckInsTab({ eventId }: { eventId: string }) {
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Checked in",  value: checkedIn,  color: "#7DE882", bg: "#1A2E1A" },
-          { label: "Checked out", value: checkedOut, color: "#88CCFF", bg: "#1A263A" },
-          { label: "Still inside", value: still < 0 ? 0 : still, color: "var(--color-gold)", bg: "var(--color-gold-subtle)" },
-        ].map(({ label, value, color, bg }) => (
+          { label: "Checked in",   value: checkedIn,             color: "#15803D" },
+          { label: "Checked out",  value: checkedOut,            color: "#1D4ED8" },
+          { label: "Still inside", value: still < 0 ? 0 : still, color: "var(--color-gold)" },
+        ].map(({ label, value, color }) => (
           <div key={label} className="rounded-xl border p-3 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-            <p className="text-[22px] font-bold tabular-nums" style={{ color }}>{value}</p>
+            <p className="text-[24px] font-bold tabular-nums" style={{ color }}>{value}</p>
             <p className="text-[10px] uppercase tracking-[0.06em] mt-0.5" style={{ color: "var(--color-text-muted)" }}>{label}</p>
           </div>
         ))}
@@ -562,7 +562,7 @@ function CheckInsTab({ eventId }: { eventId: string }) {
                       {row.check_out ? (
                         <span style={{ color: "#88CCFF" }}>{fmtTime(row.check_out.scanned_at)}</span>
                       ) : inside ? (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(168,133,74,0.12)", color: "var(--color-gold)" }}>
+                        <span className="text-[10.5px] font-semibold" style={{ background: "#F3EFE6", color: "var(--color-gold)", padding: "2px 8px", borderRadius: 6 }}>
                           Still inside
                         </span>
                       ) : (
@@ -576,11 +576,11 @@ function CheckInsTab({ eventId }: { eventId: string }) {
                     {/* Status */}
                     <td className="px-5 py-3">
                       {!hasIn ? (
-                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#2C2825", color: "#C5BFB8" }}>Not scanned</span>
+                        <span className="text-[10.5px] font-semibold" style={{ background: "#F3EFE6", color: "#9E9690", padding: "2px 8px", borderRadius: 6 }}>Not scanned</span>
                       ) : inside ? (
-                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#1A2E1A", color: "#7DE882" }}>Checked in</span>
+                        <span className="text-[10.5px] font-semibold" style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 8px", borderRadius: 6 }}>Checked in</span>
                       ) : (
-                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#1A263A", color: "#88CCFF" }}>Checked out</span>
+                        <span className="text-[10.5px] font-semibold" style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "2px 8px", borderRadius: 6 }}>Checked out</span>
                       )}
                     </td>
                   </tr>
@@ -607,11 +607,11 @@ function CheckInsTab({ eventId }: { eventId: string }) {
                     <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{row.role_name}</p>
                   </div>
                   {!hasIn ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "#2C2825", color: "#C5BFB8" }}>Not scanned</span>
+                    <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: "#F3EFE6", color: "#9E9690", padding: "2px 7px", borderRadius: 6 }}>Not scanned</span>
                   ) : inside ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "#1A2E1A", color: "#7DE882" }}>Inside</span>
+                    <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 7px", borderRadius: 6 }}>Inside</span>
                   ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "#1A263A", color: "#88CCFF" }}>Out</span>
+                    <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "2px 7px", borderRadius: 6 }}>Out</span>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-[12px]">
@@ -716,10 +716,10 @@ export default function EventDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h1 className="font-display text-[22px] sm:text-[26px] font-semibold leading-tight" style={{ color: "var(--color-text-primary)" }}>
+            <h1 className="text-[24px] sm:text-[28px] font-semibold leading-tight" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
               {event.name}
             </h1>
-            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: s.bg, color: s.color }}>
+            <span className="text-[11px] font-semibold" style={{ background: s.bg, color: s.color, padding: "3px 10px", borderRadius: 6 }}>
               {s.label}
             </span>
           </div>
@@ -804,15 +804,15 @@ export default function EventDetailPage() {
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="font-semibold text-[14px]" style={{ color: "var(--color-text-primary)" }}>{role.role_name}</span>
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: g.bg, color: g.color }}>{g.label}</span>
+                        <span className="text-[10px] font-semibold" style={{ background: g.bg, color: g.color, padding: "2px 7px", borderRadius: 6 }}>{g.label}</span>
                       </div>
                       <span className="text-[12px] font-semibold tabular-nums" style={{ color: full ? "#7DE882" : "var(--color-text-secondary)" }}>
                         {applied}/{role.capacity}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "#2C2825" }}>
+                    <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "#F1EAD9" }}>
                       <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%`, background: full ? "#7DE882" : "var(--color-gold)" }} />
+                        style={{ width: `${pct}%`, background: full ? "#15803D" : "linear-gradient(90deg,#C9A227,#A8854A)" }} />
                     </div>
                     <div className="flex gap-4 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                       <span style={{ color: confirmed > 0 ? "#7DE882" : undefined }}>{confirmed} confirmed</span>
@@ -858,7 +858,7 @@ export default function EventDetailPage() {
                           </td>
                           <td className="px-5 py-3" style={{ color: "var(--color-text-secondary)" }}>{roleName(app.role_id)}</td>
                           <td className="px-5 py-3">
-                            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                            <span className="text-[10.5px] font-semibold" style={{ background: badge.bg, color: badge.color, padding: "2px 9px", borderRadius: 6 }}>{badge.label}</span>
                           </td>
                           <td className="px-5 py-3 tabular-nums" style={{ color: "var(--color-text-secondary)" }}>{fmtShort(app.applied_at)}</td>
                         </tr>
@@ -877,7 +877,7 @@ export default function EventDetailPage() {
                         <p className="font-medium text-[13px] truncate" style={{ color: "var(--color-text-primary)" }}>{app.volunteers.first_name} {app.volunteers.last_name}</p>
                         <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{roleName(app.role_id)} · {fmtShort(app.applied_at)}</p>
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-1 rounded-full flex-shrink-0" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                      <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: badge.bg, color: badge.color, padding: "2px 8px", borderRadius: 6 }}>{badge.label}</span>
                     </div>
                   );
                 })}

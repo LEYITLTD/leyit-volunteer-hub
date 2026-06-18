@@ -17,17 +17,17 @@ type Event = {
 };
 
 const STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  draft:     { label: "Draft",     bg: "#2C2825", color: "#C5BFB8" },
-  published: { label: "Published", bg: "#1A263A", color: "#88CCFF" },
-  active:    { label: "Active",    bg: "#1A2E1A", color: "#7DE882" },
-  completed: { label: "Completed", bg: "#2C2825", color: "#6B6259" },
-  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#FF8E8E" },
+  draft:     { label: "Draft",     bg: "#F3EFE6", color: "#9E9690" },
+  published: { label: "Published", bg: "#DBEAFE", color: "#1D4ED8" },
+  active:    { label: "Active",    bg: "#DCFCE7", color: "#15803D" },
+  completed: { label: "Completed", bg: "#F3EFE6", color: "#78716C" },
+  cancelled: { label: "Cancelled", bg: "#FEE2E2", color: "#DC2626" },
 };
 
 const GENDER: Record<string, { label: string; bg: string; color: string }> = {
-  any:    { label: "Any",    bg: "#2C2825", color: "#C5BFB8" },
-  male:   { label: "Male",   bg: "#1A263A", color: "#88CCFF" },
-  female: { label: "Female", bg: "#2D1A2E", color: "#EE7DC8" },
+  any:    { label: "Any",    bg: "#F3EFE6", color: "#78716C" },
+  male:   { label: "Male",   bg: "#DBEAFE", color: "#1D4ED8" },
+  female: { label: "Female", bg: "#FCE7F3", color: "#9D174D" },
 };
 
 const UK = "Europe/London";
@@ -44,20 +44,20 @@ function GenderBar({ gender, capacity, applied }: { gender: string; capacity: nu
   const g    = GENDER[gender] ?? GENDER.any;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: g.bg, color: g.color }}>{g.label}</span>
+          <span className="text-[10px] font-semibold px-2 py-0.5" style={{ background: g.bg, color: g.color, borderRadius: 6 }}>{g.label}</span>
           <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>{capacity} spots</span>
         </div>
-        <span className="text-[11px] tabular-nums font-medium" style={{ color: full ? "#7DE882" : "var(--color-text-secondary)" }}>
+        <span className="text-[12px] tabular-nums font-semibold" style={{ color: full ? "#15803D" : "var(--color-text-secondary)" }}>
           {applied}/{capacity}
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: "#F1EAD9" }}>
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: full ? "#7DE882" : "var(--color-gold)" }}
+          style={{ width: `${pct}%`, background: full ? "#15803D" : "linear-gradient(90deg,#C9A227,#A8854A)" }}
         />
       </div>
     </div>
@@ -89,7 +89,7 @@ function EventCard({ event }: { event: Event }) {
           <h3 className="font-semibold text-[15px] sm:text-[16px] leading-snug" style={{ color: "var(--color-text-primary)" }}>
             {event.name}
           </h3>
-          <span className="text-[10px] font-semibold px-2 py-1 rounded-full flex-shrink-0" style={{ background: s.bg, color: s.color }}>
+          <span className="text-[10.5px] font-semibold flex-shrink-0" style={{ background: s.bg, color: s.color, padding: "2px 9px", borderRadius: 6 }}>
             {s.label}
           </span>
         </div>
@@ -160,7 +160,7 @@ export default function EventsPage() {
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-6 flex-col sm:flex-row">
         <div>
-          <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <h1 className="text-[28px] sm:text-[30px] font-semibold" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
             Events
           </h1>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
