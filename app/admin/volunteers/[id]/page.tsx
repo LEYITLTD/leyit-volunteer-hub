@@ -57,7 +57,7 @@ const DBS_BADGE: Record<string, { label: string; bg: string; color: string }> = 
   rejected:     { label: "Rejected",       bg: "#FEE2E2", color: "#DC2626" },
 };
 
-const REFINITIV_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+const LSEG_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pending:        { label: "Pending",        bg: "#FEF9C3", color: "#92400E" },
   clear:          { label: "Clear",          bg: "#DCFCE7", color: "#15803D" },
   possible_match: { label: "Possible match", bg: "#FEF9C3", color: "#92400E" },
@@ -179,9 +179,8 @@ function ApproveModal({
             className="rounded-xl p-4 text-[13px] leading-relaxed"
             style={{ background: "#FEF9C3", color: "#92400E" }}
           >
-            DBS will be marked as verified for {volunteer.first_name}. Note: application approval is determined solely by the Refinitiv check — approving DBS alone does not change the overall compliance status.
+            DBS will be marked as verified for {volunteer.first_name}. Note: application approval is determined solely by the LSEG check — approving DBS alone does not change the overall compliance status.
           </div>
-
 
           {err && <p className="text-[13px]" style={{ color: "var(--color-error)" }}>{err}</p>}
 
@@ -383,9 +382,9 @@ function RejectModal({
   );
 }
 
-/* ─── Refinitiv Approve Modal ────────────────────────────────────────────── */
+/* ─── LSEG Approve Modal ─────────────────────────────────────────────────── */
 
-function RefinitivApproveModal({
+function LsegApproveModal({
   volunteer,
   dbsStatus,
   approvalTemplate,
@@ -410,7 +409,7 @@ function RefinitivApproveModal({
     setSubmitting(true);
     setErr(null);
     try {
-      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/refinitiv-approve`, {
+      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/lseg-approve`, {
         method: "POST",
       });
       const data = await res.json();
@@ -434,14 +433,14 @@ function RefinitivApproveModal({
           style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
         >
           <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-            Mark Refinitiv as clear
+            Mark LSEG as clear
           </h2>
           <button onClick={onClose} className="text-[20px] leading-none" style={{ color: "var(--color-text-muted)" }}>×</button>
         </div>
 
         <div className="p-6 flex flex-col gap-5">
           <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>
-            Manually marking the Refinitiv check as{" "}
+            Manually marking the LSEG check as{" "}
             <strong style={{ color: "#7DE882" }}>clear</strong> for{" "}
             <strong style={{ color: "var(--color-text-primary)" }}>
               {volunteer.first_name} {volunteer.last_name}
@@ -457,7 +456,7 @@ function RefinitivApproveModal({
           >
             {willApprove
               ? `DBS is already verified — this will fully approve ${volunteer.first_name}'s application and send the approval email immediately.`
-              : `DBS is not yet verified — Refinitiv will be marked clear but the full approval won't trigger until DBS is also approved.`}
+              : `DBS is not yet verified — LSEG will be marked clear but the full approval won't trigger until DBS is also approved.`}
           </div>
 
           {willApprove && previewHtml && (
@@ -497,9 +496,9 @@ function RefinitivApproveModal({
   );
 }
 
-/* ─── Refinitiv Reject Modal ─────────────────────────────────────────────── */
+/* ─── LSEG Reject Modal ──────────────────────────────────────────────────── */
 
-function RefinitivRejectModal({
+function LsegRejectModal({
   volunteer,
   onClose,
   onDone,
@@ -516,7 +515,7 @@ function RefinitivRejectModal({
     setSubmit(true);
     setErr(null);
     try {
-      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/refinitiv-reject`, {
+      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/lseg-reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason.trim() }),
@@ -543,7 +542,7 @@ function RefinitivRejectModal({
         >
           <div>
             <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Mark Refinitiv as high risk
+              Mark LSEG as high risk
             </h2>
             <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
               {volunteer.first_name} {volunteer.last_name} · {volunteer.email}
@@ -628,7 +627,7 @@ export default function VolunteerDetailPage() {
   const [dbsUrl, setDbsUrl]         = useState<string | null>(null);
   const [templates, setTemplates]   = useState<Template[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [modal, setModal]           = useState<"approve" | "reject" | "refinitiv-approve" | "refinitiv-reject" | null>(null);
+  const [modal, setModal]           = useState<"approve" | "reject" | "lseg-approve" | "lseg-reject" | null>(null);
   const [success, setSuccess]       = useState<string | null>(null);
 
   function load() {
@@ -714,7 +713,7 @@ export default function VolunteerDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Right column — compliance */}
         <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* Refinitiv — primary action, show first */}
+          {/* LSEG — primary action, show first */}
           <section
             className="rounded-2xl border overflow-hidden"
             style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}
@@ -724,10 +723,10 @@ export default function VolunteerDetailPage() {
               style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}
             >
               <div>
-                <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Refinitiv check</h2>
+                <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>LSEG check</h2>
                 <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>World-Check name &amp; DOB screening</p>
               </div>
-              <Badge map={REFINITIV_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
+              <Badge map={LSEG_BADGE} value={compliance?.refinitiv_status ?? "pending"} />
             </div>
             <div className="p-5 flex flex-col gap-3">
               {/* Status callout */}
@@ -736,7 +735,7 @@ export default function VolunteerDetailPage() {
                   <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  <p className="text-[13px]" style={{ color: "#15803D" }}>Cleared — no matches found on Refinitiv World-Check.</p>
+                  <p className="text-[13px]" style={{ color: "#15803D" }}>Cleared — no matches found on LSEG World-Check.</p>
                 </div>
               )}
               {compliance?.refinitiv_status === "high_risk" && (
@@ -749,7 +748,7 @@ export default function VolunteerDetailPage() {
               )}
               {(!compliance?.refinitiv_status || compliance.refinitiv_status === "pending") && (
                 <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
-                  Search this volunteer&apos;s name and date of birth on Refinitiv World-Check, then record the result here.
+                  Search this volunteer&apos;s name and date of birth on LSEG World-Check, then record the result here.
                 </p>
               )}
               {compliance?.refinitiv_screened_at && (
@@ -759,18 +758,18 @@ export default function VolunteerDetailPage() {
               )}
               <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
                 <button
-                  onClick={() => setModal("refinitiv-approve")}
+                  onClick={() => setModal("lseg-approve")}
                   className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
                   style={{ background: "var(--color-gold)", color: "#1A1714" }}
                 >
-                  Mark as Clear
+                  Mark LSEG as clear
                 </button>
                 <button
-                  onClick={() => setModal("refinitiv-reject")}
+                  onClick={() => setModal("lseg-reject")}
                   className="w-full py-2 text-[12px] font-medium"
                   style={{ color: "#9E5555", background: "transparent" }}
                 >
-                  Mark as High Risk
+                  Mark LSEG as high risk
                 </button>
               </div>
             </div>
@@ -918,24 +917,24 @@ export default function VolunteerDetailPage() {
           onDone={() => handleDone(`DBS rejected. Rejection email sent to ${volunteer.email}.`)}
         />
       )}
-      {modal === "refinitiv-approve" && (
-        <RefinitivApproveModal
+      {modal === "lseg-approve" && (
+        <LsegApproveModal
           volunteer={volunteer}
           dbsStatus={dbsStatus}
           approvalTemplate={approveTpl}
           onClose={() => setModal(null)}
           onDone={() => handleDone(
             dbsStatus === "verified"
-              ? `Refinitiv cleared for ${volunteer.first_name}. Approval email sent.`
-              : `Refinitiv marked as clear. Awaiting DBS verification before full approval.`
+              ? `LSEG cleared for ${volunteer.first_name}. Approval email sent.`
+              : `LSEG marked as clear. Awaiting DBS verification before full approval.`
           )}
         />
       )}
-      {modal === "refinitiv-reject" && (
-        <RefinitivRejectModal
+      {modal === "lseg-reject" && (
+        <LsegRejectModal
           volunteer={volunteer}
           onClose={() => setModal(null)}
-          onDone={() => handleDone(`Refinitiv marked as high risk for ${volunteer.first_name}.`)}
+          onDone={() => handleDone(`LSEG marked as high risk for ${volunteer.first_name}.`)}
         />
       )}
     </div>

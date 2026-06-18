@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type Compliance = {
@@ -62,8 +62,11 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfilePage() {
-  const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
-  const [loading, setLoading]     = useState(true);
+  const [volunteer, setVolunteer]     = useState<Volunteer | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [uploading, setUploading]     = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef                  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/volunteer/me")
@@ -71,6 +74,28 @@ export default function ProfilePage() {
       .then(d => setVolunteer(d?.volunteer ?? null))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("certificate", file);
+    const res = await fetch("/api/volunteer/dbs", { method: "POST", body: fd });
+    if (!res.ok) {
+      const d = await res.json();
+      setUploadError(d.error ?? "Upload failed");
+    } else {
+      // Reload volunteer data to show pending status
+      const r = await fetch("/api/volunteer/me");
+      const d = await r.json();
+      setVolunteer(d?.volunteer ?? null);
+    }
+    setUploading(false);
+    // Reset so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   if (loading) {
     return (
@@ -97,6 +122,15 @@ export default function ProfilePage() {
 
   return (
     <div style={{ padding: "8px 22px 8px", maxWidth: 600, margin: "0 auto", width: "100%" }}>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,image/*"
+        style={{ display: "none" }}
+        onChange={handleUpload}
+      />
 
       {/* Avatar + name + email */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 22, paddingTop: 14 }}>
@@ -158,14 +192,17 @@ export default function ProfilePage() {
               </div>
             </div>
             <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
               style={{
                 width: "100%", marginTop: 13,
                 background: "transparent", border: "1px solid #D9D2C5",
                 color: "#44403C", borderRadius: 10, padding: "10px",
-                fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+                fontSize: 13.5, fontWeight: 600, cursor: uploading ? "not-allowed" : "pointer",
+                opacity: uploading ? 0.7 : 1,
               }}
             >
-              Replace certificate
+              {uploading ? "Uploading…" : "Replace certificate"}
             </button>
           </>
         ) : (
@@ -177,17 +214,24 @@ export default function ProfilePage() {
             </div>
             {dbsStatus === "not_uploaded" && (
               <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
                 style={{
                   width: "100%", marginTop: 13,
                   background: "#1A1714", border: "none",
                   color: "#fff", borderRadius: 10, padding: "10px",
-                  fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+                  fontSize: 13.5, fontWeight: 600, cursor: uploading ? "not-allowed" : "pointer",
+                  opacity: uploading ? 0.7 : 1,
                 }}
               >
-                Upload certificate
+                {uploading ? "Uploading…" : "Upload certificate"}
               </button>
             )}
           </>
+        )}
+
+        {uploadError && (
+          <p style={{ marginTop: 10, fontSize: 12.5, color: "#DC2626" }}>{uploadError}</p>
         )}
       </div>
 
