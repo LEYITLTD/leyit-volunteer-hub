@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 import { createServiceClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
-import { generateCertificate, pngToPdf } from "@/lib/certificates/generate";
+import { generateCertificate } from "@/lib/certificates/generate";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -85,8 +85,6 @@ export async function POST(_req: Request, { params }: Params) {
             config.text_color,
           );
 
-          const pdf = await pngToPdf(png);
-
           const { data: sendData, error: sendErr } = await resend.emails.send({
             from:    process.env.RESEND_FROM_EMAIL!,
             to:      v.email,
@@ -110,8 +108,9 @@ export async function POST(_req: Request, { params }: Params) {
               </div>
             `,
             attachments: [{
-              filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.pdf`,
-              content:  pdf.toString("base64"),
+              filename:     `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
+              content:      png.toString("base64"),
+              content_type: "image/png",
             }],
           });
 
