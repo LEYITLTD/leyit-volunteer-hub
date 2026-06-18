@@ -51,28 +51,28 @@ function renderTemplate(html: string, vars: Record<string, string>) {
 }
 
 const DBS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  not_uploaded: { label: "Not uploaded", bg: "#2C2825", color: "#9E9690" },
-  pending:      { label: "Pending review", bg: "#3A2E1A", color: "#C4973A" },
-  verified:     { label: "Verified",       bg: "#1A2E1A", color: "#4CAF50" },
-  rejected:     { label: "Rejected",       bg: "#2E1A1A", color: "#E57373" },
+  not_uploaded: { label: "Not uploaded", bg: "#2C2825", color: "#C5BFB8" },
+  pending:      { label: "Pending review", bg: "#3A2E1A", color: "#F0B94A" },
+  verified:     { label: "Verified",       bg: "#1A2E1A", color: "#7DE882" },
+  rejected:     { label: "Rejected",       bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 const REFINITIV_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  pending:        { label: "Pending",        bg: "#3A2E1A", color: "#C4973A" },
-  clear:          { label: "Clear",          bg: "#1A2E1A", color: "#4CAF50" },
-  possible_match: { label: "Possible match", bg: "#3A2E1A", color: "#C4973A" },
-  high_risk:      { label: "High risk",      bg: "#2E1A1A", color: "#E57373" },
+  pending:        { label: "Pending",        bg: "#3A2E1A", color: "#F0B94A" },
+  clear:          { label: "Clear",          bg: "#1A2E1A", color: "#7DE882" },
+  possible_match: { label: "Possible match", bg: "#3A2E1A", color: "#F0B94A" },
+  high_risk:      { label: "High risk",      bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 const OVERALL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pending",  bg: "#3A2E1A", color: "#C4973A" },
-  approved: { label: "Approved", bg: "#1A2E1A", color: "#4CAF50" },
-  rejected: { label: "Rejected", bg: "#2E1A1A", color: "#E57373" },
+  pending:  { label: "Pending",  bg: "#3A2E1A", color: "#F0B94A" },
+  approved: { label: "Approved", bg: "#1A2E1A", color: "#7DE882" },
+  rejected: { label: "Rejected", bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 function Badge({ map, value }: { map: typeof DBS_BADGE; value: string | null }) {
   const v = value ?? "not_uploaded";
-  const cfg = map[v] ?? { label: v, bg: "#2C2825", color: "#9E9690" };
+  const cfg = map[v] ?? { label: v, bg: "#2C2825", color: "#C5BFB8" };
   return (
     <span
       className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
@@ -177,7 +177,7 @@ function ApproveModal({
           {/* What happens next */}
           <div
             className="rounded-xl p-4 text-[13px] leading-relaxed"
-            style={{ background: "#3A2E1A", color: "#C4973A" }}
+            style={{ background: "#3A2E1A", color: "#F0B94A" }}
           >
             DBS will be marked as verified for {volunteer.first_name}. Note: application approval is determined solely by the Refinitiv check — approving DBS alone does not change the overall compliance status.
           </div>
@@ -362,7 +362,7 @@ function RejectModal({
             >
               <span
                 className="w-2 h-2 rounded-full"
-                style={{ background: reason.trim() ? "#4CAF50" : "#C4973A" }}
+                style={{ background: reason.trim() ? "#7DE882" : "#F0B94A" }}
               />
               <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-muted)" }}>
                 {reason.trim() ? "Live preview" : "Preview — type a reason to see it update"}
@@ -442,7 +442,7 @@ function RefinitivApproveModal({
         <div className="p-6 flex flex-col gap-5">
           <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>
             Manually marking the Refinitiv check as{" "}
-            <strong style={{ color: "#4CAF50" }}>clear</strong> for{" "}
+            <strong style={{ color: "#7DE882" }}>clear</strong> for{" "}
             <strong style={{ color: "var(--color-text-primary)" }}>
               {volunteer.first_name} {volunteer.last_name}
             </strong>.
@@ -452,7 +452,7 @@ function RefinitivApproveModal({
             className="rounded-xl p-4 text-[13px] leading-relaxed"
             style={{
               background: willApprove ? "#1A2E1A" : "#3A2E1A",
-              color:      willApprove ? "#4CAF50"  : "#C4973A",
+              color:      willApprove ? "#7DE882"  : "#F0B94A",
             }}
           >
             {willApprove
@@ -555,7 +555,7 @@ function RefinitivRejectModal({
         <div className="p-6 flex flex-col gap-5">
           <div
             className="rounded-xl p-4 text-[13px] leading-relaxed"
-            style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}
+            style={{ background: "#2E1A1A", color: "#FF8E8E", border: "1px solid #4E2A2A" }}
           >
             This will set {volunteer.first_name}&apos;s overall compliance to{" "}
             <strong>Rejected</strong>. No email is sent automatically — notify the volunteer separately if needed.
@@ -705,7 +705,7 @@ export default function VolunteerDetailPage() {
       {success && (
         <div
           className="mb-6 px-4 py-3 rounded-xl text-[13px] font-medium"
-          style={{ background: "#1A2E1A", color: "#4CAF50" }}
+          style={{ background: "#1A2E1A", color: "#7DE882" }}
         >
           {success}
         </div>
@@ -733,15 +733,15 @@ export default function VolunteerDetailPage() {
               {/* Status callout */}
               {compliance?.refinitiv_status === "clear" && (
                 <div className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: "#1A2E1A" }}>
-                  <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7DE882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  <p className="text-[13px]" style={{ color: "#4CAF50" }}>Cleared — no matches found on Refinitiv World-Check.</p>
+                  <p className="text-[13px]" style={{ color: "#7DE882" }}>Cleared — no matches found on Refinitiv World-Check.</p>
                 </div>
               )}
               {compliance?.refinitiv_status === "high_risk" && (
                 <div className="rounded-xl p-3" style={{ background: "#2E1A1A", border: "1px solid #4E2A2A" }}>
-                  <p className="text-[13px] font-semibold" style={{ color: "#E57373" }}>Marked as high risk</p>
+                  <p className="text-[13px] font-semibold" style={{ color: "#FF8E8E" }}>Marked as high risk</p>
                   {compliance.refinitiv_rejection_reason && (
                     <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "#C47070" }}>{compliance.refinitiv_rejection_reason}</p>
                   )}
@@ -806,7 +806,7 @@ export default function VolunteerDetailPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>
                     Rejection reason
                   </p>
-                  <div className="rounded-xl p-3 text-[13px] leading-relaxed" style={{ background: "#2E1A1A", color: "#E57373", border: "1px solid #4E2A2A" }}>
+                  <div className="rounded-xl p-3 text-[13px] leading-relaxed" style={{ background: "#2E1A1A", color: "#FF8E8E", border: "1px solid #4E2A2A" }}>
                     {compliance.dbs_rejection_reason}
                   </div>
                 </div>

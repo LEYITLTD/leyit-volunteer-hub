@@ -320,7 +320,7 @@ export default function SettingsPage() {
             {creds ? (
               <div className="text-center py-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#1A2E1A" }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7DE882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <h2 className="text-[16px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>Account created</h2>
                 <p className="text-[13px] leading-relaxed mb-1" style={{ color: "var(--color-text-secondary)" }}>Login details have been emailed to</p>

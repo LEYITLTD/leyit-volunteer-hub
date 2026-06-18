@@ -7,6 +7,12 @@ type Gender     = "all" | "male" | "female";
 type Event      = { id: string; name: string; event_start: string };
 type Step       = "compose" | "confirm" | "done";
 type Attachment = { filename: string; content: string; size: string };
+type SendPayload = {
+  scope: Scope; gender: Gender; event_id: string | null;
+  subject: string; message: string;
+  attachments: { filename: string; content: string }[];
+  include_qr: boolean;
+};
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -44,6 +50,7 @@ export default function BroadcastPage() {
   const [subject,     setSubject]     = useState("");
   const [message,     setMessage]     = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [includeQr,   setIncludeQr]   = useState(false);
   const [sending,     setSending]     = useState(false);
   const [error,       setError]       = useState<string | null>(null);
   const [step,        setStep]        = useState<Step>("compose");
@@ -109,10 +116,15 @@ export default function BroadcastPage() {
     setError(null);
     setSending(true);
     try {
+      const payload: SendPayload = {
+        scope, gender, event_id: eventId || null, subject, message,
+        attachments: attachments.map(a => ({ filename: a.filename, content: a.content })),
+        include_qr: includeQr && scope === "event" && !!eventId,
+      };
       const res = await fetch("/api/admin/broadcast", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ scope, gender, event_id: eventId || null, subject, message, attachments: attachments.map(a => ({ filename: a.filename, content: a.content })) }),
+        body:    JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to send");
@@ -128,7 +140,7 @@ export default function BroadcastPage() {
 
   function reset() {
     setScope("global"); setGender("all"); setEventId("");
-    setSubject(""); setMessage(""); setAttachments([]); setError(null);
+    setSubject(""); setMessage(""); setAttachments([]); setIncludeQr(false); setError(null);
     setStep("compose"); setSentCount(0);
   }
 
@@ -156,7 +168,7 @@ export default function BroadcastPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-[360px]">
           <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: "#1A2E1A" }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7DE882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </div>
@@ -190,6 +202,12 @@ export default function BroadcastPage() {
               <p style={{ ...labelStyle, marginBottom: "2px" }}>Subject</p>
               <p className="text-[13px]" style={{ color: "var(--color-text-primary)" }}>{subject}</p>
             </div>
+            {includeQr && (
+              <div>
+                <p style={{ ...labelStyle, marginBottom: "2px" }}>QR Code</p>
+                <p className="text-[13px]" style={{ color: "var(--color-text-primary)" }}>Personal check-in QR included per recipient</p>
+              </div>
+            )}
             {attachments.length > 0 && (
               <div>
                 <p style={{ ...labelStyle, marginBottom: "4px" }}>Attachments</p>
@@ -243,6 +261,33 @@ export default function BroadcastPage() {
                 <option value="">Select event…</option>
                 {events.map(e => <option key={e.id} value={e.id}>{e.name} — {fmtDate(e.event_start)}</option>)}
               </select>
+
+              {/* QR code toggle — only once an event is selected */}
+              {eventId && (
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", padding: "12px 14px", background: includeQr ? "var(--color-gold-subtle)" : "var(--color-bg)", border: `1px solid ${includeQr ? "var(--color-gold)" : "var(--color-card-border)"}`, borderRadius: "10px", marginBottom: "16px", transition: "all .15s" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={includeQr}
+                    onChange={e => setIncludeQr(e.target.checked)}
+                    style={{ width: "15px", height: "15px", accentColor: "var(--color-gold)", flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: includeQr ? "var(--color-gold)" : "var(--color-text-primary)", display: "block" }}>
+                      Include check-in QR code
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+                      Each volunteer receives their personal QR code to show at the event entrance
+                    </span>
+                  </div>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={includeQr ? "var(--color-gold)" : "var(--color-text-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <path d="M14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2h-2M20 14v2"/>
+                  </svg>
+                </label>
+              )}
             </>
           )}
 
@@ -369,6 +414,19 @@ export default function BroadcastPage() {
               <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: "1.6", whiteSpace: "pre-wrap", minHeight: "80px" }}>
                 {previewMessage || <span style={{ color: "var(--color-text-muted)", fontStyle: "italic" }}>Your email body will appear here…</span>}
               </div>
+              {includeQr && scope === "event" && eventId && (
+                <div style={{ borderTop: "1px solid var(--color-card-border)", marginTop: "12px", paddingTop: "10px", textAlign: "center" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "8px" }}>Check-in QR Code</p>
+                  <div style={{ width: "80px", height: "80px", background: "var(--color-bg)", border: "1px solid var(--color-card-border)", borderRadius: "8px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                      <rect x="3" y="14" width="7" height="7" rx="1"/>
+                      <path d="M14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2h-2M20 14v2"/>
+                    </svg>
+                  </div>
+                  <p style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "6px" }}>Unique QR per recipient</p>
+                </div>
+              )}
               {attachments.length > 0 && (
                 <div style={{ borderTop: "1px solid var(--color-card-border)", marginTop: "12px", paddingTop: "10px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {attachments.map((a, i) => (

@@ -19,23 +19,23 @@ type Event = {
 };
 
 const STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  draft:     { label: "Draft",     bg: "#2C2825", color: "#9E9690" },
-  published: { label: "Published", bg: "#1A263A", color: "#5BA4CF" },
-  active:    { label: "Active",    bg: "#1A2E1A", color: "#4CAF50" },
+  draft:     { label: "Draft",     bg: "#2C2825", color: "#C5BFB8" },
+  published: { label: "Published", bg: "#1A263A", color: "#88CCFF" },
+  active:    { label: "Active",    bg: "#1A2E1A", color: "#7DE882" },
   completed: { label: "Completed", bg: "#2C2825", color: "#6B6259" },
-  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#E57373" },
+  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#FF8E8E" },
 };
 const GENDER: Record<string, { label: string; bg: string; color: string }> = {
-  any:    { label: "Any",    bg: "#2C2825", color: "#9E9690" },
-  male:   { label: "Male",   bg: "#1A263A", color: "#5BA4CF" },
-  female: { label: "Female", bg: "#2D1A2E", color: "#CF5BA4" },
+  any:    { label: "Any",    bg: "#2C2825", color: "#C5BFB8" },
+  male:   { label: "Male",   bg: "#1A263A", color: "#88CCFF" },
+  female: { label: "Female", bg: "#2D1A2E", color: "#EE7DC8" },
 };
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#4CAF50" },
-  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#5BA4CF" },
-  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#E57373" },
-  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#9E9690" },
-  no_show:    { label: "No show",    bg: "#2E1A1A", color: "#E57373" },
+  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#7DE882" },
+  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#88CCFF" },
+  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#FF8E8E" },
+  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#C5BFB8" },
+  no_show:    { label: "No show",    bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 function fmt(d: string) {
@@ -193,18 +193,18 @@ export default function EventDetailPage() {
                       <span className="font-semibold text-[14px]" style={{ color: "var(--color-text-primary)" }}>{role.role_name}</span>
                       <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: g.bg, color: g.color }}>{g.label}</span>
                     </div>
-                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: full ? "#4CAF50" : "var(--color-text-secondary)" }}>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: full ? "#7DE882" : "var(--color-text-secondary)" }}>
                       {applied}/{role.capacity}
                     </span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "#2C2825" }}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, background: full ? "#4CAF50" : "var(--color-gold)" }}
+                      style={{ width: `${pct}%`, background: full ? "#7DE882" : "var(--color-gold)" }}
                     />
                   </div>
                   <div className="flex gap-4 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                    <span style={{ color: confirmed > 0 ? "#4CAF50" : undefined }}>{confirmed} confirmed</span>
+                    <span style={{ color: confirmed > 0 ? "#7DE882" : undefined }}>{confirmed} confirmed</span>
                   </div>
                 </div>
               );

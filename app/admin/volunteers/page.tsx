@@ -20,21 +20,21 @@ type Volunteer = {
 };
 
 const DBS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
-  not_uploaded: { label: "No DBS",   bg: "#2C2825", color: "#9E9690" },
-  pending:      { label: "Pending",  bg: "#3A2E1A", color: "#C4973A" },
-  verified:     { label: "Verified", bg: "#1A2E1A", color: "#4CAF50" },
-  rejected:     { label: "Rejected", bg: "#2E1A1A", color: "#E57373" },
+  not_uploaded: { label: "No DBS",   bg: "#2C2825", color: "#C5BFB8" },
+  pending:      { label: "Pending",  bg: "#3A2E1A", color: "#F0B94A" },
+  verified:     { label: "Verified", bg: "#1A2E1A", color: "#7DE882" },
+  rejected:     { label: "Rejected", bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 const OVERALL_LABELS: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pending",  bg: "#3A2E1A", color: "#C4973A" },
-  approved: { label: "Approved", bg: "#1A2E1A", color: "#4CAF50" },
-  rejected: { label: "Rejected", bg: "#2E1A1A", color: "#E57373" },
+  pending:  { label: "Pending",  bg: "#3A2E1A", color: "#F0B94A" },
+  approved: { label: "Approved", bg: "#1A2E1A", color: "#7DE882" },
+  rejected: { label: "Rejected", bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 function Badge({ map, value }: { map: typeof DBS_LABELS; value: string | null }) {
   const v   = value ?? "not_uploaded";
-  const cfg = map[v] ?? { label: v, bg: "#2C2825", color: "#9E9690" };
+  const cfg = map[v] ?? { label: v, bg: "#2C2825", color: "#C5BFB8" };
   return (
     <span
       className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"

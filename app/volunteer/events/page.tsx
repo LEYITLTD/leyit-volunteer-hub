@@ -41,10 +41,10 @@ function fmtTime(d: string) {
 }
 
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#4CAF50" },
-  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#5BA4CF" },
-  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#E57373" },
-  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#9E9690" },
+  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#7DE882" },
+  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#88CCFF" },
+  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#FF8E8E" },
+  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#C5BFB8" },
 };
 
 const GENDER_LABEL: Record<string, string> = {
@@ -70,7 +70,7 @@ function RoleRow({ role }: { role: Role }) {
               className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
               style={{
                 background: role.gender_restriction === "male" ? "#1A263A" : "#2D1A2E",
-                color:      role.gender_restriction === "male" ? "#5BA4CF" : "#CF5BA4",
+                color:      role.gender_restriction === "male" ? "#88CCFF" : "#EE7DC8",
               }}
             >
               {GENDER_LABEL[role.gender_restriction]}
@@ -79,7 +79,7 @@ function RoleRow({ role }: { role: Role }) {
         </div>
         <span
           className="text-[12px] font-semibold tabular-nums shrink-0"
-          style={{ color: full ? "#E57373" : "var(--color-text-secondary)" }}
+          style={{ color: full ? "#FF8E8E" : "var(--color-text-secondary)" }}
         >
           {full ? "Full" : `${spotsLeft} left`}
         </span>
@@ -87,7 +87,7 @@ function RoleRow({ role }: { role: Role }) {
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: full ? "#E57373" : "var(--color-gold)" }}
+          style={{ width: `${pct}%`, background: full ? "#FF8E8E" : "var(--color-gold)" }}
         />
       </div>
     </div>
@@ -190,7 +190,7 @@ function EventCard({
               </span>
             )}
             {app.status === "confirmed" && (
-              <span className="text-[11px]" style={{ color: "#4CAF50" }}>
+              <span className="text-[11px]" style={{ color: "#7DE882" }}>
                 You're in!
               </span>
             )}
@@ -413,7 +413,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   return (
     <div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl text-[13px] font-medium max-w-[90vw] text-center"
-      style={{ background: "#1A2E1A", color: "#4CAF50", border: "1px solid #2A4E2A" }}
+      style={{ background: "#1A2E1A", color: "#7DE882", border: "1px solid #2A4E2A" }}
     >
       {message}
     </div>

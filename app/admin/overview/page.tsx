@@ -62,7 +62,7 @@ function StatCard({
       {warn && value > 0 && (
         <span
           className="mt-2.5 self-start text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full"
-          style={{ background: "#3A2E1A", color: "#C4973A" }}
+          style={{ background: "#3A2E1A", color: "#F0B94A" }}
         >
           Needs attention
         </span>
@@ -100,7 +100,7 @@ export default function AdminOverviewPage() {
       label:   "Approved Brothers",
       value:   data.approvedMale,
       href:    "/admin/volunteers",
-      color:   "#5BA4CF",
+      color:   "#88CCFF",
       bgColor: "#1A263A",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -112,7 +112,7 @@ export default function AdminOverviewPage() {
       label:   "Approved Sisters",
       value:   data.approvedFemale,
       href:    "/admin/volunteers",
-      color:   "#CF5BA4",
+      color:   "#EE7DC8",
       bgColor: "#2D1A2E",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -124,7 +124,7 @@ export default function AdminOverviewPage() {
       label:   "Pending Checks",
       value:   data.pendingChecks,
       href:    "/admin/compliance",
-      color:   "#C4973A",
+      color:   "#F0B94A",
       bgColor: "#3A2E1A",
       warn:    true,
       icon: (

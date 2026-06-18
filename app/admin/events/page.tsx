@@ -17,17 +17,17 @@ type Event = {
 };
 
 const STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  draft:     { label: "Draft",     bg: "#2C2825", color: "#9E9690" },
-  published: { label: "Published", bg: "#1A263A", color: "#5BA4CF" },
-  active:    { label: "Active",    bg: "#1A2E1A", color: "#4CAF50" },
+  draft:     { label: "Draft",     bg: "#2C2825", color: "#C5BFB8" },
+  published: { label: "Published", bg: "#1A263A", color: "#88CCFF" },
+  active:    { label: "Active",    bg: "#1A2E1A", color: "#7DE882" },
   completed: { label: "Completed", bg: "#2C2825", color: "#6B6259" },
-  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#E57373" },
+  cancelled: { label: "Cancelled", bg: "#2E1A1A", color: "#FF8E8E" },
 };
 
 const GENDER: Record<string, { label: string; bg: string; color: string }> = {
-  any:    { label: "Any",    bg: "#2C2825", color: "#9E9690" },
-  male:   { label: "Male",   bg: "#1A263A", color: "#5BA4CF" },
-  female: { label: "Female", bg: "#2D1A2E", color: "#CF5BA4" },
+  any:    { label: "Any",    bg: "#2C2825", color: "#C5BFB8" },
+  male:   { label: "Male",   bg: "#1A263A", color: "#88CCFF" },
+  female: { label: "Female", bg: "#2D1A2E", color: "#EE7DC8" },
 };
 
 function fmtDate(d: string) {
@@ -49,14 +49,14 @@ function GenderBar({ gender, capacity, applied }: { gender: string; capacity: nu
           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: g.bg, color: g.color }}>{g.label}</span>
           <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>{capacity} spots</span>
         </div>
-        <span className="text-[11px] tabular-nums font-medium" style={{ color: full ? "#4CAF50" : "var(--color-text-secondary)" }}>
+        <span className="text-[11px] tabular-nums font-medium" style={{ color: full ? "#7DE882" : "var(--color-text-secondary)" }}>
           {applied}/{capacity}
         </span>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: full ? "#4CAF50" : "var(--color-gold)" }}
+          style={{ width: `${pct}%`, background: full ? "#7DE882" : "var(--color-gold)" }}
         />
       </div>
     </div>
