@@ -752,18 +752,32 @@ export default function EventDetailPage() {
             <span>{fmtTime(event.event_start)} – {fmtTime(event.event_end)}</span>
           </div>
         </div>
-        {event.status === "draft" && (
-          <button
-            onClick={publish} disabled={publishing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-semibold flex-shrink-0 self-start"
-            style={{ background: "var(--color-gold)", color: "#1A1411", opacity: publishing ? 0.7 : 1 }}
+        <div className="flex items-center gap-2 flex-shrink-0 self-start">
+          <Link
+            href={`/admin/events/${event.id}/report`}
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-semibold"
+            style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", color: "var(--color-text-secondary)" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 2 15 22 11 13 2 9 22 2"/>
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
-            {publishing ? "Publishing…" : "Publish Event"}
-          </button>
-        )}
+            Report
+          </Link>
+          {event.status === "draft" && (
+            <button
+              onClick={publish} disabled={publishing}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-semibold"
+              style={{ background: "var(--color-gold)", color: "#1A1411", opacity: publishing ? 0.7 : 1 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              {publishing ? "Publishing…" : "Publish Event"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats row */}
