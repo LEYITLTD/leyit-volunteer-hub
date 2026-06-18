@@ -12,16 +12,15 @@ export async function POST(
   if (error) return error;
 
   const { id } = await params;
-  const { reason } = await request.json();
 
   const service = createServiceClient();
 
-  // Mark compliance as high_risk
+  // Mark compliance as high_risk (no reason given for LSEG — it's a pass/fail check)
   const { error: updErr } = await service
     .from("volunteer_compliance")
     .update({
       refinitiv_status:           "high_risk",
-      refinitiv_rejection_reason: reason?.trim() || null,
+      refinitiv_rejection_reason: null,
       refinitiv_screened_at:      new Date().toISOString(),
       refinitiv_override_by:      null,
       refinitiv_override_at:      null,
@@ -54,13 +53,9 @@ export async function POST(
         .single();
 
       if (tpl) {
-        const trimmedReason = reason?.trim();
-        const reasonBlock = trimmedReason
-          ? `<p>Reason: ${trimmedReason}</p>`
-          : "";
         const vars = {
           first_name:   volunteer.first_name,
-          reason_block: reasonBlock,
+          reason_block: "", // LSEG is a pass/fail — no reason shared
         };
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
