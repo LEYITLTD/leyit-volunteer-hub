@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -99,7 +98,7 @@ const SIDEBAR_NAV = [
   },
 ];
 
-function SidebarContents({ onNav }: { onNav?: () => void }) {
+function SidebarContents() {
   const path = usePathname();
 
   return (
@@ -126,7 +125,6 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
                 <Link
                   key={href}
                   href={href}
-                  onClick={soon ? undefined : onNav}
                   className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] mb-0.5 transition-colors"
                   style={{
                     background: active ? "var(--color-gold-subtle)" : "transparent",
@@ -259,49 +257,9 @@ function BottomTabBar() {
   );
 }
 
-/* ── Pending verification screen ─────────────────────────── */
-
-function PendingVerification() {
-  return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="max-w-[400px] w-full text-center">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: "#3A2E1A" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0B94A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 1 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
-          </svg>
-        </div>
-        <h2 className="text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
-          Verification in progress
-        </h2>
-        <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--color-text-secondary)" }}>
-          Your background check is being processed. This usually takes{" "}
-          <strong style={{ color: "var(--color-text-primary)" }}>5–7 business days</strong>.
-        </p>
-        <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
-          We'll email you as soon as your account is ready. Contact{" "}
-          <a href="mailto:volunteers@leyit.dev" style={{ color: "var(--color-gold)" }}>volunteers@leyit.dev</a>
-        </p>
-      </div>
-    </div>
-  );
-}
-
 /* ── Shell ───────────────────────────────────────────────── */
 
 export function VolunteerShell({ children }: { children: React.ReactNode }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [compliance, setCompliance] = useState<"loading" | "clear" | "pending">("loading");
-
-  useEffect(() => {
-    fetch("/api/volunteer/me")
-      .then(r => r.json())
-      .then(data => {
-        const status = data?.volunteer?.volunteer_compliance?.refinitiv_status;
-        setCompliance(status === "clear" ? "clear" : "pending");
-      })
-      .catch(() => setCompliance("pending"));
-  }, []);
-
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-bg)" }}>
 
@@ -313,45 +271,16 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
         <SidebarContents />
       </aside>
 
-      {/* Mobile sidebar overlay (slide-in for rare use, e.g. deep links) */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div
-            className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside
-            className="relative z-10 flex flex-col w-[260px] h-full border-r"
-            style={{ background: "var(--color-chrome)", borderColor: "#2C2825" }}
-          >
-            <SidebarContents onNav={() => setMobileOpen(false)} />
-          </aside>
-        </div>
-      )}
-
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 flex flex-col overflow-auto lg:pb-0" style={{ paddingBottom: "var(--tab-bar-pad, 0)" }}>
-          {/* Add bottom padding on mobile for tab bar */}
-          <div className="flex-1 flex flex-col lg:[--tab-bar-pad:0px] [--tab-bar-pad:96px]">
-            {compliance === "loading" ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
-              </div>
-            ) : compliance === "pending" ? (
-              <PendingVerification />
-            ) : (
-              <div className="flex-1 flex flex-col pb-24 lg:pb-0">
-                {children}
-              </div>
-            )}
+        <main className="flex-1 flex flex-col overflow-auto">
+          <div className="flex-1 flex flex-col pb-24 lg:pb-0">
+            {children}
           </div>
         </main>
       </div>
 
-      {/* Mobile bottom tab bar */}
-      {compliance === "clear" && <BottomTabBar />}
+      <BottomTabBar />
     </div>
   );
 }

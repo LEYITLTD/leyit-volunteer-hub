@@ -40,190 +40,19 @@ function fmtTime(d: string) {
   return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 }
 
-const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  confirmed:  { label: "Confirmed",  bg: "#1A2E1A", color: "#7DE882" },
-  waitlisted: { label: "Waitlisted", bg: "#1A263A", color: "#88CCFF" },
-  declined:   { label: "Declined",   bg: "#2E1A1A", color: "#FF8E8E" },
-  cancelled:  { label: "Cancelled",  bg: "#2C2825", color: "#C5BFB8" },
+const APP_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
+  confirmed:  { label: "✓ Confirmed",       bg: "#DCFCE7", fg: "#15803D" },
+  applied:    { label: "Applied — pending",  bg: "#DBEAFE", fg: "#1D4ED8" },
+  waitlisted: { label: "Waitlisted",         bg: "#FEF9C3", fg: "#92400E" },
+  declined:   { label: "Not going",          bg: "#F3F4F6", fg: "#4B5563" },
+  cancelled:  { label: "Not going",          bg: "#F3F4F6", fg: "#4B5563" },
 };
 
-const GENDER_LABEL: Record<string, string> = {
-  any: "Open", male: "Brothers", female: "Sisters",
+const EVENT_STATUS_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  active:     { label: "Active",     bg: "#DCFCE7", fg: "#15803D" },
+  published:  { label: "Open",       bg: "#DBEAFE", fg: "#1D4ED8" },
+  open:       { label: "Open",       bg: "#DBEAFE", fg: "#1D4ED8" },
 };
-
-/* ─── Role row ───────────────────────────────────────────────────────────── */
-
-function RoleRow({ role }: { role: Role }) {
-  const spotsLeft = Math.max(0, role.capacity - role.appliedCount);
-  const pct       = role.capacity > 0 ? Math.min((role.appliedCount / role.capacity) * 100, 100) : 0;
-  const full      = spotsLeft === 0;
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
-            {role.role_name}
-          </span>
-          {role.gender_restriction !== "any" && (
-            <span
-              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-              style={{
-                background: role.gender_restriction === "male" ? "#1A263A" : "#2D1A2E",
-                color:      role.gender_restriction === "male" ? "#88CCFF" : "#EE7DC8",
-              }}
-            >
-              {GENDER_LABEL[role.gender_restriction]}
-            </span>
-          )}
-        </div>
-        <span
-          className="text-[12px] font-semibold tabular-nums shrink-0"
-          style={{ color: full ? "#FF8E8E" : "var(--color-text-secondary)" }}
-        >
-          {full ? "Full" : `${spotsLeft} left`}
-        </span>
-      </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: full ? "#FF8E8E" : "var(--color-gold)" }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ─── Event card ─────────────────────────────────────────────────────────── */
-
-function EventCard({
-  event,
-  onApply,
-}: {
-  event: Event;
-  onApply: (event: Event) => void;
-}) {
-  const app       = event.myApplication;
-  const appBadge  = app ? (APP_STATUS[app.status] ?? null) : null;
-  const hasRoles  = event.eligibleRoles.length > 0;
-  const allFull   = hasRoles && event.eligibleRoles.every((r) => r.appliedCount >= r.capacity);
-
-  const canApply  = !app && hasRoles && !allFull;
-
-  return (
-    <div
-      className="rounded-2xl border overflow-hidden"
-      style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
-    >
-      {/* Header */}
-      <div
-        className="px-4 sm:px-5 pt-4 pb-3 border-b"
-        style={{ borderColor: "var(--color-card-border)" }}
-      >
-        <h3
-          className="font-semibold text-[16px] leading-snug mb-1.5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {event.name}
-        </h3>
-        <div className="flex flex-col gap-1 mt-1">
-          {event.city && (
-            <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
-              {event.city}
-            </span>
-          )}
-          <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            {fmtDate(event.event_start)}
-          </span>
-          <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            {fmtTime(event.event_start)} – {fmtTime(event.event_end)}
-          </span>
-        </div>
-      </div>
-
-      {/* Roles */}
-      <div className="px-4 sm:px-5 py-4">
-        {!hasRoles ? (
-          <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
-            No roles available for you on this event.
-          </p>
-        ) : (
-          <div className="space-y-3.5">
-            {event.eligibleRoles.map((role) => (
-              <RoleRow key={role.id} role={role} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div
-        className="px-4 sm:px-5 py-3 border-t flex items-center justify-between gap-3"
-        style={{ borderColor: "var(--color-card-border)" }}
-      >
-        {app && appBadge ? (
-          <>
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: appBadge.bg, color: appBadge.color }}
-              >
-                {appBadge.label}
-              </span>
-              <span className="text-[12px] truncate" style={{ color: "var(--color-text-muted)" }}>
-                {event.eligibleRoles.find((r) => r.id === app.role_id)?.role_name ?? ""}
-              </span>
-            </div>
-            {app.status === "waitlisted" && (
-              <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                We'll let you know if a spot opens
-              </span>
-            )}
-            {app.status === "confirmed" && (
-              <span className="text-[11px]" style={{ color: "#7DE882" }}>
-                You're in!
-              </span>
-            )}
-          </>
-        ) : canApply ? (
-          <>
-            <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-              {event.eligibleRoles.length} role{event.eligibleRoles.length !== 1 ? "s" : ""} available
-            </span>
-            <button
-              onClick={() => onApply(event)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold shrink-0"
-              style={{ background: "var(--color-gold)", color: "#1A1411" }}
-            >
-              Apply
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </button>
-          </>
-        ) : allFull ? (
-          <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-            All roles are currently full
-          </span>
-        ) : (
-          <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-            No roles available
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ─── Apply modal ────────────────────────────────────────────────────────── */
 
@@ -240,8 +69,8 @@ function ApplyModal({
   const [selectedRole, setSelectedRole] = useState<string>(
     availableRoles.length === 1 ? availableRoles[0].id : "",
   );
-  const [applying, setApplying]   = useState(false);
-  const [err, setErr]             = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [err, setErr]           = useState<string | null>(null);
 
   async function apply() {
     if (!selectedRole) { setErr("Please select a role."); return; }
@@ -261,8 +90,6 @@ function ApplyModal({
       setApplying(false);
     }
   }
-
-  const roleName = availableRoles.find((r) => r.id === selectedRole)?.role_name ?? "";
 
   return (
     <div
@@ -373,7 +200,7 @@ function ApplyModal({
           )}
         </div>
 
-        {/* Footer — always visible */}
+        {/* Footer */}
         {availableRoles.length > 0 && (
           <div className="px-5 py-4 border-t shrink-0 flex gap-3" style={{ borderColor: "var(--color-card-border)" }}>
             <button
@@ -402,7 +229,7 @@ function ApplyModal({
   );
 }
 
-/* ─── Success toast ──────────────────────────────────────────────────────── */
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
 
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   useEffect(() => {
@@ -420,11 +247,116 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   );
 }
 
+/* ─── Event card ─────────────────────────────────────────────────────────── */
+
+function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) => void }) {
+  const app      = event.myApplication;
+  const hasRoles = event.eligibleRoles.length > 0;
+  const allFull  = hasRoles && event.eligibleRoles.every(r => r.appliedCount >= r.capacity);
+  const canApply = !app && hasRoles && !allFull;
+
+  const totalCapacity = event.eligibleRoles.reduce((s, r) => s + r.capacity, 0);
+  const totalApplied  = event.eligibleRoles.reduce((s, r) => s + r.appliedCount, 0);
+  const pct           = totalCapacity > 0 ? Math.min((totalApplied / totalCapacity) * 100, 100) : 0;
+
+  const evBadge = EVENT_STATUS_BADGE[event.status] ?? EVENT_STATUS_BADGE.published;
+
+  const appStyle = app ? (APP_STATUS[app.status] ?? APP_STATUS.declined) : null;
+
+  return (
+    <div style={{
+      background: "#fff", border: "1px solid #EAE6DD",
+      borderRadius: 17, padding: 18, marginBottom: 14,
+    }}>
+      {/* Top row: name + event status badge */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#1C1917", lineHeight: 1.3, flex: 1 }}>
+          {event.name}
+        </div>
+        <span style={{
+          background: evBadge.bg, color: evBadge.fg,
+          fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 7, flexShrink: 0,
+        }}>
+          {evBadge.label}
+        </span>
+      </div>
+
+      {/* Date + venue */}
+      <div style={{ fontSize: 13, color: "#78716C", marginBottom: 2 }}>
+        {fmtDate(event.event_start)} · {fmtTime(event.event_start)}–{fmtTime(event.event_end)}
+      </div>
+      {event.city && (
+        <div style={{ fontSize: 13, color: "#78716C", marginBottom: 0 }}>{event.city}</div>
+      )}
+
+      {/* Role chips */}
+      {event.eligibleRoles.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 13 }}>
+          {event.eligibleRoles.map(r => (
+            <span key={r.id} style={{
+              background: "#F3EFE6", color: "#7A6A4A",
+              fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 7,
+            }}>
+              {r.role_name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Capacity row */}
+      {totalCapacity > 0 && (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#78716C", margin: "15px 0 6px" }}>
+            <span>Capacity</span>
+            <span><strong style={{ color: "#1C1917" }}>{totalApplied}/{totalCapacity}</strong> confirmed</span>
+          </div>
+          {/* Capacity bar */}
+          <div style={{ height: 7, borderRadius: 5, background: "#F1EAD9", overflow: "hidden" }}>
+            <div style={{
+              height: "100%", width: `${pct}%`,
+              background: "linear-gradient(90deg,#C9A227,#A8854A)",
+            }} />
+          </div>
+        </>
+      )}
+
+      {/* Apply button or status pill */}
+      {appStyle ? (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: appStyle.bg, color: appStyle.fg,
+          borderRadius: 11, padding: 12, fontSize: 14, fontWeight: 600, marginTop: 14,
+        }}>
+          {appStyle.label}
+        </div>
+      ) : canApply ? (
+        <button
+          onClick={() => onApply(event)}
+          style={{
+            width: "100%", background: "#1A1714", color: "#fff",
+            border: "none", borderRadius: 11, padding: 12,
+            fontSize: 14, fontWeight: 600, marginTop: 14, cursor: "pointer",
+          }}
+        >
+          Apply for a role
+        </button>
+      ) : (
+        <div style={{ fontSize: 12, color: "#78716C", marginTop: 14, textAlign: "center" }}>
+          {allFull ? "All roles are currently full" : "No roles available"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
+
+type FilterKey = "all" | "applied" | "confirmed";
 
 export default function BrowseEventsPage() {
   const [events,   setEvents]   = useState<Event[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [filter,   setFilter]   = useState<FilterKey>("all");
   const [applyFor, setApplyFor] = useState<Event | null>(null);
   const [toast,    setToast]    = useState<string | null>(null);
 
@@ -447,63 +379,90 @@ export default function BrowseEventsPage() {
     load();
   }
 
+  const filtered = events.filter(ev => {
+    if (filter === "all") return true;
+    if (filter === "applied") return ev.myApplication?.status === "applied" || ev.myApplication?.status === "waitlisted";
+    if (filter === "confirmed") return ev.myApplication?.status === "confirmed";
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+        <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "#A8854A", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
+  const CHIPS: { key: FilterKey; label: string }[] = [
+    { key: "all",       label: "All" },
+    { key: "applied",   label: "Applied" },
+    { key: "confirmed", label: "Confirmed" },
+  ];
+
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
-      <div className="mb-6">
-        <h1 className="font-display text-[24px] sm:text-[28px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+    <div style={{ flex: 1 }}>
+      {/* Page header */}
+      <div style={{ padding: "8px 22px 6px" }}>
+        <h1 style={{
+          fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)",
+          fontSize: 28, fontWeight: 600, color: "#1C1917", margin: "0 0 4px",
+        }}>
           Events
         </h1>
-        <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-          {events.length > 0
-            ? `${events.length} open event${events.length !== 1 ? "s" : ""} you can apply for`
-            : "No events open right now"}
-        </p>
       </div>
 
-      {events.length === 0 ? (
-        <div
-          className="rounded-2xl border p-12 flex flex-col items-center gap-4 text-center"
-          style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}
-        >
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center"
-            style={{ background: "var(--color-gold-subtle)" }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
+      {/* Filter chips */}
+      <div style={{
+        display: "flex", gap: 8, overflowX: "auto",
+        padding: "2px 22px 14px",
+        WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
+      }}>
+        {CHIPS.map(({ key, label }) => {
+          const active = filter === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                flexShrink: 0, borderRadius: 20, padding: "8px 16px",
+                fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                border: "1px solid",
+                background: active ? "#1A1714" : "#fff",
+                color:      active ? "#fff"    : "#57534E",
+                borderColor: active ? "#1A1714" : "#E4DDD0",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Event list */}
+      <div style={{ padding: "0 22px" }}>
+        {filtered.length === 0 ? (
+          <div style={{
+            background: "#fff", border: "1px solid #EAE6DD", borderRadius: 17,
+            padding: 40, textAlign: "center",
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#1C1917", marginBottom: 6 }}>No events</div>
+            <div style={{ fontSize: 13, color: "#78716C" }}>
+              {filter === "all"
+                ? "No events open right now — check back soon."
+                : `No ${filter} events yet.`}
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-[16px] mb-1" style={{ color: "var(--color-text-primary)" }}>
-              No events open yet
-            </h2>
-            <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>
-              Check back soon — new events will appear here when they&apos;re published.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {events.map((event) => (
+        ) : (
+          filtered.map((event) => (
             <EventCard
               key={event.id}
               event={event}
               onApply={setApplyFor}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       {applyFor && (
         <ApplyModal

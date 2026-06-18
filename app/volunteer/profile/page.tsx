@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Compliance = {
   dbs_status:       string | null;
@@ -192,33 +193,49 @@ export default function ProfilePage() {
 
       {/* Profile menu */}
       <div style={{ background: "#fff", border: "1px solid #EAE6DD", borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
-        {MENU_ITEMS.map((item, i) => (
-          <button
-            key={item.label}
-            style={{
-              display: "flex", alignItems: "center", gap: 13,
-              padding: "15px 16px", cursor: "pointer",
-              borderBottom: i < MENU_ITEMS.length - 1 ? "1px solid #F4EFE6" : "none",
-              width: "100%", background: "transparent", border: "none",
-              borderBottomWidth: i < MENU_ITEMS.length - 1 ? 1 : 0,
-              borderBottomStyle: "solid", borderBottomColor: "#F4EFE6",
-              textAlign: "left",
-            }}
-          >
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "#F3EFE6", color: "#A8854A",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              {item.icon}
-            </div>
-            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, color: "#1C1917" }}>
-              {item.label}
-            </span>
-            <span style={{ color: "#C9C1B2", fontSize: 18, lineHeight: 1 }}>›</span>
-          </button>
-        ))}
+        {MENU_ITEMS.map((item, i) => {
+          const inner = (
+            <>
+              <div style={{
+                width: 34, height: 34, borderRadius: 10,
+                background: "#F3EFE6", color: "#A8854A",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                {item.icon}
+              </div>
+              <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, color: "#1C1917" }}>
+                {item.label}
+              </span>
+              <span style={{ color: "#C9C1B2", fontSize: 18, lineHeight: 1 }}>›</span>
+            </>
+          );
+
+          const sharedStyle: React.CSSProperties = {
+            display: "flex", alignItems: "center", gap: 13,
+            padding: "15px 16px", cursor: "pointer",
+            borderBottom: i < MENU_ITEMS.length - 1 ? "1px solid #F4EFE6" : "none",
+            width: "100%", background: "transparent",
+            textDecoration: "none",
+          };
+
+          if (i === 0) {
+            return (
+              <Link key={item.label} href="/volunteer/profile/edit" style={sharedStyle}>
+                {inner}
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={item.label}
+              style={{ ...sharedStyle, border: "none", textAlign: "left" }}
+            >
+              {inner}
+            </button>
+          );
+        })}
       </div>
 
       {/* Sign out */}

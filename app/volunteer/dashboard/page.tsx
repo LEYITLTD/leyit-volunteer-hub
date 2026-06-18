@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
-type Compliance = {
-  dbs_status:     string | null;
-  overall_status: string | null;
-};
+/* ── Types ──────────────────────────────────────────────── */
 
 type Volunteer = {
   id:         string;
   first_name: string;
   last_name:  string;
   email:      string;
-  gender:     "male" | "female" | null;
-  volunteer_compliance: Compliance | null;
+  volunteer_compliance: { refinitiv_status: string | null } | null;
 };
 
 type UpcomingEvent = {
@@ -32,295 +29,289 @@ type MeResponse = {
   upcomingEvents: UpcomingEvent[];
 };
 
-const TIERS = [
-  { label: "Certificate", min: 100,  color: "#9E9690" },
-  { label: "Silver",      min: 250,  color: "#A8B5C2" },
-  { label: "Gold",        min: 400,  color: "var(--color-gold)" },
-];
+type EventItem = {
+  id:           string;
+  name:         string;
+  city:         string | null;
+  event_start:  string;
+  status:       string;
+  myApplication: { status: string } | null;
+};
+
+/* ── Helpers ─────────────────────────────────────────────── */
+
+const POINTS = 1000;
 
 function getTier(pts: number) {
-  if (pts >= 400) return TIERS[2];
-  if (pts >= 250) return TIERS[1];
-  if (pts >= 100) return TIERS[0];
+  if (pts >= 400) return { label: "Gold tier",   emoji: "🥇", color: "#E7C766" };
+  if (pts >= 250) return { label: "Silver tier", emoji: "🥈", color: "#C0C0C0" };
+  if (pts >= 100) return { label: "Cert tier",   emoji: "🏅", color: "#CD7F32" };
   return null;
 }
 
-const DBS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  not_uploaded: { label: "Not uploaded",  bg: "#2C2825", color: "#C5BFB8" },
-  pending:      { label: "Pending review", bg: "#3A2E1A", color: "#F0B94A" },
-  verified:     { label: "Verified",       bg: "#1A2E1A", color: "#7DE882" },
-  rejected:     { label: "Rejected",       bg: "#2E1A1A", color: "#FF8E8E" },
-};
-
-const OVERALL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pending approval", bg: "#3A2E1A", color: "#F0B94A" },
-  approved: { label: "Approved",          bg: "#1A2E1A", color: "#7DE882" },
-  rejected: { label: "Rejected",          bg: "#2E1A1A", color: "#FF8E8E" },
-};
-
-function Badge({ map, value }: { map: typeof DBS_BADGE; value: string | null }) {
-  const cfg = map[value ?? "not_uploaded"] ?? { label: value ?? "—", bg: "#2C2825", color: "#C5BFB8" };
-  return (
-    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: cfg.bg, color: cfg.color }}>
-      {cfg.label}
-    </span>
-  );
-}
-
-function fmtEventDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
-    timeZone: "Europe/London",
-  });
-}
-
-function fmtEventTime(d: string) {
-  return new Date(d).toLocaleTimeString("en-GB", {
-    hour: "2-digit", minute: "2-digit",
-    timeZone: "Europe/London",
-  });
-}
-
 function daysUntil(dateStr: string): number {
-  const now = new Date();
+  const now    = new Date();
   const target = new Date(dateStr);
-  const diffMs = target.getTime() - now.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+const DATE_TINTS = [
+  { bg: "#F5ECD6", color: "#8A6D2F" },
+  { bg: "#E7EEF6", color: "#1D4ED8" },
+  { bg: "#EAF3EC", color: "#15803D" },
+];
+
+/* ── Dashboard ───────────────────────────────────────────── */
 
 export default function VolunteerDashboard() {
-  const [data, setData]     = useState<MeResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Points hardcoded at 1000 as per spec until real transactions exist
-  const POINTS = 1000;
+  const [meData,     setMeData]     = useState<MeResponse | null>(null);
+  const [openEvents, setOpenEvents] = useState<EventItem[]>([]);
+  const [loading,    setLoading]    = useState(true);
 
   useEffect(() => {
-    fetch("/api/volunteer/me")
-      .then((r) => r.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/volunteer/me").then(r => r.json()),
+      fetch("/api/volunteer/events").then(r => r.ok ? r.json() : []),
+    ]).then(([me, evts]) => {
+      setMeData(me);
+      const list: EventItem[] = Array.isArray(evts) ? evts : [];
+      setOpenEvents(list.filter(e => e.myApplication === null));
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+        <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "#A8854A", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
-  if (!data) {
+  if (!meData) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>Unable to load your profile.</p>
+        <p style={{ fontSize: 14, color: "#78716C" }}>Unable to load your profile.</p>
       </div>
     );
   }
 
-  const { volunteer, confirmedCount, upcomingEvents } = data;
-  const compliance = volunteer.volunteer_compliance;
-  const tier = getTier(POINTS);
-  const nextEvent = upcomingEvents[0] ?? null;
-  const daysToNext = nextEvent ? daysUntil(nextEvent.event_start) : null;
+  const { volunteer, confirmedCount, upcomingEvents } = meData;
+  const nextEvent   = upcomingEvents[0] ?? null;
+  const daysToNext  = nextEvent ? daysUntil(nextEvent.event_start) : null;
+  const tier        = getTier(POINTS);
+  const initials    = `${volunteer.first_name[0] ?? ""}${volunteer.last_name[0] ?? ""}`.toUpperCase();
+  const fullName    = `${volunteer.first_name} ${volunteer.last_name}`;
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
-      {/* Welcome */}
-      <div className="mb-6">
-        <h1 className="font-display text-[26px] sm:text-[30px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-          Welcome back, {volunteer.first_name}!
-        </h1>
-        <p className="text-[14px] mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Here&apos;s an overview of your volunteer activity.
-        </p>
-      </div>
+    <div style={{ flex: 1 }}>
 
-      {/* Stats row */}
-      <div className={`grid gap-3 sm:gap-4 mb-5 ${nextEvent ? "grid-cols-3" : "grid-cols-2"}`}>
-        <div className="rounded-xl border p-4 sm:p-5 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <p className="font-ui text-[24px] sm:text-[28px] font-bold tabular-nums" style={{ color: "var(--color-gold)" }}>
-            {POINTS.toLocaleString()}
-          </p>
-          <p className="text-[11px] uppercase tracking-[0.06em] mt-1" style={{ color: "var(--color-text-muted)" }}>Points</p>
-        </div>
-
-        <div className="rounded-xl border p-4 sm:p-5 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <p className="font-ui text-[24px] sm:text-[28px] font-bold tabular-nums" style={{ color: "var(--color-text-primary)" }}>
-            {confirmedCount}
-          </p>
-          <p className="text-[11px] uppercase tracking-[0.06em] mt-1" style={{ color: "var(--color-text-muted)" }}>Events confirmed</p>
-        </div>
-
-        {/* Conditional: days to next event */}
-        {nextEvent && daysToNext !== null && (
-          <div className="rounded-xl border p-4 sm:p-5 text-center" style={{ background: "var(--color-gold-subtle)", borderColor: "var(--color-gold)" }}>
-            <p className="font-ui text-[24px] sm:text-[28px] font-bold tabular-nums" style={{ color: "var(--color-gold)" }}>
-              {daysToNext === 0 ? "Today" : daysToNext === 1 ? "1" : daysToNext.toString()}
-            </p>
-            <p className="text-[11px] uppercase tracking-[0.06em] mt-1" style={{ color: "var(--color-gold)" }}>
-              {daysToNext === 0 ? "Event day!" : daysToNext === 1 ? "Day to go" : "Days to go"}
-            </p>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 22px 14px" }}>
+        <div>
+          <div style={{ fontSize: 13, color: "#78716C" }}>Assalamu alaikum,</div>
+          <div style={{
+            fontFamily: "var(--font-cormorant, 'Cormorant Garamond', Georgia, serif)",
+            fontSize: 26, fontWeight: 600, color: "#1C1917", lineHeight: 1.25,
+          }}>
+            {fullName}
           </div>
-        )}
+        </div>
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%", background: "#A8854A",
+          color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 16, fontWeight: 700, flexShrink: 0,
+        }}>
+          {initials}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Points card */}
-        <div className="rounded-xl border p-5 sm:p-6" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1" style={{ color: "var(--color-text-muted)" }}>Volunteer points</p>
-              <p className="font-ui text-[42px] sm:text-[48px] font-bold leading-none tabular-nums" style={{ color: "var(--color-gold)" }}>
-                {POINTS.toLocaleString()}
-              </p>
+      <div style={{ padding: "0 22px" }}>
+
+        {/* ── Points card ────────────────────────────────────── */}
+        <div style={{
+          background: "linear-gradient(135deg,#1F1B17,#2C2620)",
+          borderRadius: 18, padding: 20, position: "relative", overflow: "hidden",
+          marginBottom: 13,
+        }}>
+          {/* Gold glow */}
+          <div style={{
+            position: "absolute", right: -30, top: -30, width: 130, height: 130,
+            borderRadius: "50%",
+            background: "radial-gradient(circle,rgba(201,162,39,0.32),transparent 70%)",
+          }} />
+
+          <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(243,233,210,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+            Total Points
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 42, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+              {POINTS.toLocaleString()}
             </div>
             {tier && (
-              <span
-                className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full flex-shrink-0"
-                style={{ background: "var(--color-gold-subtle)", color: "var(--color-gold)", border: "1px solid var(--color-gold)" }}
-              >
-                {tier.label} Tier
+              <span style={{
+                background: "rgba(201,162,39,0.2)", color: tier.color,
+                fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 20,
+              }}>
+                {tier.emoji} {tier.label}
               </span>
             )}
           </div>
 
-          {/* Tier progress */}
-          <div className="space-y-2.5 mt-4">
-            {TIERS.map(({ label, min, color }) => {
-              const reached = POINTS >= min;
-              return (
-                <div key={label} className="flex items-center gap-3">
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: reached ? color : "#3A3530" }}
-                  />
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "#2C2825" }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width:      reached ? "100%" : `${Math.min((POINTS / min) * 100, 100)}%`,
-                        background: reached ? color : "#4A4440",
-                      }}
-                    />
-                  </div>
-                  <span className="text-[11px] w-[80px] text-right flex-shrink-0" style={{ color: reached ? color : "#4A4440" }}>
-                    {reached ? `✓ ${label}` : `${min.toLocaleString()} pts`}
-                  </span>
-                </div>
-              );
-            })}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(243,233,210,0.7)" }}>
+            <span>Rank #3 of 700</span>
+            <span>Top tier reached 🎉</span>
           </div>
         </div>
 
-        {/* Compliance card */}
-        <div className="rounded-xl border p-5 sm:p-6" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-4" style={{ color: "var(--color-text-muted)" }}>Compliance status</p>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>DBS certificate</span>
-              <Badge map={DBS_BADGE} value={compliance?.dbs_status ?? null} />
+        {/* ── Stats row ──────────────────────────────────────── */}
+        <div style={{ display: "flex", gap: 13, marginBottom: 20 }}>
+          {/* Events confirmed */}
+          <div style={{
+            flex: 1, background: "#fff", border: "1px solid #EAE6DD",
+            borderRadius: 15, padding: 15,
+          }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78716C", fontWeight: 600, marginBottom: 4 }}>
+              Events
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>Account status</span>
-              <Badge map={OVERALL_BADGE} value={compliance?.overall_status ?? null} />
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#1C1917" }}>
+              {confirmedCount}
             </div>
           </div>
 
-          {(!compliance?.dbs_status || compliance.dbs_status === "not_uploaded") && (
-            <div
-              className="mt-5 rounded-lg p-3.5 text-[12px] leading-relaxed"
-              style={{ background: "var(--color-warning-bg)", color: "var(--color-warning)" }}
-            >
-              <strong>Action needed:</strong> Upload your DBS certificate so we can verify your account and assign you to events.
+          {/* Days to go */}
+          <div style={{
+            flex: 1,
+            background: nextEvent ? "#F3EFE6" : "#fff",
+            border: nextEvent ? "1px solid #A8854A" : "1px solid #EAE6DD",
+            borderRadius: 15, padding: 15,
+          }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78716C", fontWeight: 600, marginBottom: 4 }}>
+              Days to go
             </div>
-          )}
-
-          {compliance?.overall_status === "approved" && (
-            <div
-              className="mt-5 rounded-lg p-3.5 text-[12px] leading-relaxed"
-              style={{ background: "#1A2E1A", color: "#7DE882" }}
-            >
-              Your account is fully verified. You can now apply for events.
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#1C1917" }}>
+              {daysToNext !== null ? daysToNext : "—"}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Upcoming events */}
-        <div className="lg:col-span-2 rounded-xl border p-5 sm:p-6" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-4" style={{ color: "var(--color-text-muted)" }}>Upcoming events</p>
+        {/* ── Next event ─────────────────────────────────────── */}
+        {nextEvent && (
+          <div style={{ marginBottom: 22 }}>
+            <div style={{
+              fontSize: 13, textTransform: "uppercase", letterSpacing: "0.07em",
+              color: "#78716C", fontWeight: 700, marginBottom: 11,
+            }}>
+              Your next event
+            </div>
+            <div style={{ background: "#fff", border: "1px solid #EAE6DD", borderRadius: 16, padding: 17 }}>
+              <div style={{ fontSize: 16.5, fontWeight: 700, color: "#1C1917", marginBottom: 4 }}>
+                {nextEvent.name}
+              </div>
+              <div style={{ fontSize: 13, color: "#78716C", marginBottom: 2 }}>
+                {new Date(nextEvent.event_start).toLocaleDateString("en-GB", {
+                  weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London",
+                })}
+                {nextEvent.city ? ` · ${nextEvent.city}` : ""}
+              </div>
+              <div style={{ fontSize: 13, color: "#78716C", marginBottom: 12 }}>
+                {nextEvent.role_name}
+              </div>
 
-          {upcomingEvents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#4A4440" }}>
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              <p className="text-[14px]" style={{ color: "var(--color-text-secondary)" }}>No upcoming events</p>
-              <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Confirmed events will appear here</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{
+                  background: "#DCFCE7", color: "#15803D",
+                  fontSize: 11.5, fontWeight: 600, padding: "3px 9px", borderRadius: 20,
+                }}>
+                  Confirmed
+                </span>
+              </div>
+
+              <Link
+                href="/volunteer/qr-code"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  width: "100%", background: "#1A1714", color: "#fff",
+                  border: "none", borderRadius: 10, padding: "11px",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", textDecoration: "none",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="3" height="3" /><rect x="18" y="18" width="3" height="3" />
+                </svg>
+                Show check-in QR
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── Open events ────────────────────────────────────── */}
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
+            <div style={{
+              fontSize: 13, textTransform: "uppercase", letterSpacing: "0.07em",
+              color: "#78716C", fontWeight: 700,
+            }}>
+              Open events
+            </div>
+            <Link href="/volunteer/events" style={{ fontSize: 13, color: "#A8854A", fontWeight: 600, textDecoration: "none" }}>
+              See all
+            </Link>
+          </div>
+
+          {openEvents.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#A8A29E", textAlign: "center", padding: "20px 0" }}>
+              No open events right now
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {upcomingEvents.map((ev) => (
-                <div
+            openEvents.slice(0, 2).map((ev, idx) => {
+              const tint    = DATE_TINTS[idx % 3];
+              const d       = new Date(ev.event_start);
+              const dayNum  = d.toLocaleDateString("en-GB", { day: "numeric",   timeZone: "Europe/London" });
+              const monAbbr = d.toLocaleDateString("en-GB", { month: "short",   timeZone: "Europe/London" }).toUpperCase();
+              return (
+                <Link
                   key={ev.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border p-4"
-                  style={{ borderColor: "var(--color-card-border)", background: "var(--color-bg)" }}
+                  href="/volunteer/events"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 13,
+                    background: "#fff", border: "1px solid #EAE6DD",
+                    borderRadius: 15, padding: 14, marginBottom: 11,
+                    textDecoration: "none",
+                  }}
                 >
                   {/* Date block */}
-                  <div
-                    className="flex-shrink-0 w-[52px] h-[52px] rounded-xl flex flex-col items-center justify-center"
-                    style={{ background: "var(--color-gold-subtle)", border: "1px solid var(--color-gold)" }}
-                  >
-                    <span className="text-[18px] font-bold leading-none tabular-nums" style={{ color: "var(--color-gold)" }}>
-                      {new Date(ev.event_start).toLocaleDateString("en-GB", { day: "numeric", timeZone: "Europe/London" })}
-                    </span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-gold)" }}>
-                      {new Date(ev.event_start).toLocaleDateString("en-GB", { month: "short", timeZone: "Europe/London" })}
-                    </span>
+                  <div style={{
+                    width: 46, height: 46, borderRadius: 12,
+                    background: tint.bg, color: tint.color,
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{dayNum}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{monAbbr}</span>
                   </div>
 
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-semibold leading-snug truncate" style={{ color: "var(--color-text-primary)" }}>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: "#1C1917", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {ev.name}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                      {ev.city && (
-                        <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                          </svg>
-                          {ev.city}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        {fmtEventTime(ev.event_start)} – {fmtEventTime(ev.event_end)}
-                      </span>
-                      <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-                        {fmtEventDate(ev.event_start)}
-                      </span>
                     </div>
+                    {ev.city && (
+                      <div style={{ fontSize: 12.5, color: "#78716C" }}>{ev.city}</div>
+                    )}
                   </div>
 
-                  {/* Role badge */}
-                  <div className="flex-shrink-0">
-                    <span
-                      className="text-[11px] font-semibold px-3 py-1.5 rounded-full"
-                      style={{ background: "#1A2E1A", color: "#7DE882" }}
-                    >
-                      {ev.role_name}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  {/* Arrow */}
+                  <span style={{ color: "#C9C1B2", fontSize: 20, lineHeight: 1, flexShrink: 0 }}>›</span>
+                </Link>
+              );
+            })
           )}
         </div>
+
       </div>
     </div>
   );
