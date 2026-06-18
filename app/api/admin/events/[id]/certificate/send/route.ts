@@ -67,20 +67,17 @@ export async function POST(_req: Request, { params }: Params) {
   const eventName = event?.name ?? "the event";
   const results: { email: string; ok: boolean; error?: string }[] = [];
 
-  // Step 1: generate all PNGs and upload to storage first
-  // Step 2: get signed URLs, send all emails, then clean up
-  const uploadedPaths: string[] = [];
-
   const CONCURRENCY = 3;
 
-  // Generate + upload phase
   for (let i = 0; i < unique.length; i += CONCURRENCY) {
     const batch = unique.slice(i, i + CONCURRENCY);
     await Promise.all(
       batch.map(async (v) => {
         try {
-          const fullName  = `${v.first_name} ${v.last_name}`;
-          const png       = await generateCertificate(
+          const fullName = `${v.first_name} ${v.last_name}`;
+
+          // Generate PNG in memory
+          const png = await generateCertificate(
             templateBuffer,
             fullName,
             config.name_x,
@@ -89,39 +86,9 @@ export async function POST(_req: Request, { params }: Params) {
             config.text_color,
           );
 
-          // Upload PNG to Supabase Storage
-          const storagePath = `${id}/certs/${v.id}.png`;
-          const { error: upErr } = await service.storage
-            .from("certificates")
-            .upload(storagePath, png, { contentType: "image/png", upsert: true });
+          console.log(`Certificate PNG size for ${v.email}: ${png.length} bytes`);
 
-          if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
-          uploadedPaths.push(storagePath);
-          results.push({ email: v.email, ok: true });
-        } catch (e) {
-          results.push({ email: v.email, ok: false, error: String(e) });
-          console.error(`Certificate generation failed for ${v.email}:`, e);
-        }
-      })
-    );
-  }
-
-  // Send phase — bucket is public so we use getPublicUrl (no auth required, Resend can fetch directly)
-  for (let i = 0; i < unique.length; i += CONCURRENCY) {
-    const batch = unique.slice(i, i + CONCURRENCY);
-    await Promise.all(
-      batch.map(async (v) => {
-        const existing = results.find(r => r.email === v.email);
-        if (!existing?.ok) return; // skip if generation failed
-
-        try {
-          const storagePath = `${id}/certs/${v.id}.png`;
-          const { data: publicData } = service.storage
-            .from("certificates")
-            .getPublicUrl(storagePath);
-
-          if (!publicData?.publicUrl) throw new Error("Could not get public URL");
-
+          // Send with inline base64 content — no external URL dependency
           const { data: sendData, error: sendErr } = await resend.emails.send({
             from:    process.env.RESEND_FROM_EMAIL!,
             to:      v.email,
@@ -145,29 +112,25 @@ export async function POST(_req: Request, { params }: Params) {
               </div>
             `,
             attachments: [{
-              filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
-              path:     publicData.publicUrl,
+              filename:    `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
+              content:     png.toString("base64"),
+              contentType: "image/png",
             }],
           });
 
           if (sendErr) {
-            existing.ok    = false;
-            existing.error = `Resend error: ${sendErr.message}`;
+            results.push({ email: v.email, ok: false, error: `Resend error: ${sendErr.message}` });
+            console.error(`Send failed for ${v.email}:`, sendErr.message);
           } else {
+            results.push({ email: v.email, ok: true });
             console.log(`Certificate sent to ${v.email} — id: ${sendData?.id}`);
           }
         } catch (e) {
-          const existing = results.find(r => r.email === v.email);
-          if (existing) { existing.ok = false; existing.error = String(e); }
-          console.error(`Send failed for ${v.email}:`, e);
+          results.push({ email: v.email, ok: false, error: String(e) });
+          console.error(`Certificate failed for ${v.email}:`, e);
         }
       })
     );
-  }
-
-  // Clean up temp PNGs from storage
-  if (uploadedPaths.length > 0) {
-    await service.storage.from("certificates").remove(uploadedPaths);
   }
 
   const sent   = results.filter(r => r.ok).length;
