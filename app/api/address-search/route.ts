@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&countrycodes=gb&limit=8`,
       {
-        headers: { "User-Agent": "VolunteerHub/1.0 (volunteers@leyit.dev)" },
+        headers: { "User-Agent": "LULGlobalVolunteers/1.0 (volunteers@leyit.dev)" },
         next: { revalidate: 0 },
       },
     );

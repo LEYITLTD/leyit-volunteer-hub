@@ -17,7 +17,7 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "VolunteerHub — Light Upon Light Global",
+  title: "LUL Global Volunteers",
   description: "Unified volunteer management platform for ~700 volunteers",
 };
 

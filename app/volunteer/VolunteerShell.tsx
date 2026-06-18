@@ -111,7 +111,7 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
         <Image src="/assets/logo-gold.png" alt="LUL" width={32} height={32} className="h-8 w-auto object-contain flex-shrink-0" />
         <div>
           <span className="text-[11px] font-semibold uppercase tracking-[0.1em] block" style={{ color: "var(--color-gold)" }}>
-            VolunteerHub
+            LUL Global Volunteers
           </span>
           <span className="text-[10px]" style={{ color: "#6B6259" }}>Volunteer Portal</span>
         </div>
@@ -274,7 +274,7 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
           <Image src="/assets/logo-gold.png" alt="LUL" width={28} height={28} className="h-7 w-auto object-contain" />
-          <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>VolunteerHub</span>
+          <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>LUL Global Volunteers</span>
         </header>
 
         <main className="flex-1 flex flex-col overflow-auto">

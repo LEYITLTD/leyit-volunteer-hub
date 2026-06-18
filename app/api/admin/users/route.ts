@@ -67,11 +67,14 @@ export async function POST(request: Request) {
     to:      email,
     subject: "Your Eman Channel admin account is ready",
     html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1714;background:#fff;padding:32px 24px;border-radius:12px;">
-        <img src="https://volunteer-hub-leyitltds-projects.vercel.app/assets/logo-gold.png" alt="Eman Channel" style="height:36px;margin-bottom:28px;" />
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #E8E3DC;">
+        <div style="background:#1A1714;padding:16px 24px;">
+          <span style="font-size:13px;font-weight:700;color:#A8854A;letter-spacing:0.08em;text-transform:uppercase;">LUL Global Volunteers</span>
+        </div>
+        <div style="padding:32px 24px;color:#1A1714;">
         <h2 style="font-size:20px;font-weight:700;margin:0 0 8px;">Welcome, ${full_name}</h2>
         <p style="font-size:14px;color:#5C5550;margin:0 0 24px;line-height:1.6;">
-          An admin account has been created for you on the Eman Channel Volunteer Hub.
+          An admin account has been created for you on LUL Global Volunteers.
           Use the credentials below to sign in — you'll be asked to set a new password straight away.
         </p>
         <div style="background:#F5F2EE;border-radius:10px;padding:20px 20px 16px;margin-bottom:24px;">
@@ -87,6 +90,7 @@ export async function POST(request: Request) {
         <p style="font-size:12px;color:#9E9690;margin:0;">
           If you weren't expecting this email, contact <a href="mailto:admin@emanchannel.tv" style="color:#B8861B;">admin@emanchannel.tv</a>.
         </p>
+        </div>
       </div>
     `,
   });

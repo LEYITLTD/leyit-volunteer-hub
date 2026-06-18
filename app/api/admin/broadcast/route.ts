@@ -92,14 +92,18 @@ export async function POST(request: Request) {
           to:      r.email,
           subject: personalSubject,
           html: `
-            <div style="font-family:sans-serif;max-width:580px;margin:0 auto;color:#1A1714;background:#fff;padding:32px 24px;border-radius:12px;">
-              <img src="https://volunteer-hub-leyitltds-projects.vercel.app/assets/logo-gold.png" alt="Eman Channel" style="height:36px;margin-bottom:28px;" />
-              <div style="font-size:14px;line-height:1.7;color:#2C2825;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
-              <hr style="border:none;border-top:1px solid #E8E3DC;margin:28px 0;" />
-              <p style="font-size:12px;color:#9E9690;margin:0;">
-                Eman Channel Volunteer Team &mdash;
-                <a href="mailto:volunteers@leyit.dev" style="color:#B8861B;">volunteers@leyit.dev</a>
-              </p>
+            <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #E8E3DC;">
+              <div style="background:#1A1714;padding:16px 24px;">
+                <span style="font-size:13px;font-weight:700;color:#A8854A;letter-spacing:0.08em;text-transform:uppercase;">LUL Global Volunteers</span>
+              </div>
+              <div style="padding:28px 24px;color:#1A1714;">
+                <div style="font-size:14px;line-height:1.7;color:#2C2825;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                <hr style="border:none;border-top:1px solid #E8E3DC;margin:24px 0;" />
+                <p style="font-size:12px;color:#9E9690;margin:0;">
+                  LUL Global Volunteers &mdash;
+                  <a href="mailto:volunteers@leyit.dev" style="color:#B8861B;">volunteers@leyit.dev</a>
+                </p>
+              </div>
             </div>
           `,
           ...(attachments.length > 0 && {

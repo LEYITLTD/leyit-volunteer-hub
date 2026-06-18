@@ -225,7 +225,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
           <Image src="/assets/logo-gold.png" alt="LUL" width={28} height={28} className="h-7 w-auto object-contain" />
-          <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>VolunteerHub</span>
+          <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>LUL Global Volunteers</span>
           <span className="text-[11px] ml-auto" style={{ color: "rgba(255,255,255,0.4)" }}>Admin</span>
         </header>
 

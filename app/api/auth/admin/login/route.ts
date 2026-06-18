@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: email,
-      subject: "Your VolunteerHub login code",
+      subject: "Your LUL Global Volunteers login code",
       html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <div style="background: #1A1714; padding: 28px 32px; text-align: center; border-radius: 16px 16px 0 0;">

@@ -51,7 +51,7 @@ export default function LoginPage() {
           Welcome back
         </h1>
         <p className="text-[14px] text-text-secondary mb-6">
-          Sign in to VolunteerHub
+          Sign in to LUL Global Volunteers
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
