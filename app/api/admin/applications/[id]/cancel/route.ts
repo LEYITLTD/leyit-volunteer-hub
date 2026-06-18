@@ -52,8 +52,8 @@ export async function POST(_req: Request, { params }: Params) {
       .single();
 
     if (tpl) {
-      const vol     = application.volunteers as { first_name: string; email: string } | null;
-      const roleRow = application.event_roles as { role_name: string; events: { name: string } | null } | null;
+      const vol     = application.volunteers as unknown as { first_name: string; email: string } | null;
+      const roleRow = application.event_roles as unknown as { role_name: string; events: { name: string } | null } | null;
       if (vol?.email) {
         const vars = {
           first_name: vol.first_name,
