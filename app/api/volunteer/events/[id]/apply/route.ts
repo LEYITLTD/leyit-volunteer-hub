@@ -3,13 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Resend } from "resend";
-
-function renderTemplate(html: string, vars: Record<string, string>) {
-  return Object.entries(vars).reduce(
-    (out, [k, v]) => out.replaceAll(`{{${k}}}`, v),
-    html,
-  );
-}
+import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", {
@@ -155,7 +149,7 @@ export async function POST(
         from:    process.env.RESEND_FROM_EMAIL!,
         to:      volunteer.email,
         subject: renderTemplate(tpl.subject, vars),
-        html:    renderTemplate(tpl.body_html, vars),
+        html:    wrapEmailHtml(renderTemplate(tpl.body_html, vars)),
       });
     }
   } catch {

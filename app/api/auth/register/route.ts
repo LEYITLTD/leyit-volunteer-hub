@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
-
-function renderTemplate(html: string, vars: Record<string, string>) {
-  return Object.entries(vars).reduce(
-    (out, [k, v]) => out.replaceAll(`{{${k}}}`, v),
-    html,
-  );
-}
+import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
 
 export async function POST(request: Request) {
   try {
@@ -144,7 +138,7 @@ export async function POST(request: Request) {
         from: process.env.RESEND_FROM_EMAIL!,
         to: email,
         subject: tpl.subject,
-        html: renderTemplate(tpl.body_html, { first_name: firstName }),
+        html: wrapEmailHtml(renderTemplate(tpl.body_html, { first_name: firstName })),
       });
     }
 
