@@ -41,17 +41,17 @@ function fmtTime(d: string) {
 }
 
 const APP_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
-  confirmed:  { label: "✓ Confirmed",       bg: "#DCFCE7", fg: "#15803D" },
-  applied:    { label: "Applied — pending",  bg: "#DBEAFE", fg: "#1D4ED8" },
-  waitlisted: { label: "Waitlisted",         bg: "#FEF9C3", fg: "#92400E" },
-  declined:   { label: "Not going",          bg: "#F3F4F6", fg: "#4B5563" },
-  cancelled:  { label: "Not going",          bg: "#F3F4F6", fg: "#4B5563" },
+  confirmed:  { label: "✓ Confirmed",      bg: "#DCFCE7", fg: "#15803D" },
+  applied:    { label: "Applied — pending", bg: "#DBEAFE", fg: "#1D4ED8" },
+  waitlisted: { label: "Waitlisted",        bg: "#FEF9C3", fg: "#92400E" },
+  declined:   { label: "Not going",         bg: "#F3F4F6", fg: "#4B5563" },
+  cancelled:  { label: "Not going",         bg: "#F3F4F6", fg: "#4B5563" },
 };
 
 const EVENT_STATUS_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
-  active:     { label: "Active",     bg: "#DCFCE7", fg: "#15803D" },
-  published:  { label: "Open",       bg: "#DBEAFE", fg: "#1D4ED8" },
-  open:       { label: "Open",       bg: "#DBEAFE", fg: "#1D4ED8" },
+  active:    { label: "Active", bg: "#DCFCE7", fg: "#15803D" },
+  published: { label: "Open",   bg: "#DBEAFE", fg: "#1D4ED8" },
+  open:      { label: "Open",   bg: "#DBEAFE", fg: "#1D4ED8" },
 };
 
 /* ─── Apply modal ────────────────────────────────────────────────────────── */
@@ -229,6 +229,78 @@ function ApplyModal({
   );
 }
 
+/* ─── Cancel confirm modal ───────────────────────────────────────────────── */
+
+function CancelModal({
+  event,
+  onClose,
+  onDone,
+}: {
+  event: Event;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [cancelling, setCancelling] = useState(false);
+  const [err, setErr]               = useState<string | null>(null);
+
+  async function cancel() {
+    setCancelling(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/volunteer/events/${event.id}/cancel`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to cancel");
+      onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to cancel");
+      setCancelling(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        style={{ background: "var(--color-card)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-[17px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
+          Cancel your place?
+        </h2>
+        <p className="text-[13px] mb-5 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+          You&apos;re about to cancel your place at <strong style={{ color: "var(--color-text-primary)" }}>{event.name}</strong>. If you change your mind, you may re-apply if spaces are still available.
+        </p>
+        {err && (
+          <p className="text-[12px] px-3 py-2.5 rounded-xl mb-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
+            {err}
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl text-[14px] font-medium border"
+            style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
+          >
+            Keep place
+          </button>
+          <button
+            onClick={cancel}
+            disabled={cancelling}
+            className="flex-1 py-3 rounded-xl text-[14px] font-semibold"
+            style={{ background: "#FEE2E2", color: "#DC2626", opacity: cancelling ? 0.7 : 1 }}
+          >
+            {cancelling ? "Cancelling…" : "Yes, cancel"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Toast ──────────────────────────────────────────────────────────────── */
 
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
@@ -249,7 +321,17 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
 /* ─── Event card ─────────────────────────────────────────────────────────── */
 
-function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) => void }) {
+function EventCard({
+  event,
+  onApply,
+  onCancel,
+  onClaim,
+}: {
+  event: Event;
+  onApply: (event: Event) => void;
+  onCancel: (event: Event) => void;
+  onClaim: (event: Event) => void;
+}) {
   const app      = event.myApplication;
   const hasRoles = event.eligibleRoles.length > 0;
   const allFull  = hasRoles && event.eligibleRoles.every(r => r.appliedCount >= r.capacity);
@@ -259,16 +341,19 @@ function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) =
   const totalApplied  = event.eligibleRoles.reduce((s, r) => s + r.appliedCount, 0);
   const pct           = totalCapacity > 0 ? Math.min((totalApplied / totalCapacity) * 100, 100) : 0;
 
-  const evBadge = EVENT_STATUS_BADGE[event.status] ?? EVENT_STATUS_BADGE.published;
-
+  const evBadge  = EVENT_STATUS_BADGE[event.status] ?? EVENT_STATUS_BADGE.published;
   const appStyle = app ? (APP_STATUS[app.status] ?? APP_STATUS.declined) : null;
+
+  const isConfirmed  = app?.status === "confirmed";
+  const isWaitlisted = app?.status === "waitlisted";
+  const isActive     = isConfirmed || isWaitlisted;
 
   return (
     <div style={{
       background: "#fff", border: "1px solid #EAE6DD",
       borderRadius: 17, padding: 18, marginBottom: 14,
     }}>
-      {/* Top row: name + event status badge */}
+      {/* Top row */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
         <div style={{ fontSize: 17, fontWeight: 700, color: "#1C1917", lineHeight: 1.3, flex: 1 }}>
           {event.name}
@@ -303,14 +388,13 @@ function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) =
         </div>
       )}
 
-      {/* Capacity row */}
+      {/* Capacity bar */}
       {totalCapacity > 0 && (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#78716C", margin: "15px 0 6px" }}>
             <span>Capacity</span>
             <span><strong style={{ color: "#1C1917" }}>{totalApplied}/{totalCapacity}</strong> confirmed</span>
           </div>
-          {/* Capacity bar */}
           <div style={{ height: 7, borderRadius: 5, background: "#F1EAD9", overflow: "hidden" }}>
             <div style={{
               height: "100%", width: `${pct}%`,
@@ -320,8 +404,53 @@ function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) =
         </>
       )}
 
-      {/* Apply button or status pill */}
-      {appStyle ? (
+      {/* Status / action area */}
+      {appStyle && isActive ? (
+        <div style={{ marginTop: 14 }}>
+          {/* Status badge row */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: appStyle.bg,
+            borderRadius: isWaitlisted ? "11px 11px 0 0" : 11,
+            padding: "11px 14px",
+          }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: appStyle.fg }}>
+              {appStyle.label}
+            </span>
+            {/* Cancel link */}
+            <button
+              onClick={() => onCancel(event)}
+              style={{
+                fontSize: 12, fontWeight: 600, color: "#DC2626",
+                background: "none", border: "none", cursor: "pointer",
+                textDecoration: "underline", padding: 0,
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Claim spot button (waitlisted only) */}
+          {isWaitlisted && (
+            <button
+              onClick={() => onClaim(event)}
+              style={{
+                width: "100%", background: "#1A1714", color: "#fff",
+                border: "none", borderRadius: "0 0 11px 11px",
+                padding: "11px 14px", fontSize: 14, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center",
+                justifyContent: "center", gap: 7,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Claim spot
+            </button>
+          )}
+        </div>
+      ) : appStyle ? (
+        // declined / cancelled — show static pill
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "center",
           background: appStyle.bg, color: appStyle.fg,
@@ -349,16 +478,90 @@ function EventCard({ event, onApply }: { event: Event; onApply: (event: Event) =
   );
 }
 
+/* ─── Claim confirm modal ────────────────────────────────────────────────── */
+
+function ClaimModal({
+  event,
+  onClose,
+  onDone,
+}: {
+  event: Event;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [claiming, setClaiming] = useState(false);
+  const [err, setErr]           = useState<string | null>(null);
+
+  async function claim() {
+    setClaiming(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/volunteer/events/${event.id}/claim`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to claim spot");
+      onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to claim spot");
+      setClaiming(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        style={{ background: "var(--color-card)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-[17px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
+          Claim your spot?
+        </h2>
+        <p className="text-[13px] mb-5 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+          A spot has opened up at <strong style={{ color: "var(--color-text-primary)" }}>{event.name}</strong>. Confirm below to secure your place — spots are filled on a first-come, first-served basis.
+        </p>
+        {err && (
+          <p className="text-[12px] px-3 py-2.5 rounded-xl mb-4" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>
+            {err}
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl text-[14px] font-medium border"
+            style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}
+          >
+            Not now
+          </button>
+          <button
+            onClick={claim}
+            disabled={claiming}
+            className="flex-1 py-3 rounded-xl text-[14px] font-semibold"
+            style={{ background: "var(--color-gold)", color: "#1A1411", opacity: claiming ? 0.7 : 1 }}
+          >
+            {claiming ? "Claiming…" : "Claim spot"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 
 type FilterKey = "all" | "applied" | "confirmed";
 
 export default function BrowseEventsPage() {
-  const [events,   setEvents]   = useState<Event[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [filter,   setFilter]   = useState<FilterKey>("all");
-  const [applyFor, setApplyFor] = useState<Event | null>(null);
-  const [toast,    setToast]    = useState<string | null>(null);
+  const [events,    setEvents]    = useState<Event[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [filter,    setFilter]    = useState<FilterKey>("all");
+  const [applyFor,  setApplyFor]  = useState<Event | null>(null);
+  const [cancelFor, setCancelFor] = useState<Event | null>(null);
+  const [claimFor,  setClaimFor]  = useState<Event | null>(null);
+  const [toast,     setToast]     = useState<string | null>(null);
 
   function load() {
     fetch("/api/volunteer/events")
@@ -376,6 +579,18 @@ export default function BrowseEventsPage() {
         ? `You've been added to the waitlist for ${event.name}.`
         : `You're confirmed for ${event.name}!`,
     );
+    load();
+  }
+
+  function handleCancelled(event: Event) {
+    setCancelFor(null);
+    setToast(`Your place at ${event.name} has been cancelled.`);
+    load();
+  }
+
+  function handleClaimed(event: Event) {
+    setClaimFor(null);
+    setToast(`Your spot at ${event.name} is confirmed!`);
     load();
   }
 
@@ -459,6 +674,8 @@ export default function BrowseEventsPage() {
               key={event.id}
               event={event}
               onApply={setApplyFor}
+              onCancel={setCancelFor}
+              onClaim={setClaimFor}
             />
           ))
         )}
@@ -469,6 +686,22 @@ export default function BrowseEventsPage() {
           event={applyFor}
           onClose={() => setApplyFor(null)}
           onDone={(waitlisted) => handleApplied(applyFor, waitlisted)}
+        />
+      )}
+
+      {cancelFor && (
+        <CancelModal
+          event={cancelFor}
+          onClose={() => setCancelFor(null)}
+          onDone={() => handleCancelled(cancelFor)}
+        />
+      )}
+
+      {claimFor && (
+        <ClaimModal
+          event={claimFor}
+          onClose={() => setClaimFor(null)}
+          onDone={() => handleClaimed(claimFor)}
         />
       )}
 

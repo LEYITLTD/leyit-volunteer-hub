@@ -131,7 +131,7 @@ export async function POST(
 
     if (tpl) {
       const statusNote = isFull
-        ? `You've been added to the waitlist at position ${waitlistPos}. We'll let you know as soon as a spot opens up.`
+        ? "You're on the waitlist. We'll email you as soon as a spot opens up — you'll need to log in and claim it."
         : "Your spot is confirmed — we look forward to seeing you there!";
 
       const vars = {

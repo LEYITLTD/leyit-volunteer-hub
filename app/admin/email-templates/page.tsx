@@ -230,6 +230,17 @@ function applyPreviewTags(html: string) {
     .replaceAll("{{password}}",    "Xk7mP9wQ2!");
 }
 
+/* ─── Template categories ────────────────────────────────────────────────── */
+
+const TEMPLATE_CATEGORIES: { label: string; keys: string[] }[] = [
+  { label: "Registration",   keys: ["registration_dbs_required", "registration_dbs_uploaded"] },
+  { label: "Events",         keys: ["event_application_received", "application_approved"] },
+  { label: "Waitlist",       keys: ["waitlist_spot_available", "volunteer_cancelled"] },
+  { label: "Compliance",     keys: ["dbs_rejected"] },
+  { label: "Certificates",   keys: ["certificate_sent"] },
+  { label: "Admin",          keys: ["admin_account_created"] },
+];
+
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export default function EmailTemplatesPage() {
@@ -316,24 +327,68 @@ export default function EmailTemplatesPage() {
         </p>
         {loading ? (
           <p style={{ fontSize: 13, color: "#A8A29E", paddingLeft: 4 }}>Loading…</p>
-        ) : templates.map(t => (
-          <button
-            key={t.key}
-            onClick={() => select(t)}
-            style={{
-              width: "100%", textAlign: "left", padding: "11px 12px",
-              borderRadius: 9, border: "none", cursor: "pointer", marginBottom: 4,
-              background: selected?.key === t.key ? "#fff" : "transparent",
-              boxShadow: selected?.key === t.key ? "0 1px 3px rgba(0,0,0,0.07)" : "none",
-              outline: selected?.key === t.key ? "1px solid #EAE6DD" : "none",
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1917", lineHeight: 1.3 }}>{t.name}</div>
-            <div style={{ fontSize: 11.5, color: "#A8A29E", marginTop: 2 }}>
-              {t.updated_at ? `Updated ${new Date(t.updated_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}` : "Not yet saved"}
-            </div>
-          </button>
-        ))}
+        ) : (() => {
+          const byKey = Object.fromEntries(templates.map(t => [t.key, t]));
+          const categorised = new Set<string>();
+
+          return (
+            <>
+              {TEMPLATE_CATEGORIES.map(cat => {
+                const catTemplates = cat.keys.map(k => byKey[k]).filter(Boolean);
+                if (catTemplates.length === 0) return null;
+                catTemplates.forEach(t => categorised.add(t.key));
+                return (
+                  <div key={cat.label} style={{ marginBottom: 12 }}>
+                    <p style={{
+                      fontSize: 9.5, fontWeight: 700, textTransform: "uppercase",
+                      letterSpacing: "0.1em", color: "#C4BCAF", marginBottom: 4, paddingLeft: 4,
+                    }}>
+                      {cat.label}
+                    </p>
+                    {catTemplates.map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => select(t)}
+                        style={{
+                          width: "100%", textAlign: "left", padding: "10px 12px",
+                          borderRadius: 9, border: "none", cursor: "pointer", marginBottom: 2,
+                          background: selected?.key === t.key ? "#fff" : "transparent",
+                          boxShadow: selected?.key === t.key ? "0 1px 3px rgba(0,0,0,0.07)" : "none",
+                          outline: selected?.key === t.key ? "1px solid #EAE6DD" : "none",
+                        }}
+                      >
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#1C1917", lineHeight: 1.3 }}>{t.name}</div>
+                        <div style={{ fontSize: 11, color: "#A8A29E", marginTop: 1 }}>
+                          {t.updated_at ? `Updated ${new Date(t.updated_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}` : "Not yet saved"}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+
+              {/* Uncategorised (safety net) */}
+              {templates.filter(t => !categorised.has(t.key)).map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => select(t)}
+                  style={{
+                    width: "100%", textAlign: "left", padding: "10px 12px",
+                    borderRadius: 9, border: "none", cursor: "pointer", marginBottom: 2,
+                    background: selected?.key === t.key ? "#fff" : "transparent",
+                    boxShadow: selected?.key === t.key ? "0 1px 3px rgba(0,0,0,0.07)" : "none",
+                    outline: selected?.key === t.key ? "1px solid #EAE6DD" : "none",
+                  }}
+                >
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#1C1917", lineHeight: 1.3 }}>{t.name}</div>
+                  <div style={{ fontSize: 11, color: "#A8A29E", marginTop: 1 }}>
+                    {t.updated_at ? `Updated ${new Date(t.updated_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}` : "Not yet saved"}
+                  </div>
+                </button>
+              ))}
+            </>
+          );
+        })()}
       </div>
 
       {/* ── Editor pane ── */}

@@ -645,10 +645,11 @@ function CheckInsTab({ eventId }: { eventId: string }) {
 
 export default function EventDetailPage() {
   const { id }  = useParams<{ id: string }>();
-  const [event,      setEvent]      = useState<Event | null>(null);
-  const [loading,    setLoading]    = useState(true);
-  const [publishing, setPublishing] = useState(false);
-  const [tab,        setTab]        = useState<PageTab>("overview");
+  const [event,          setEvent]          = useState<Event | null>(null);
+  const [loading,        setLoading]        = useState(true);
+  const [publishing,     setPublishing]     = useState(false);
+  const [tab,            setTab]            = useState<PageTab>("overview");
+  const [cancellingApp,  setCancellingApp]  = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/events/${id}`)
@@ -656,6 +657,23 @@ export default function EventDetailPage() {
       .then(setEvent)
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function cancelApplication(appId: string) {
+    setCancellingApp(appId);
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}/cancel`, { method: "POST" });
+      if (res.ok) {
+        setEvent(e => e ? {
+          ...e,
+          event_applications: e.event_applications.map(a =>
+            a.id === appId ? { ...a, status: "cancelled" } : a,
+          ),
+        } : e);
+      }
+    } finally {
+      setCancellingApp(null);
+    }
+  }
 
   async function publish() {
     if (!event) return;
@@ -842,14 +860,16 @@ export default function EventDetailPage() {
                 <table className="w-full text-[13px]">
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--color-card-border)" }}>
-                      {["Volunteer", "Role", "Status", "Date"].map(h => (
-                        <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-muted)" }}>{h}</th>
+                      {["Volunteer", "Role", "Status", "Date", ""].map((h, i) => (
+                        <th key={i} className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-muted)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {event.event_applications.map((app, i) => {
-                      const badge = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
+                      const badge      = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
+                      const canCancel  = app.status === "confirmed" || app.status === "waitlisted";
+                      const isCancelling = cancellingApp === app.id;
                       return (
                         <tr key={app.id} style={{ borderBottom: i < event.event_applications.length - 1 ? "1px solid var(--color-card-border)" : undefined }}>
                           <td className="px-5 py-3">
@@ -861,6 +881,18 @@ export default function EventDetailPage() {
                             <span className="text-[10.5px] font-semibold" style={{ background: badge.bg, color: badge.color, padding: "2px 9px", borderRadius: 6 }}>{badge.label}</span>
                           </td>
                           <td className="px-5 py-3 tabular-nums" style={{ color: "var(--color-text-secondary)" }}>{fmtShort(app.applied_at)}</td>
+                          <td className="px-5 py-3">
+                            {canCancel && (
+                              <button
+                                onClick={() => cancelApplication(app.id)}
+                                disabled={isCancelling}
+                                className="text-[11px] font-semibold px-3 py-1.5 rounded-lg"
+                                style={{ background: "#FEE2E2", color: "#DC2626", opacity: isCancelling ? 0.6 : 1 }}
+                              >
+                                {isCancelling ? "…" : "Cancel"}
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -870,14 +902,28 @@ export default function EventDetailPage() {
               {/* Mobile cards */}
               <div className="sm:hidden divide-y" style={{ borderColor: "var(--color-card-border)" }}>
                 {event.event_applications.map(app => {
-                  const badge = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
+                  const badge      = APP_STATUS[app.status] ?? APP_STATUS.confirmed;
+                  const canCancel  = app.status === "confirmed" || app.status === "waitlisted";
+                  const isCancelling = cancellingApp === app.id;
                   return (
                     <div key={app.id} className="px-4 py-3 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-[13px] truncate" style={{ color: "var(--color-text-primary)" }}>{app.volunteers.first_name} {app.volunteers.last_name}</p>
                         <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{roleName(app.role_id)} · {fmtShort(app.applied_at)}</p>
                       </div>
-                      <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: badge.bg, color: badge.color, padding: "2px 8px", borderRadius: 6 }}>{badge.label}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[10px] font-semibold" style={{ background: badge.bg, color: badge.color, padding: "2px 8px", borderRadius: 6 }}>{badge.label}</span>
+                        {canCancel && (
+                          <button
+                            onClick={() => cancelApplication(app.id)}
+                            disabled={isCancelling}
+                            className="text-[10px] font-semibold px-2.5 py-1 rounded-lg"
+                            style={{ background: "#FEE2E2", color: "#DC2626", opacity: isCancelling ? 0.6 : 1 }}
+                          >
+                            {isCancelling ? "…" : "Cancel"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

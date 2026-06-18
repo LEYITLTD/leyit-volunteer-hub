@@ -360,7 +360,16 @@ export default function RegisterPage() {
             </label>
             <label className="sm:col-span-2 flex items-start gap-2.5 text-[13px] cursor-pointer" style={{ color: "var(--color-text-primary)" }}>
               <input type="checkbox" checked={form.privacyAccepted} onChange={(e) => set("privacyAccepted", e.target.checked)} className="mt-0.5 shrink-0" />
-              I have read and accept the privacy policy.
+              <span>
+                I have read and agree to the{" "}
+                <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "#A8854A", fontWeight: 600 }}>
+                  Terms &amp; Conditions
+                </a>
+                {" "}and{" "}
+                <a href="/faq" target="_blank" rel="noreferrer" style={{ color: "#A8854A", fontWeight: 600 }}>
+                  FAQ
+                </a>.
+              </span>
             </label>
           </div>
         )}

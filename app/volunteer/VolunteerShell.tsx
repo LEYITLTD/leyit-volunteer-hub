@@ -150,6 +150,17 @@ function SidebarContents() {
       </nav>
 
       <div className="flex-shrink-0 px-2.5 py-4 border-t" style={{ borderColor: "#2C2825" }}>
+        {/* T&C / FAQ links */}
+        <div className="flex items-center gap-3 px-2.5 mb-3">
+          <Link href="/terms" className="text-[11px] font-medium" style={{ color: "#4A4440" }}>
+            Terms &amp; Conditions
+          </Link>
+          <span style={{ color: "#3A3432", fontSize: 10 }}>·</span>
+          <Link href="/faq" className="text-[11px] font-medium" style={{ color: "#4A4440" }}>
+            FAQ
+          </Link>
+        </div>
+
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"
