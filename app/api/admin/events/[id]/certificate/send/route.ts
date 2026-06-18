@@ -67,16 +67,20 @@ export async function POST(_req: Request, { params }: Params) {
   const eventName = event?.name ?? "the event";
   const results: { email: string; ok: boolean; error?: string }[] = [];
 
-  // resend.batch.send() strips attachments — send each individually
+  // Step 1: generate all PNGs and upload to storage first
+  // Step 2: get signed URLs, send all emails, then clean up
+  const uploadedPaths: string[] = [];
+
   const CONCURRENCY = 3;
+
+  // Generate + upload phase
   for (let i = 0; i < unique.length; i += CONCURRENCY) {
     const batch = unique.slice(i, i + CONCURRENCY);
     await Promise.all(
       batch.map(async (v) => {
         try {
-          const fullName = `${v.first_name} ${v.last_name}`;
-
-          const png = await generateCertificate(
+          const fullName  = `${v.first_name} ${v.last_name}`;
+          const png       = await generateCertificate(
             templateBuffer,
             fullName,
             config.name_x,
@@ -84,6 +88,39 @@ export async function POST(_req: Request, { params }: Params) {
             config.font_size,
             config.text_color,
           );
+
+          // Upload PNG to Supabase Storage
+          const storagePath = `${id}/certs/${v.id}.png`;
+          const { error: upErr } = await service.storage
+            .from("certificates")
+            .upload(storagePath, png, { contentType: "image/png", upsert: true });
+
+          if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+          uploadedPaths.push(storagePath);
+          results.push({ email: v.email, ok: true });
+        } catch (e) {
+          results.push({ email: v.email, ok: false, error: String(e) });
+          console.error(`Certificate generation failed for ${v.email}:`, e);
+        }
+      })
+    );
+  }
+
+  // Send phase — use path: signedUrl so Resend fetches the file directly
+  for (let i = 0; i < unique.length; i += CONCURRENCY) {
+    const batch = unique.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async (v) => {
+        const existing = results.find(r => r.email === v.email);
+        if (!existing?.ok) return; // skip if generation failed
+
+        try {
+          const storagePath = `${id}/certs/${v.id}.png`;
+          const { data: signed, error: signErr } = await service.storage
+            .from("certificates")
+            .createSignedUrl(storagePath, 3600); // 1 hour — plenty for Resend to fetch
+
+          if (signErr || !signed?.signedUrl) throw new Error(`Signed URL failed: ${signErr?.message}`);
 
           const { data: sendData, error: sendErr } = await resend.emails.send({
             from:    process.env.RESEND_FROM_EMAIL!,
@@ -108,24 +145,29 @@ export async function POST(_req: Request, { params }: Params) {
               </div>
             `,
             attachments: [{
-              filename:     `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
-              content:      png.toString("base64"),
-              contentType: "image/png",
+              filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
+              path:     signed.signedUrl,
             }],
           });
 
           if (sendErr) {
-            results.push({ email: v.email, ok: false, error: `Resend error: ${sendErr.message}` });
+            existing.ok    = false;
+            existing.error = `Resend error: ${sendErr.message}`;
           } else {
-            results.push({ email: v.email, ok: true });
             console.log(`Certificate sent to ${v.email} — id: ${sendData?.id}`);
           }
         } catch (e) {
-          results.push({ email: v.email, ok: false, error: String(e) });
-          console.error(`Certificate failed for ${v.email}:`, e);
+          const existing = results.find(r => r.email === v.email);
+          if (existing) { existing.ok = false; existing.error = String(e); }
+          console.error(`Send failed for ${v.email}:`, e);
         }
       })
     );
+  }
+
+  // Clean up temp PNGs from storage
+  if (uploadedPaths.length > 0) {
+    await service.storage.from("certificates").remove(uploadedPaths);
   }
 
   const sent   = results.filter(r => r.ok).length;
