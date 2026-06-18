@@ -56,6 +56,11 @@ export async function POST(request: Request) {
 
   if (createErr) return NextResponse.json({ error: createErr.message }, { status: 400 });
 
+  // Supabase admin createUser can leave token columns NULL which breaks signInWithPassword
+  // ("converting NULL to string is unsupported"). Re-setting the password via updateUserById
+  // forces Supabase to normalise all auth fields on the row.
+  await service.auth.admin.updateUserById(data.user.id, { password }).catch(() => null);
+
   // Insert into admins table (linked by email)
   const nameParts  = full_name.trim().split(" ");
   const firstName  = nameParts[0];
