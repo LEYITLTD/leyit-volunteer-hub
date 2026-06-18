@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-type Activity = { id: string; type: string; name: string; action: string; timestamp: string };
+type Activity    = { id: string; type: string; name: string; action: string; timestamp: string };
+type LeaderRow   = { volunteer_id: string; first_name: string; last_name: string; total: number };
 type Stats = {
   totalEvents:     number;
   approvedMale:    number;
@@ -11,6 +12,7 @@ type Stats = {
   pendingChecks:   number;
   totalVolunteers: number;
   activity:        Activity[];
+  leaderboard:     LeaderRow[];
 };
 
 const UK_TZ = "Europe/London";
@@ -161,59 +163,140 @@ export default function AdminOverviewPage() {
             {STAT_CARDS.map(s => <StatCard key={s.label} {...s} />)}
           </div>
 
-          {/* Activity log */}
-          <div
-            className="rounded-xl border max-w-[560px]"
-            style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", padding: "20px" }}
-          >
-            <h2
-              className="uppercase font-bold"
-              style={{ fontSize: "13px", letterSpacing: ".07em", color: "var(--color-text-muted)", margin: "0 0 6px" }}
-            >
-              Activity log
-            </h2>
+          {/* Activity log + Leaderboard row */}
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
 
-            <div style={{ maxHeight: "480px", overflowY: "auto" }}>
-              {data.activity.length === 0 ? (
-                <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
-              ) : (
-                data.activity.map((item, i) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: "flex",
-                      gap: "12px",
-                      padding: "11px 0",
-                      borderBottom: i < data.activity.length - 1 ? "1px solid var(--color-card-border)" : "none",
-                    }}
-                  >
-                    {/* Time column */}
-                    <span
+            {/* Activity log */}
+            <div
+              className="rounded-xl border flex-1 min-w-0"
+              style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", padding: "20px" }}
+            >
+              <h2
+                className="uppercase font-bold"
+                style={{ fontSize: "13px", letterSpacing: ".07em", color: "var(--color-text-muted)", margin: "0 0 6px" }}
+              >
+                Activity log
+              </h2>
+
+              <div style={{ maxHeight: "480px", overflowY: "auto" }}>
+                {data.activity.length === 0 ? (
+                  <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
+                ) : (
+                  data.activity.map((item, i) => (
+                    <div
+                      key={item.id}
                       style={{
-                        fontSize: "12px",
-                        color: "var(--color-text-muted)",
-                        fontVariantNumeric: "tabular-nums",
-                        width: "42px",
-                        flexShrink: 0,
-                        paddingTop: "1px",
+                        display: "flex",
+                        gap: "12px",
+                        padding: "11px 0",
+                        borderBottom: i < data.activity.length - 1 ? "1px solid var(--color-card-border)" : "none",
                       }}
                     >
-                      {fmtActivityTime(item.timestamp)}
-                    </span>
-
-                    {/* Content */}
-                    <div>
-                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--color-text-primary)" }}>
-                        {item.name}
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--color-text-muted)",
+                          fontVariantNumeric: "tabular-nums",
+                          width: "42px",
+                          flexShrink: 0,
+                          paddingTop: "1px",
+                        }}
+                      >
+                        {fmtActivityTime(item.timestamp)}
                       </span>
-                      <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "1px" }}>
-                        {item.action}
+                      <div>
+                        <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--color-text-primary)" }}>
+                          {item.name}
+                        </span>
+                        <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "1px" }}>
+                          {item.action}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Leaderboard */}
+            <div
+              className="rounded-xl border w-full lg:w-[280px] flex-shrink-0"
+              style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", padding: "20px" }}
+            >
+              <h2
+                className="uppercase font-bold"
+                style={{ fontSize: "13px", letterSpacing: ".07em", color: "var(--color-text-muted)", margin: "0 0 14px" }}
+              >
+                Points leaderboard
+              </h2>
+
+              {data.leaderboard.length === 0 ? (
+                <p className="text-[13px] py-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
+                  No points awarded yet.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-0">
+                  {data.leaderboard.map((v, i) => {
+                    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                    const isTop = i < 3;
+                    return (
+                      <div
+                        key={v.volunteer_id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "10px 0",
+                          borderBottom: i < data.leaderboard.length - 1 ? "1px solid var(--color-card-border)" : "none",
+                        }}
+                      >
+                        {/* Rank */}
+                        <div style={{ width: 28, flexShrink: 0, textAlign: "center" }}>
+                          {medal ? (
+                            <span style={{ fontSize: 20, lineHeight: 1 }}>{medal}</span>
+                          ) : (
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-muted)" }}>
+                              {i + 1}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Name */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p
+                            style={{
+                              fontSize: 13,
+                              fontWeight: isTop ? 700 : 500,
+                              color: "var(--color-text-primary)",
+                              margin: 0,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {v.first_name} {v.last_name}
+                          </p>
+                        </div>
+
+                        {/* Points */}
+                        <div
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontVariantNumeric: "tabular-nums",
+                            color: isTop ? "var(--color-gold)" : "var(--color-text-secondary)",
+                          }}
+                        >
+                          {v.total.toLocaleString()} <span style={{ fontSize: 10, fontWeight: 500, color: "var(--color-text-muted)" }}>pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
+
           </div>
         </>
       ) : (

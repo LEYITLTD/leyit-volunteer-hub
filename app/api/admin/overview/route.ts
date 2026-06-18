@@ -21,7 +21,7 @@ export async function GET() {
     service.from("volunteers").select("*", { count: "exact", head: true }),
   ]);
 
-  // Activity feed — 10 streams in parallel
+  // Activity feed + leaderboard — 11 streams in parallel
   const [
     newVolunteers,
     applications,
@@ -33,6 +33,7 @@ export async function GET() {
     checkIns,
     checkOuts,
     broadcasts,
+    allPoints,
   ] = await Promise.all([
     // New volunteer registrations
     service.from("volunteers")
@@ -103,6 +104,10 @@ export async function GET() {
       .select("id, subject, recipient_count, scope, sent_at")
       .order("sent_at", { ascending: false })
       .limit(10),
+
+    // All points for leaderboard aggregation
+    service.from("points_transactions")
+      .select("volunteer_id, amount, earned_at, volunteers(first_name, last_name)"),
   ]);
 
   type ActivityItem = { id: string; type: string; name: string; action: string; timestamp: string };
@@ -235,7 +240,39 @@ export async function GET() {
     });
   }
 
+  // Points awarded (recent transactions)
+  for (const pt of allPoints.data ?? []) {
+    const earned = (pt as unknown as Record<string, unknown>).earned_at as string | null;
+    const vol    = pt.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!earned || !vol) continue;
+    activity.push({
+      id:        `points-${(pt as unknown as Record<string, unknown>).id as string ?? earned}`,
+      type:      "points",
+      name:      `${vol.first_name} ${vol.last_name}`,
+      action:    `Awarded ${pt.amount} point${pt.amount === 1 ? "" : "s"}`,
+      timestamp: earned,
+    });
+  }
+
   activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  // Build leaderboard — aggregate all points per volunteer
+  type LeaderRow = { volunteer_id: string; first_name: string; last_name: string; total: number };
+  const lbMap = new Map<string, LeaderRow>();
+  for (const pt of allPoints.data ?? []) {
+    const vid = pt.volunteer_id;
+    const vol = pt.volunteers as unknown as { first_name: string; last_name: string } | null;
+    if (!vid || !vol) continue;
+    const existing = lbMap.get(vid);
+    if (existing) {
+      existing.total += pt.amount;
+    } else {
+      lbMap.set(vid, { volunteer_id: vid, first_name: vol.first_name, last_name: vol.last_name, total: pt.amount });
+    }
+  }
+  const leaderboard = Array.from(lbMap.values())
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
 
   return NextResponse.json({
     totalEvents:     events.count         ?? 0,
@@ -244,5 +281,6 @@ export async function GET() {
     pendingChecks:   pendingChecks.count  ?? 0,
     totalVolunteers: totalVolunteers.count ?? 0,
     activity:        activity.slice(0, 30),
+    leaderboard,
   });
 }
