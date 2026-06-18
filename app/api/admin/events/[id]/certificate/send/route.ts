@@ -110,7 +110,7 @@ export async function POST(_req: Request, { params }: Params) {
             attachments: [{
               filename:     `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.png`,
               content:      png.toString("base64"),
-              content_type: "image/png",
+              contentType: "image/png",
             }],
           });
 
