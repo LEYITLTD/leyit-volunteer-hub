@@ -14,15 +14,14 @@ export async function POST(_req: Request, { params }: Params) {
   const service = createServiceClient();
 
   // Load certificate config
-  const { data: config } = await service
+  const { data: config, error: cfgErr } = await service
     .from("certificate_configs")
     .select("*")
     .eq("event_id", id)
     .maybeSingle();
 
-  if (!config) {
-    return NextResponse.json({ error: "No certificate configured for this event" }, { status: 400 });
-  }
+  if (cfgErr) return NextResponse.json({ error: `Config load failed: ${cfgErr.message}` }, { status: 500 });
+  if (!config) return NextResponse.json({ error: "No certificate configured for this event" }, { status: 400 });
 
   // Download template
   const { data: blob, error: storageErr } = await service.storage
@@ -30,27 +29,28 @@ export async function POST(_req: Request, { params }: Params) {
     .download(config.template_storage_path);
 
   if (storageErr || !blob) {
-    return NextResponse.json({ error: "Failed to load certificate template" }, { status: 500 });
+    return NextResponse.json({ error: `Template download failed: ${storageErr?.message ?? "empty blob"}` }, { status: 500 });
   }
-  const templateBuffer = Buffer.from(await blob.arrayBuffer());
+
+  let templateBuffer: Buffer;
+  try {
+    templateBuffer = Buffer.from(await blob.arrayBuffer());
+  } catch (e) {
+    return NextResponse.json({ error: `Template buffer failed: ${String(e)}` }, { status: 500 });
+  }
 
   // Get event name
-  const { data: event } = await service
-    .from("events")
-    .select("name")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: event } = await service.from("events").select("name").eq("id", id).maybeSingle();
 
   // Get confirmed volunteers for this event
-  const { data: apps } = await service
+  const { data: apps, error: appsErr } = await service
     .from("event_applications")
     .select("volunteers!inner(id, first_name, last_name, email), event_roles!inner(event_id)")
     .eq("status", "confirmed")
     .eq("event_roles.event_id", id);
 
-  if (!apps || apps.length === 0) {
-    return NextResponse.json({ error: "No confirmed volunteers for this event" }, { status: 400 });
-  }
+  if (appsErr) return NextResponse.json({ error: `Volunteers query failed: ${appsErr.message}` }, { status: 500 });
+  if (!apps || apps.length === 0) return NextResponse.json({ error: "No confirmed volunteers for this event" }, { status: 400 });
 
   type AppRow = { volunteers: { id: string; first_name: string; last_name: string; email: string } };
   const volunteers = (apps as unknown as AppRow[]).map(a => a.volunteers);
@@ -63,18 +63,19 @@ export async function POST(_req: Request, { params }: Params) {
     return true;
   });
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resend    = new Resend(process.env.RESEND_API_KEY);
   const eventName = event?.name ?? "the event";
-  let sent = 0;
+  const results: { email: string; ok: boolean; error?: string }[] = [];
 
-  // Generate + send in batches of 5 (certificate gen is CPU-heavy)
-  const BATCH = 5;
-  for (let i = 0; i < unique.length; i += BATCH) {
-    const batch = unique.slice(i, i + BATCH);
-    await resend.batch.send(
-      await Promise.all(
-        batch.map(async (v) => {
+  // resend.batch.send() strips attachments — send each individually
+  const CONCURRENCY = 3;
+  for (let i = 0; i < unique.length; i += CONCURRENCY) {
+    const batch = unique.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async (v) => {
+        try {
           const fullName = `${v.first_name} ${v.last_name}`;
+
           const png = await generateCertificate(
             templateBuffer,
             fullName,
@@ -83,9 +84,10 @@ export async function POST(_req: Request, { params }: Params) {
             config.font_size,
             config.text_color,
           );
+
           const pdf = await pngToPdf(png);
 
-          return {
+          const { data: sendData, error: sendErr } = await resend.emails.send({
             from:    process.env.RESEND_FROM_EMAIL!,
             to:      v.email,
             subject: `Your certificate — ${eventName}`,
@@ -109,14 +111,26 @@ export async function POST(_req: Request, { params }: Params) {
             `,
             attachments: [{
               filename: `certificate-${v.first_name.toLowerCase()}-${v.last_name.toLowerCase()}.pdf`,
-              content:  pdf.toString("base64"),
+              content:  pdf,
             }],
-          };
-        })
-      )
+          });
+
+          if (sendErr) {
+            results.push({ email: v.email, ok: false, error: `Resend error: ${sendErr.message}` });
+          } else {
+            results.push({ email: v.email, ok: true });
+            console.log(`Certificate sent to ${v.email} — id: ${sendData?.id}`);
+          }
+        } catch (e) {
+          results.push({ email: v.email, ok: false, error: String(e) });
+          console.error(`Certificate failed for ${v.email}:`, e);
+        }
+      })
     );
-    sent += batch.length;
   }
 
-  return NextResponse.json({ sent });
+  const sent   = results.filter(r => r.ok).length;
+  const failed = results.filter(r => !r.ok);
+
+  return NextResponse.json({ sent, failed, total: unique.length });
 }

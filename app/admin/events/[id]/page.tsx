@@ -183,9 +183,13 @@ function CertificateTab({ eventId, eventName }: { eventId: string; eventName: st
     setSendingCerts(true); setSendError(null);
     try {
       const res  = await fetch(`/api/admin/events/${eventId}/certificate/send`, { method: "POST" });
-      const data = await res.json();
+      const data = await res.json() as { sent?: number; failed?: { email: string; error: string }[]; total?: number; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to send");
-      setSendResult(data.sent); setConfirmSend(false);
+      if ((data.failed?.length ?? 0) > 0) {
+        const firstErr = data.failed![0].error;
+        setSendError(`${data.failed!.length} failed. First error: ${firstErr}`);
+      }
+      setSendResult(data.sent ?? 0); setConfirmSend(false);
     } catch (e) {
       setSendError(e instanceof Error ? e.message : "Failed to send");
     } finally { setSendingCerts(false); }
@@ -406,7 +410,7 @@ function CertificateTab({ eventId, eventName }: { eventId: string; eventName: st
                   {sendError}
                 </p>
               )}
-              <div className="flex gap-3">
+              <div className="flex gap-3 max-w-sm">
                 <button onClick={() => setConfirmSend(false)}
                   className="flex-1 py-2.5 rounded-xl text-[13px] font-medium border"
                   style={{ borderColor: "var(--color-card-border)", color: "var(--color-text-secondary)" }}>
