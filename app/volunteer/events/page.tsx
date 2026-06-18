@@ -22,8 +22,12 @@ type Event = {
   id: string;
   name: string;
   city: string | null;
+  venue_name: string | null;
+  venue_address: string | null;
+  description: string | null;
   event_start: string;
   event_end: string;
+  doors_open: string | null;
   status: string;
   eligibleRoles: Role[];
   myApplication: MyApplication | null;
@@ -122,6 +126,18 @@ function ApplyModal({
                 {fmtDate(event.event_start)} · {fmtTime(event.event_start)}–{fmtTime(event.event_end)}
               </span>
             </div>
+            {event.venue_name && (
+              <div className="flex items-center gap-1 mt-0.5 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                {event.venue_name}{event.venue_address ? ` · ${event.venue_address}` : ""}
+              </div>
+            )}
+            {event.doors_open && (
+              <div className="flex items-center gap-1 mt-0.5 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Doors open {fmtTime(event.doors_open)}
+              </div>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -134,6 +150,12 @@ function ApplyModal({
 
         {/* Body */}
         <div className="p-5 flex flex-col gap-4 overflow-y-auto">
+          {/* Description */}
+          {event.description && (
+            <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              {event.description}
+            </p>
+          )}
           {availableRoles.length === 0 ? (
             <p className="text-[14px] text-center py-4" style={{ color: "var(--color-text-muted)" }}>
               All roles are currently full.
@@ -369,9 +391,18 @@ function EventCard({
       {/* Date + venue */}
       <div style={{ fontSize: 13, color: "#78716C", marginBottom: 2 }}>
         {fmtDate(event.event_start)} · {fmtTime(event.event_start)}–{fmtTime(event.event_end)}
+        {event.doors_open && <span style={{ color: "#A8A29E", marginLeft: 4 }}>(Doors {fmtTime(event.doors_open)})</span>}
       </div>
-      {event.city && (
-        <div style={{ fontSize: 13, color: "#78716C", marginBottom: 0 }}>{event.city}</div>
+      {(event.city || event.venue_name) && (
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#78716C", marginBottom: 2 }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {event.venue_name ? `${event.venue_name}${event.city ? `, ${event.city}` : ""}` : event.city}
+        </div>
+      )}
+      {event.description && (
+        <div style={{ fontSize: 12, color: "#A8A29E", marginTop: 3, marginBottom: 2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {event.description}
+        </div>
       )}
 
       {/* Role chips */}

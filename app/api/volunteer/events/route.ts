@@ -38,7 +38,7 @@ export async function GET() {
   const { data: events, error } = await service
     .from("events")
     .select(`
-      id, name, city, event_start, event_end, status,
+      id, name, city, venue_name, venue_address, description, event_start, event_end, doors_open, status,
       event_roles ( id, role_name, capacity, gender_restriction ),
       event_applications ( id, role_id, status, volunteer_id )
     `)

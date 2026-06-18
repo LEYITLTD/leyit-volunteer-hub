@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json();
-  const { name, city, event_start, event_end, roles } = body;
+  const { name, city, venue_name, venue_address, description, event_start, event_end, doors_open, roles } = body;
 
   if (!name || !event_start || !event_end) {
     return NextResponse.json({ error: "name, event_start and event_end are required" }, { status: 400 });
@@ -40,9 +40,13 @@ export async function POST(request: Request) {
     .from("events")
     .insert({
       name,
-      city: city ?? null,
+      city:          city          ?? null,
+      venue_name:    venue_name    ?? null,
+      venue_address: venue_address ?? null,
+      description:   description   ?? null,
       event_start,
       event_end,
+      doors_open:    doors_open    ?? null,
       early_bird_cutoff_days: 14,
       created_by: admin?.id ?? null,
       status: "draft",
