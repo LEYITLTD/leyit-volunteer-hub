@@ -34,7 +34,14 @@ export async function POST(request: Request) {
     first_name:  admin?.first_name ?? "Ahmed",
     last_name:   admin?.last_name  ?? "Hassan",
     event_name:  "Eman Channel Live 2025",
-    reason:      "Certificate not matching provided details.",
+    event_date:  "Saturday, 14 June 2025",
+    event_time:  "09:00 – 17:00",
+    city:        "London",
+    role_name:   "Registration Desk",
+    status_note: "Your spot is confirmed — we look forward to seeing you there!",
+    reason:      "The certificate you uploaded has expired.",
+    email:       "a.hassan@example.com",
+    password:    "Xk7mP9wQ2!",
   };
 
   const renderedBody = Object.entries(sampleVars).reduce(

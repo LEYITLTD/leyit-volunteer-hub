@@ -204,16 +204,30 @@ function RichEditor({
 const ALL_TAGS = [
   { tag: "{{first_name}}",  label: "First name" },
   { tag: "{{last_name}}",   label: "Last name" },
-  { tag: "{{event_name}}", label: "Event name" },
+  { tag: "{{event_name}}",  label: "Event name" },
+  { tag: "{{event_date}}",  label: "Event date" },
+  { tag: "{{event_time}}",  label: "Event time" },
+  { tag: "{{city}}",        label: "City" },
+  { tag: "{{role_name}}",   label: "Role name" },
+  { tag: "{{status_note}}", label: "Status note" },
   { tag: "{{reason}}",      label: "Reason" },
+  { tag: "{{email}}",       label: "Email address" },
+  { tag: "{{password}}",    label: "Temp password" },
 ];
 
 function applyPreviewTags(html: string) {
   return html
-    .replaceAll("{{first_name}}", "Ahmed")
-    .replaceAll("{{last_name}}", "Hassan")
-    .replaceAll("{{event_name}}", "Eman Channel Live")
-    .replaceAll("{{reason}}", "Certificate not matching provided details.");
+    .replaceAll("{{first_name}}",  "Ahmed")
+    .replaceAll("{{last_name}}",   "Hassan")
+    .replaceAll("{{event_name}}",  "Eman Channel Live 2025")
+    .replaceAll("{{event_date}}",  "Saturday, 14 June 2025")
+    .replaceAll("{{event_time}}",  "09:00 – 17:00")
+    .replaceAll("{{city}}",        "London")
+    .replaceAll("{{role_name}}",   "Registration Desk")
+    .replaceAll("{{status_note}}", "Your spot is confirmed — we look forward to seeing you there!")
+    .replaceAll("{{reason}}",      "The certificate you uploaded has expired.")
+    .replaceAll("{{email}}",       "a.hassan@example.com")
+    .replaceAll("{{password}}",    "Xk7mP9wQ2!");
 }
 
 /* ─── Main page ──────────────────────────────────────────────────────────── */
