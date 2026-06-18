@@ -230,7 +230,7 @@ export default function BroadcastPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", margin: "5px 0 16px", padding: "4px", background: "var(--color-bg)", borderRadius: "8px" }}>
             {(["global", "event"] as const).map(s => (
               <button key={s} onClick={() => { setScope(s); if (s === "global") setEventId(""); }}
-                style={{ padding: "8px 0", borderRadius: "6px", fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all .15s", background: scope === s ? "var(--color-card)" : "transparent", color: scope === s ? "var(--color-text-primary)" : "var(--color-text-muted)", border: scope === s ? "1px solid var(--color-card-border)" : "1px solid transparent" }}>
+                style={{ padding: "8px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all .15s", background: scope === s ? "var(--color-card)" : "transparent", color: scope === s ? "var(--color-text-primary)" : "var(--color-text-muted)", border: scope === s ? "1px solid var(--color-card-border)" : "1px solid transparent" }}>
                 {s === "global" ? "All volunteers" : "By event"}
               </button>
             ))}
