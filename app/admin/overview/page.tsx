@@ -173,7 +173,7 @@ export default function AdminOverviewPage() {
               Activity log
             </h2>
 
-            <div style={{ maxHeight: "340px", overflowY: "auto" }}>
+            <div style={{ maxHeight: "480px", overflowY: "auto" }}>
               {data.activity.length === 0 ? (
                 <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
               ) : (

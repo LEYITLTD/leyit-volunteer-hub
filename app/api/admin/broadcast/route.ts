@@ -137,5 +137,14 @@ export async function POST(request: Request) {
     sent += batch.length;
   }
 
+  // Log the broadcast (fire-and-forget — never block the response)
+  void service.from("broadcast_logs").insert({
+    subject,
+    recipient_count: sent,
+    scope:    scope ?? "global",
+    gender:   gender ?? "all",
+    event_id: event_id ?? null,
+  });
+
   return NextResponse.json({ sent });
 }
