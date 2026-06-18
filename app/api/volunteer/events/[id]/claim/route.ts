@@ -49,7 +49,7 @@ export async function POST(
     .eq("role_id", application.role_id)
     .eq("status", "confirmed");
 
-  const roleRow = application.event_roles as { capacity: number } | null;
+  const roleRow = application.event_roles as unknown as { capacity: number } | null;
   const capacity = roleRow?.capacity ?? 0;
 
   if ((confirmedCount ?? 0) >= capacity) {

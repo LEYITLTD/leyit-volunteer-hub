@@ -69,7 +69,7 @@ export async function POST(
       .single();
 
     if (tpl) {
-      const roleRow = application.event_roles as { role_name: string; events: { name: string } | null } | null;
+      const roleRow = application.event_roles as unknown as { role_name: string; events: { name: string } | null } | null;
       const vars = {
         first_name: volunteer.first_name,
         role_name:  roleRow?.role_name ?? "Volunteer",

@@ -50,16 +50,16 @@ export async function notifyWaitlist(roleId: string): Promise<void> {
   if (!tpl) return;
 
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const eventName = (role.events as { name: string } | null)?.name ?? "the event";
+  const eventName = (role.events as unknown as { name: string } | null)?.name ?? "the event";
 
   await Promise.all(
     waitlisted
       .filter((app) => {
-        const vol = app.volunteers as { gender?: string | null } | null;
+        const vol = app.volunteers as unknown as { gender?: string | null } | null;
         return genderMatches(role.gender_restriction, vol?.gender ?? null);
       })
       .map(async (app) => {
-        const vol = app.volunteers as { first_name: string; email: string } | null;
+        const vol = app.volunteers as unknown as { first_name: string; email: string } | null;
         if (!vol?.email) return;
         const vars = {
           first_name: vol.first_name,
