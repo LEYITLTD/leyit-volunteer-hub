@@ -30,11 +30,12 @@ const GENDER: Record<string, { label: string; bg: string; color: string }> = {
   female: { label: "Female", bg: "#2D1A2E", color: "#EE7DC8" },
 };
 
+const UK = "Europe/London";
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: UK });
 }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: UK });
 }
 
 function GenderBar({ gender, capacity, applied }: { gender: string; capacity: number; applied: number }) {

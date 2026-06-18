@@ -33,11 +33,11 @@ type Event = {
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
+    weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London",
   });
 }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 }
 
 const APP_STATUS: Record<string, { label: string; bg: string; color: string }> = {

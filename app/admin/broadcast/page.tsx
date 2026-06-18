@@ -15,7 +15,7 @@ type SendPayload = {
 };
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 }
 
 function fmtBytes(bytes: number) {

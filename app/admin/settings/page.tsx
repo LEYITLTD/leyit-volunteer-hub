@@ -30,7 +30,7 @@ type Template = {
 
 function fmtDate(d: string | null) {
   if (!d) return "Never";
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 }
 
 const VARIABLE_HINTS: Record<string, string[]> = {
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                           </div>
                         )}
 
-                        <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Last updated: {new Date(t.updated_at).toLocaleString("en-GB")}</p>
+                        <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Last updated: {new Date(t.updated_at).toLocaleString("en-GB", { timeZone: "Europe/London" })}</p>
                       </div>
                     </div>
                   );

@@ -43,7 +43,7 @@ type Template = { key: string; subject: string; body_html: string };
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function fmt(d: string | null) {
-  return d ? new Date(d).toLocaleDateString("en-GB") : "—";
+  return d ? new Date(d).toLocaleDateString("en-GB", { timeZone: "Europe/London" }) : "—";
 }
 
 function renderTemplate(html: string, vars: Record<string, string>) {

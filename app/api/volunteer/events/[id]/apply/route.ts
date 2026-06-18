@@ -13,11 +13,11 @@ function renderTemplate(html: string, vars: Record<string, string>) {
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London",
   });
 }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 }
 
 export async function POST(

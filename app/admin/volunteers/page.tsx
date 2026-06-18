@@ -151,7 +151,7 @@ export default function VolunteersPage() {
                       {v.email}
                     </p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-                      Registered {new Date(v.created_at).toLocaleDateString("en-GB")}
+                      Registered {new Date(v.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}
                     </p>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--color-text-muted)", flexShrink: 0, marginTop: 2 }}>
@@ -200,7 +200,7 @@ export default function VolunteersPage() {
                       {v.email}
                     </td>
                     <td className="px-5 py-3.5" style={{ color: "var(--color-text-muted)" }}>
-                      {new Date(v.created_at).toLocaleDateString("en-GB")}
+                      {new Date(v.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge map={DBS_LABELS} value={v.volunteer_compliance?.dbs_status ?? null} />
