@@ -5,7 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV = [
+/* ── Desktop sidebar nav ─────────────────────────────────── */
+
+const SIDEBAR_NAV = [
   {
     section: "My Hub",
     links: [
@@ -14,8 +16,7 @@ const NAV = [
         label: "Dashboard",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+            <path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V20a1 1 0 001 1h12a1 1 0 001-1V9.5" />
           </svg>
         ),
       },
@@ -29,8 +30,7 @@ const NAV = [
         label: "Browse Events",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+            <rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M3 9h18M8 3v4M16 3v4" />
           </svg>
         ),
       },
@@ -66,7 +66,7 @@ const NAV = [
         label: "Points & Rewards",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            <path d="M12 2l2.6 5.8 6.4.6-4.8 4.2 1.4 6.2L12 16l-5.6 2.8 1.4-6.2L3 8.4l6.4-.6z" />
           </svg>
         ),
         soon: true,
@@ -81,10 +81,9 @@ const NAV = [
         label: "My Profile",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
           </svg>
         ),
-        soon: true,
       },
       {
         href: "/volunteer/documents",
@@ -105,7 +104,6 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b flex-shrink-0" style={{ borderColor: "#2C2825" }}>
         <Image src="/assets/logo-gold.png" alt="LUL" width={32} height={32} className="h-8 w-auto object-contain flex-shrink-0" />
         <div>
@@ -116,9 +114,8 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-2.5 py-3 overflow-y-auto">
-        {NAV.map(({ section, links }) => (
+        {SIDEBAR_NAV.map(({ section, links }) => (
           <div key={section} className="mb-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] px-2 mb-1" style={{ color: "#6B6259" }}>
               {section}
@@ -142,10 +139,8 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
                   </span>
                   <span className="flex-1 truncate">{label}</span>
                   {soon && (
-                    <span
-                      className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: "#2C2825", color: "#6B6259" }}
-                    >
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                      style={{ background: "#2C2825", color: "#6B6259" }}>
                       Soon
                     </span>
                   )}
@@ -156,7 +151,6 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
         ))}
       </nav>
 
-      {/* Sign out */}
       <div className="flex-shrink-0 px-2.5 py-4 border-t" style={{ borderColor: "#2C2825" }}>
         <form action="/api/auth/logout" method="POST">
           <button
@@ -177,39 +171,122 @@ function SidebarContents({ onNav }: { onNav?: () => void }) {
   );
 }
 
+/* ── Mobile bottom tab bar ───────────────────────────────── */
+
+function BottomTabBar() {
+  const path = usePathname();
+
+  const active =
+    path.startsWith("/volunteer/dashboard") ? "home"    :
+    path.startsWith("/volunteer/events") || path.startsWith("/volunteer/applications") ? "events"  :
+    path.startsWith("/volunteer/qr-code")   ? "qr"      :
+    path.startsWith("/volunteer/points")    ? "points"  :
+    path.startsWith("/volunteer/profile")   ? "profile" : "";
+
+  const fg = (key: string) => active === key ? "#A8854A" : "#A8A29E";
+
+  return (
+    <div
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-start"
+      style={{
+        height: 84,
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderTop: "1px solid #EAE6DD",
+        paddingTop: 11,
+        paddingLeft: 14,
+        paddingRight: 14,
+      }}
+    >
+      {/* Home */}
+      <Link href="/volunteer/dashboard" className="flex-1 flex flex-col items-center gap-1" style={{ color: fg("home") }}>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V20a1 1 0 001 1h12a1 1 0 001-1V9.5" />
+        </svg>
+        <span style={{ fontSize: 10.5, fontWeight: 600 }}>Home</span>
+      </Link>
+
+      {/* Events */}
+      <Link href="/volunteer/events" className="flex-1 flex flex-col items-center gap-1" style={{ color: fg("events") }}>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M3 9h18M8 3v4M16 3v4" />
+        </svg>
+        <span style={{ fontSize: 10.5, fontWeight: 600 }}>Events</span>
+      </Link>
+
+      {/* QR — centre elevated button */}
+      <Link href="/volunteer/qr-code" className="flex-1 flex flex-col items-center" style={{ marginTop: -20 }}>
+        <div style={{
+          width: 54, height: 54, borderRadius: "50%",
+          background: "linear-gradient(135deg,#C9A227,#A8854A)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 8px 18px -4px rgba(168,133,74,0.6)",
+          border: "3px solid #fff",
+          color: "#fff",
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="3" height="3" /><rect x="18" y="18" width="3" height="3" />
+          </svg>
+        </div>
+        <span style={{ fontSize: 10.5, fontWeight: 600, color: fg("qr"), marginTop: 3 }}>QR</span>
+      </Link>
+
+      {/* Points */}
+      <Link href="/volunteer/points" className="flex-1 flex flex-col items-center gap-1" style={{ color: fg("points") }}>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2l2.6 5.8 6.4.6-4.8 4.2 1.4 6.2L12 16l-5.6 2.8 1.4-6.2L3 8.4l6.4-.6z" />
+        </svg>
+        <span style={{ fontSize: 10.5, fontWeight: 600 }}>Points</span>
+      </Link>
+
+      {/* Profile */}
+      <Link href="/volunteer/profile" className="flex-1 flex flex-col items-center gap-1" style={{ color: fg("profile") }}>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+        </svg>
+        <span style={{ fontSize: 10.5, fontWeight: 600 }}>Profile</span>
+      </Link>
+
+      {/* iOS-style home indicator */}
+      <div style={{
+        position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
+        width: 128, height: 5, borderRadius: 3, background: "#1C1917", opacity: 0.22,
+      }} />
+    </div>
+  );
+}
+
+/* ── Pending verification screen ─────────────────────────── */
+
 function PendingVerification() {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-[400px] w-full text-center">
-        {/* Hourglass icon */}
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: "#3A2E1A" }}
-        >
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: "#3A2E1A" }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0B94A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 1 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
           </svg>
         </div>
-
-        <h2
-          className="text-[22px] font-semibold mb-2"
-          style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
-        >
+        <h2 className="text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
           Verification in progress
         </h2>
         <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--color-text-secondary)" }}>
-          Your background check is being processed. This usually takes <strong style={{ color: "var(--color-text-primary)" }}>5–7 business days</strong>.
+          Your background check is being processed. This usually takes{" "}
+          <strong style={{ color: "var(--color-text-primary)" }}>5–7 business days</strong>.
         </p>
         <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>
-          We'll email you as soon as your account is ready. If you have any questions, contact{" "}
-          <a href="mailto:volunteers@leyit.dev" style={{ color: "var(--color-gold)" }}>
-            volunteers@leyit.dev
-          </a>
+          We'll email you as soon as your account is ready. Contact{" "}
+          <a href="mailto:volunteers@leyit.dev" style={{ color: "var(--color-gold)" }}>volunteers@leyit.dev</a>
         </p>
       </div>
     </div>
   );
 }
+
+/* ── Shell ───────────────────────────────────────────────── */
 
 export function VolunteerShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -236,12 +313,12 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
         <SidebarContents />
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile sidebar overlay (slide-in for rare use, e.g. deep links) */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div
             className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
             onClick={() => setMobileOpen(false)}
           />
           <aside
@@ -255,39 +332,26 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
-        <header
-          className="lg:hidden flex items-center gap-3 px-4 py-3 border-b flex-shrink-0"
-          style={{ background: "var(--color-chrome)", borderColor: "#2C2825" }}
-        >
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-1.5 -ml-1 rounded-lg"
-            style={{ color: "#9E9690" }}
-            aria-label="Open menu"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6"  x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <Image src="/assets/logo-gold.png" alt="LUL" width={28} height={28} className="h-7 w-auto object-contain" />
-          <span className="text-[12px] font-semibold" style={{ color: "var(--color-gold)" }}>LUL Global Volunteers</span>
-        </header>
-
-        <main className="flex-1 flex flex-col overflow-auto">
-          {compliance === "loading" ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
-            </div>
-          ) : compliance === "pending" ? (
-            <PendingVerification />
-          ) : (
-            children
-          )}
+        <main className="flex-1 flex flex-col overflow-auto lg:pb-0" style={{ paddingBottom: "var(--tab-bar-pad, 0)" }}>
+          {/* Add bottom padding on mobile for tab bar */}
+          <div className="flex-1 flex flex-col lg:[--tab-bar-pad:0px] [--tab-bar-pad:96px]">
+            {compliance === "loading" ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+              </div>
+            ) : compliance === "pending" ? (
+              <PendingVerification />
+            ) : (
+              <div className="flex-1 flex flex-col pb-24 lg:pb-0">
+                {children}
+              </div>
+            )}
+          </div>
         </main>
       </div>
+
+      {/* Mobile bottom tab bar */}
+      {compliance === "clear" && <BottomTabBar />}
     </div>
   );
 }
