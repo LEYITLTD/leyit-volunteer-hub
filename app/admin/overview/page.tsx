@@ -173,45 +173,47 @@ export default function AdminOverviewPage() {
               Activity log
             </h2>
 
-            {data.activity.length === 0 ? (
-              <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
-            ) : (
-              data.activity.map((item, i) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    padding: "11px 0",
-                    borderBottom: i < data.activity.length - 1 ? "1px solid var(--color-card-border)" : "none",
-                  }}
-                >
-                  {/* Time column */}
-                  <span
+            <div style={{ maxHeight: "340px", overflowY: "auto" }}>
+              {data.activity.length === 0 ? (
+                <p className="text-[13px] py-6 text-center" style={{ color: "var(--color-text-secondary)" }}>No activity yet.</p>
+              ) : (
+                data.activity.map((item, i) => (
+                  <div
+                    key={item.id}
                     style={{
-                      fontSize: "12px",
-                      color: "var(--color-text-muted)",
-                      fontVariantNumeric: "tabular-nums",
-                      width: "42px",
-                      flexShrink: 0,
-                      paddingTop: "1px",
+                      display: "flex",
+                      gap: "12px",
+                      padding: "11px 0",
+                      borderBottom: i < data.activity.length - 1 ? "1px solid var(--color-card-border)" : "none",
                     }}
                   >
-                    {fmtActivityTime(item.timestamp)}
-                  </span>
-
-                  {/* Content */}
-                  <div>
-                    <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--color-text-primary)" }}>
-                      {item.name}
+                    {/* Time column */}
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: "var(--color-text-muted)",
+                        fontVariantNumeric: "tabular-nums",
+                        width: "42px",
+                        flexShrink: 0,
+                        paddingTop: "1px",
+                      }}
+                    >
+                      {fmtActivityTime(item.timestamp)}
                     </span>
-                    <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "1px" }}>
-                      {item.action}
+
+                    {/* Content */}
+                    <div>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--color-text-primary)" }}>
+                        {item.name}
+                      </span>
+                      <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "1px" }}>
+                        {item.action}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </>
       ) : (
