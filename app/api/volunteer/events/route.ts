@@ -68,12 +68,17 @@ export async function GET() {
     });
 
     return {
-      id:           event.id,
-      name:         event.name,
-      city:         event.city,
-      event_start:  event.event_start,
-      event_end:    event.event_end,
-      status:       event.status,
+      id:            event.id,
+      name:          event.name,
+      city:          event.city,
+      venue_name:    (event as Record<string, unknown>).venue_name    as string | null ?? null,
+      venue_address: (event as Record<string, unknown>).venue_address as string | null ?? null,
+      description:   (event as Record<string, unknown>).description   as string | null ?? null,
+      doors_open:    (event as Record<string, unknown>).doors_open    as string | null ?? null,
+      thumbnail_url: (event as Record<string, unknown>).thumbnail_url as string | null ?? null,
+      event_start:   event.event_start,
+      event_end:     event.event_end,
+      status:        event.status,
       eligibleRoles: rolesWithCounts,
       myApplication,
     };

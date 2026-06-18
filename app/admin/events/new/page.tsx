@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
@@ -14,8 +14,147 @@ const GENDER_OPTIONS = [
 ];
 
 type RoleRow = { id: number; role_name: string; gender_restriction: string; capacity: string };
-
 let _nextId = 1;
+
+/* ─── Image upload area ──────────────────────────────────────────────────── */
+
+function ImageUpload({
+  name, file, preview,
+  onChange, onRemove,
+}: {
+  name: string;
+  file: File | null;
+  preview: string | null;
+  onChange: (f: File, url: string) => void;
+  onRemove: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [err,      setErr]      = useState<string | null>(null);
+
+  function validate(f: File): string | null {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) return "Only JPG, PNG or WebP allowed";
+    if (f.size > 5 * 1024 * 1024) return "File must be under 5 MB";
+    return null;
+  }
+
+  function handle(f: File) {
+    const e = validate(f);
+    if (e) { setErr(e); return; }
+    setErr(null);
+    onChange(f, URL.createObjectURL(f));
+  }
+
+  return (
+    <div>
+      {preview ? (
+        /* ── Preview ── */
+        <div>
+          <div style={{
+            position: "relative", borderRadius: 12, overflow: "hidden",
+            aspectRatio: "16/9", background: "#1C1510",
+          }}>
+            {/* Image */}
+            <img src={preview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+
+            {/* Gradient scrim */}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom,rgba(0,0,0,0.04) 0%,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.72) 100%)" }} />
+
+            {/* Event name preview overlay */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px 16px" }}>
+              {name.trim() ? (
+                <p style={{
+                  fontFamily: "'Cormorant Garamond',Georgia,serif",
+                  fontSize: 22, fontWeight: 700, color: "#fff",
+                  margin: 0, lineHeight: 1.2,
+                  textShadow: "0 1px 6px rgba(0,0,0,0.4)",
+                }}>
+                  {name}
+                </p>
+              ) : (
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: 0 }}>
+                  Fill in the event name above to preview
+                </p>
+              )}
+            </div>
+
+            {/* Remove button */}
+            <button
+              type="button" onClick={onRemove}
+              style={{
+                position: "absolute", top: 10, right: 10,
+                width: 30, height: 30, borderRadius: "50%",
+                background: "rgba(0,0,0,0.55)", border: "none",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <button
+            type="button" onClick={() => inputRef.current?.click()}
+            className="mt-2 text-[12px] font-semibold"
+            style={{ color: "var(--color-gold)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            Replace image
+          </button>
+        </div>
+      ) : (
+        /* ── Drop zone ── */
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={e => {
+            e.preventDefault(); setDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) handle(f);
+          }}
+          style={{
+            width: "100%", padding: "32px 20px", borderRadius: 12,
+            border: `2px dashed ${dragging ? "var(--color-gold)" : "var(--color-card-border)"}`,
+            background: dragging ? "var(--color-gold-subtle)" : "transparent",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            cursor: "pointer", transition: "all 0.15s ease",
+          }}
+        >
+          <div style={{
+            width: 44, height: 44, borderRadius: 10,
+            background: "var(--color-gold-subtle)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="1.5" strokeLinecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)", margin: "0 0 2px" }}>
+              Click to upload or drag &amp; drop
+            </p>
+            <p className="text-[11px]" style={{ color: "var(--color-text-muted)", margin: 0 }}>
+              JPG, PNG or WebP · Max 5 MB · 1200×675px recommended
+            </p>
+          </div>
+        </button>
+      )}
+
+      {err && <p className="mt-2 text-[12px]" style={{ color: "var(--color-error)" }}>{err}</p>}
+
+      <input
+        ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handle(f); e.target.value = ""; }}
+      />
+    </div>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -28,11 +167,13 @@ export default function NewEventPage() {
   const [startDt,      setStartDt]      = useState("");
   const [endDt,        setEndDt]        = useState("");
   const [doorsOpen,    setDoorsOpen]    = useState("");
+  const [imageFile,    setImageFile]    = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [roles,        setRoles]        = useState<RoleRow[]>([
     { id: _nextId++, role_name: "Welcome Team", gender_restriction: "any", capacity: "1" },
   ]);
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
 
   function addRole() {
     setRoles(r => [...r, { id: _nextId++, role_name: "Welcome Team", gender_restriction: "any", capacity: "1" }]);
@@ -43,10 +184,10 @@ export default function NewEventPage() {
   }
 
   async function submit() {
-    if (!name.trim())   { setError("Event name is required."); return; }
-    if (!city.trim())   { setError("City is required."); return; }
-    if (!startDt)       { setError("Start date and time is required."); return; }
-    if (!endDt)         { setError("End date and time is required."); return; }
+    if (!name.trim()) { setError("Event name is required."); return; }
+    if (!city.trim()) { setError("City is required."); return; }
+    if (!startDt)     { setError("Start date and time is required."); return; }
+    if (!endDt)       { setError("End date and time is required."); return; }
     if (new Date(endDt) <= new Date(startDt)) { setError("End time must be after start time."); return; }
     if (doorsOpen && new Date(doorsOpen) >= new Date(startDt)) { setError("Doors open time must be before the event start."); return; }
     if (roles.length === 0) { setError("Add at least one role."); return; }
@@ -58,6 +199,18 @@ export default function NewEventPage() {
     setLoading(true);
 
     try {
+      /* 1. Upload thumbnail if provided */
+      let thumbnail_url: string | null = null;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const upRes  = await fetch("/api/admin/upload/event-thumbnail", { method: "POST", body: fd });
+        const upData = await upRes.json();
+        if (!upRes.ok) throw new Error(upData.error ?? "Image upload failed");
+        thumbnail_url = upData.url as string;
+      }
+
+      /* 2. Create event */
       const res = await fetch("/api/admin/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,6 +223,7 @@ export default function NewEventPage() {
           event_start:   new Date(startDt).toISOString(),
           event_end:     new Date(endDt).toISOString(),
           doors_open:    doorsOpen ? new Date(doorsOpen).toISOString() : null,
+          thumbnail_url,
           roles: roles.map(r => ({
             role_name:          r.role_name,
             gender_restriction: r.gender_restriction,
@@ -86,22 +240,18 @@ export default function NewEventPage() {
     }
   }
 
-  const selectClass = [
+  const inputCls = [
     "w-full min-h-[44px] border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] appearance-none",
     "focus:outline-none focus:ring-2",
   ].join(" ");
-  const selectStyle = {
-    borderColor: "var(--color-input-border)",
-    background:  "var(--color-input-bg)",
-    color:       "var(--color-text-primary)",
-  };
-  const labelClass = "text-[11px] font-semibold uppercase tracking-[0.06em]";
-  const labelStyle = { color: "var(--color-text-secondary)" };
+  const inputSty = { borderColor: "var(--color-input-border)", background: "var(--color-input-bg)", color: "var(--color-text-primary)" };
+  const lblCls   = "text-[11px] font-semibold uppercase tracking-[0.06em]";
+  const lblSty   = { color: "var(--color-text-secondary)" };
 
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
       <Link href="/admin/events" className="inline-flex items-center gap-1.5 text-[13px] mb-6" style={{ color: "var(--color-text-secondary)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         Back to Events
       </Link>
 
@@ -111,32 +261,41 @@ export default function NewEventPage() {
 
       <div className="space-y-5">
 
+        {/* ── Thumbnail ─────────────────────────────────────────────────── */}
+        <div className="rounded-xl border p-5 sm:p-6" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-4" style={{ color: "var(--color-text-muted)" }}>
+            Event thumbnail <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+          </h2>
+          <ImageUpload
+            name={name}
+            file={imageFile}
+            preview={imagePreview}
+            onChange={(f, url) => { setImageFile(f); setImagePreview(url); }}
+            onRemove={() => { setImageFile(null); setImagePreview(null); }}
+          />
+        </div>
+
         {/* ── Basic info ─────────────────────────────────────────────── */}
         <div className="rounded-xl border p-5 sm:p-6 space-y-5" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-muted)" }}>Event details</h2>
 
-          {/* Name + city */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Event name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Eman Channel Volunteer Day" required />
             <Input label="City" value={city} onChange={e => setCity(e.target.value)} placeholder="e.g. London" required />
           </div>
 
-          {/* Venue name + address */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Venue name" value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="e.g. Emirates Stadium" />
             <Input label="Venue address" value={venueAddress} onChange={e => setVenueAddress(e.target.value)} placeholder="e.g. Hornsey Rd, London N7 7AJ" />
           </div>
 
-          {/* Description */}
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} style={labelStyle}>Description <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(shown to volunteers)</span></label>
+            <label className={lblCls} style={lblSty}>Description <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(shown to volunteers)</span></label>
             <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={3}
+              value={description} onChange={e => setDescription(e.target.value)} rows={3}
               placeholder="Brief overview of what volunteers will be doing at this event…"
               className="w-full border rounded-[var(--radius-md)] px-3 py-2.5 text-[14px] resize-none focus:outline-none focus:ring-2"
-              style={{ ...selectStyle, lineHeight: 1.6 }}
+              style={{ ...inputSty, lineHeight: 1.6 }}
             />
           </div>
         </div>
@@ -144,19 +303,18 @@ export default function NewEventPage() {
         {/* ── Date & time ────────────────────────────────────────────── */}
         <div className="rounded-xl border p-5 sm:p-6 space-y-4" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-muted)" }}>Date &amp; time</h2>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className={labelClass} style={labelStyle}>Doors open <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span></label>
-              <input type="datetime-local" value={doorsOpen} onChange={e => setDoorsOpen(e.target.value)} className={selectClass} style={selectStyle} />
+              <label className={lblCls} style={lblSty}>Doors open <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span></label>
+              <input type="datetime-local" value={doorsOpen} onChange={e => setDoorsOpen(e.target.value)} className={inputCls} style={inputSty} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className={labelClass} style={labelStyle}>Event starts <span style={{ color: "var(--color-error)" }}>*</span></label>
-              <input type="datetime-local" value={startDt} onChange={e => setStartDt(e.target.value)} className={selectClass} style={selectStyle} />
+              <label className={lblCls} style={lblSty}>Event starts <span style={{ color: "var(--color-error)" }}>*</span></label>
+              <input type="datetime-local" value={startDt} onChange={e => setStartDt(e.target.value)} className={inputCls} style={inputSty} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className={labelClass} style={labelStyle}>Event ends <span style={{ color: "var(--color-error)" }}>*</span></label>
-              <input type="datetime-local" value={endDt} onChange={e => setEndDt(e.target.value)} className={selectClass} style={selectStyle} />
+              <label className={lblCls} style={lblSty}>Event ends <span style={{ color: "var(--color-error)" }}>*</span></label>
+              <input type="datetime-local" value={endDt} onChange={e => setEndDt(e.target.value)} className={inputCls} style={inputSty} />
             </div>
           </div>
         </div>
@@ -183,22 +341,16 @@ export default function NewEventPage() {
                     <button onClick={() => removeRole(row.id)} className="text-[11px] px-2 py-0.5 rounded" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>Remove</button>
                   )}
                 </div>
-
-                <select value={row.role_name} onChange={e => updateRole(row.id, "role_name", e.target.value)} className={selectClass} style={selectStyle}>
+                <select value={row.role_name} onChange={e => updateRole(row.id, "role_name", e.target.value)} className={inputCls} style={inputSty}>
                   {ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}
                 </select>
-
-                <select value={row.gender_restriction} onChange={e => updateRole(row.id, "gender_restriction", e.target.value)} className={selectClass} style={selectStyle}>
+                <select value={row.gender_restriction} onChange={e => updateRole(row.id, "gender_restriction", e.target.value)} className={inputCls} style={inputSty}>
                   {GENDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-
-                <input type="number" min="1" value={row.capacity} onChange={e => updateRole(row.id, "capacity", e.target.value)} placeholder="Qty" className={selectClass} style={selectStyle} />
-
-                <button
-                  onClick={() => removeRole(row.id)} disabled={roles.length === 1}
+                <input type="number" min="1" value={row.capacity} onChange={e => updateRole(row.id, "capacity", e.target.value)} placeholder="Qty" className={inputCls} style={inputSty} />
+                <button onClick={() => removeRole(row.id)} disabled={roles.length === 1}
                   className="hidden sm:flex items-center justify-center w-8 h-[44px] rounded-lg"
-                  style={{ color: roles.length === 1 ? "#3A3530" : "#9E9690", background: "transparent" }}
-                >
+                  style={{ color: roles.length === 1 ? "#3A3530" : "#9E9690", background: "transparent" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                   </svg>
@@ -207,11 +359,8 @@ export default function NewEventPage() {
             ))}
           </div>
 
-          <button
-            onClick={addRole}
-            className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold px-3 py-2 rounded-lg"
-            style={{ color: "var(--color-gold)", background: "var(--color-gold-subtle)" }}
-          >
+          <button onClick={addRole} className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold px-3 py-2 rounded-lg"
+            style={{ color: "var(--color-gold)", background: "var(--color-gold-subtle)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
