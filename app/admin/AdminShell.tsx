@@ -87,6 +87,15 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/email-templates",
+    label: "Templates",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16v4H4zM4 12h10M4 16h10M14 12h6v8h-6z"/>
+      </svg>
+    ),
+  },
+  {
     href: "/admin/settings",
     label: "Settings",
     icon: (
