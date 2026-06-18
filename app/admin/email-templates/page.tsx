@@ -186,7 +186,7 @@ function RichEditor({
   useEffect(() => {
     if (!editor) return;
     if (content !== prevContent.current && content !== editor.getHTML()) {
-      editor.commands.setContent(content, false);
+      editor.commands.setContent(content);
     }
     prevContent.current = content;
   }, [content, editor]);
