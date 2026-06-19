@@ -298,37 +298,64 @@ export default function BroadcastPage() {
           ) : history.length === 0 ? (
             <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>No broadcasts sent yet.</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {history.map(b => {
-                const openRate = b.stats.total > 0 ? Math.round((b.stats.opened / b.stats.total) * 100) : 0;
+                const openRate   = b.stats.total > 0 ? Math.round((b.stats.opened / b.stats.total) * 100) : 0;
                 const scopeLabel = b.event_name ?? (b.scope === "global" ? "All volunteers" : b.scope);
                 const genderLabel = b.gender === "all" ? "" : b.gender === "male" ? " · Brothers" : " · Sisters";
+                const rateColor  = openRate >= 30 ? "#16A34A" : openRate >= 15 ? "#D97706" : "var(--color-text-secondary)";
+                const sentTime   = new Date(b.sent_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
                 return (
-                  <Link key={b.id} href={`/admin/broadcast/${b.id}`} style={{ textDecoration: "none" }}>
-                    <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 10, padding: "14px 18px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", transition: "border-color .15s" }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--color-gold)")}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--color-card-border)")}>
-                      <div style={{ flexShrink: 0, textAlign: "center", minWidth: 50 }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: openRate >= 30 ? "#16A34A" : openRate >= 15 ? "#D97706" : "var(--color-text-secondary)", letterSpacing: "-0.02em" }}>{openRate}%</div>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>opened</div>
-                      </div>
-                      <div style={{ width: 1, height: 32, background: "var(--color-card-border)", flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.subject}</div>
-                        <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>
-                          {new Date(b.sent_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" })}
-                          {" · "}{scopeLabel}{genderLabel}{" · "}{b.recipient_count} recipients
+                  <Link key={b.id} href={`/admin/broadcast/${b.id}`} style={{ textDecoration: "none", display: "block" }}>
+                    <div
+                      style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 14, padding: "20px 24px", cursor: "pointer", transition: "border-color .15s, box-shadow .15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--color-gold)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--color-card-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
+                      {/* Top row: subject + arrow */}
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>
+                            {b.subject}
+                          </div>
+                          <div style={{ fontSize: 12, color: "var(--color-text-muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <span>{sentTime}</span>
+                            <span style={{ opacity: 0.4 }}>·</span>
+                            <span>{scopeLabel}{genderLabel}</span>
+                            <span style={{ opacity: 0.4 }}>·</span>
+                            <span>{b.recipient_count} recipients</span>
+                          </div>
                         </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="9 18 15 12 9 6"/></svg>
                       </div>
-                      <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
-                        {[{ label: "Delivered", val: b.stats.delivered, color: "#3B82F6" }, { label: "Opened", val: b.stats.opened, color: "#16A34A" }, { label: "Clicked", val: b.stats.clicked, color: "#EA580C" }].map(s => (
-                          <div key={s.label} style={{ textAlign: "center", minWidth: 44 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{s.val}</div>
-                            <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{s.label}</div>
+
+                      {/* Divider */}
+                      <div style={{ height: 1, background: "var(--color-card-border)", marginBottom: 16 }} />
+
+                      {/* Stats row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                        {/* Open rate — hero stat */}
+                        <div style={{ textAlign: "center", flex: "0 0 80px" }}>
+                          <div style={{ fontSize: 26, fontWeight: 800, color: rateColor, letterSpacing: "-0.03em", lineHeight: 1 }}>{openRate}%</div>
+                          <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: 3 }}>Open rate</div>
+                        </div>
+
+                        <div style={{ width: 1, height: 40, background: "var(--color-card-border)", flexShrink: 0, margin: "0 20px" }} />
+
+                        {/* Other stats spread */}
+                        {[
+                          { label: "Sent",      val: b.stats.total,     color: "var(--color-text-primary)" },
+                          { label: "Delivered", val: b.stats.delivered, color: "#3B82F6" },
+                          { label: "Opened",    val: b.stats.opened,    color: "#16A34A" },
+                          { label: "Clicked",   val: b.stats.clicked,   color: "#EA580C" },
+                          { label: "Bounced",   val: b.stats.bounced,   color: "#DC2626" },
+                        ].map((s, i, arr) => (
+                          <div key={s.label} style={{ flex: 1, textAlign: "center", borderRight: i < arr.length - 1 ? "1px solid var(--color-card-border)" : "none", padding: "0 12px" }}>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: s.color, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.val}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>{s.label}</div>
                           </div>
                         ))}
                       </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   </Link>
                 );
