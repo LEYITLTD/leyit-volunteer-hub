@@ -9,7 +9,7 @@ type Volunteer = {
   last_name:  string;
 };
 
-const BASE_URL = "https://volunteer-hub-leyitltds-projects.vercel.app";
+const BASE_URL = "https://volunteer-hub-nine.vercel.app";
 
 export default function QrCodePage() {
   const [volunteer, setVolunteer] = useState<Volunteer | null>(null);

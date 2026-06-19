@@ -160,7 +160,7 @@ export default function EventsPage() {
       {/* Header */}
       <div className="flex items-start sm:items-center justify-between gap-3 mb-6 flex-col sm:flex-row">
         <div>
-          <h1 className="text-[28px] sm:text-[30px] font-semibold" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
+          <h1 className="text-[24px] sm:text-[26px] font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
             Events
           </h1>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>

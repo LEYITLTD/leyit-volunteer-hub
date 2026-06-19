@@ -7,7 +7,7 @@ import QRCode from "qrcode";
 type Recipient  = { id: string; email: string; first_name: string; last_name: string };
 type Attachment = { filename: string; content: string };
 
-const APP_BASE = "https://volunteer-hub-leyitltds-projects.vercel.app";
+const APP_BASE = "https://volunteer-hub-nine.vercel.app";
 
 async function getRecipients(
   service: ReturnType<typeof createServiceClient>,

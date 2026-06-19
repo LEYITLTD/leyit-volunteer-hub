@@ -405,7 +405,7 @@ export default function EmailTemplatesPage() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22, gap: 12 }}>
               <div>
-                <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 600, color: "#1C1917", margin: 0, lineHeight: 1.2 }}>
+                <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1C1917", margin: 0, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
                   {selected.name}
                 </h1>
                 <p style={{ fontSize: 13, color: "#78716C", marginTop: 4 }}>

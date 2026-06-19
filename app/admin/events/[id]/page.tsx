@@ -924,7 +924,7 @@ export default function EventDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h1 className="text-[24px] sm:text-[28px] font-semibold leading-tight" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
+            <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight leading-tight" style={{ color: "var(--color-text-primary)" }}>
               {event.name}
             </h1>
             <span className="text-[11px] font-semibold" style={{ background: s.bg, color: s.color, padding: "3px 10px", borderRadius: 6 }}>

@@ -567,10 +567,7 @@ export default function CompliancePage() {
   return (
     <div style={{ padding: "28px 28px 40px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Page heading */}
-      <h1 style={{
-        fontFamily: "var(--font-cormorant, 'Cormorant Garamond', Georgia, serif)",
-        fontSize: 30, fontWeight: 600, color: "#1C1917", marginBottom: 4,
-      }}>
+      <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1C1917", marginBottom: 4, letterSpacing: "-0.02em" }}>
         Compliance
       </h1>
       <p style={{ fontSize: 14, color: "#78716C", marginBottom: 24, marginTop: 0 }}>

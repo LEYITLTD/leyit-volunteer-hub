@@ -64,8 +64,7 @@ function ImageUpload({
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px 16px" }}>
               {name.trim() ? (
                 <p style={{
-                  fontFamily: "'Cormorant Garamond',Georgia,serif",
-                  fontSize: 22, fontWeight: 700, color: "#fff",
+                  fontSize: 18, fontWeight: 700, color: "#fff",
                   margin: 0, lineHeight: 1.2,
                   textShadow: "0 1px 6px rgba(0,0,0,0.4)",
                 }}>

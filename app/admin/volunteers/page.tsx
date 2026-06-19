@@ -80,7 +80,7 @@ export default function VolunteersPage() {
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-[28px] sm:text-[30px] font-semibold" style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--color-text-primary)" }}>
+          <h1 className="text-[24px] sm:text-[26px] font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
             Volunteers
           </h1>
           <p className="text-[13px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
