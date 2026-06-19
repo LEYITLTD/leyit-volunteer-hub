@@ -86,65 +86,89 @@ export async function POST(request: Request) {
     }
   }
 
-  // Send in batches of 50
-  const BATCH = 50;
-  let sent = 0;
-  for (let i = 0; i < recipients.length; i += BATCH) {
-    const batch = recipients.slice(i, i + BATCH);
-    await resend.batch.send(
-      batch.map(r => {
-        const personalSubject = subject
-          .replace(/\{\{first_name\}\}/g, r.first_name)
-          .replace(/\{\{last_name\}\}/g,  r.last_name ?? "");
-        const personalBody = message
-          .replace(/\{\{first_name\}\}/g, r.first_name)
-          .replace(/\{\{last_name\}\}/g,  r.last_name ?? "");
+  // Build email payload for a recipient
+  function buildEmail(r: Recipient) {
+    const personalSubject = subject
+      .replace(/\{\{first_name\}\}/g, r.first_name)
+      .replace(/\{\{last_name\}\}/g,  r.last_name ?? "");
+    const personalBody = message
+      .replace(/\{\{first_name\}\}/g, r.first_name)
+      .replace(/\{\{last_name\}\}/g,  r.last_name ?? "");
 
-        const qrSection = qrMap.has(r.id) ? `
-          <div style="margin-top:24px;padding-top:20px;border-top:1px solid #E8E3DC;text-align:center;">
-            <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9E9690;margin:0 0 12px;">Your Check-in QR Code</p>
-            <p style="font-size:12px;color:#7A6F65;margin:0 0 14px;">Show this at the event entrance to check in.</p>
-            <img src="${qrMap.get(r.id)}" alt="QR Code" width="180" height="180" style="display:block;margin:0 auto;border-radius:10px;border:4px solid #F5F2EE;" />
+    const qrSection = qrMap.has(r.id) ? `
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid #E8E3DC;text-align:center;">
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9E9690;margin:0 0 12px;">Your Check-in QR Code</p>
+        <p style="font-size:12px;color:#7A6F65;margin:0 0 14px;">Show this at the event entrance to check in.</p>
+        <img src="${qrMap.get(r.id)}" alt="QR Code" width="180" height="180" style="display:block;margin:0 auto;border-radius:10px;border:4px solid #F5F2EE;" />
+      </div>
+    ` : "";
+
+    return {
+      from:    process.env.RESEND_FROM_EMAIL!,
+      to:      r.email,
+      subject: personalSubject,
+      html: `
+        <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #E8E3DC;">
+          <div style="background:#1A1714;padding:16px 24px;">
+            <span style="font-size:13px;font-weight:700;color:#A8854A;letter-spacing:0.08em;text-transform:uppercase;">LUL Global Volunteers</span>
           </div>
-        ` : "";
-
-        return {
-          from:    process.env.RESEND_FROM_EMAIL!,
-          to:      r.email,
-          subject: personalSubject,
-          html: `
-            <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #E8E3DC;">
-              <div style="background:#1A1714;padding:16px 24px;">
-                <span style="font-size:13px;font-weight:700;color:#A8854A;letter-spacing:0.08em;text-transform:uppercase;">LUL Global Volunteers</span>
-              </div>
-              <div style="padding:28px 24px;color:#1A1714;">
-                <div style="font-size:14px;line-height:1.7;color:#2C2825;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
-                ${qrSection}
-                <hr style="border:none;border-top:1px solid #E8E3DC;margin:24px 0;" />
-                <p style="font-size:12px;color:#9E9690;margin:0;">
-                  LUL Global Volunteers &mdash;
-                  <a href="mailto:volunteers@leyit.dev" style="color:#B8861B;">volunteers@leyit.dev</a>
-                </p>
-              </div>
-            </div>
-          `,
-          ...(attachments.length > 0 && {
-            attachments: attachments.map(a => ({ filename: a.filename, content: a.content })),
-          }),
-        };
-      })
-    );
-    sent += batch.length;
+          <div style="padding:28px 24px;color:#1A1714;">
+            <div style="font-size:14px;line-height:1.7;color:#2C2825;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+            ${qrSection}
+            <hr style="border:none;border-top:1px solid #E8E3DC;margin:24px 0;" />
+            <p style="font-size:12px;color:#9E9690;margin:0;">
+              LUL Global Volunteers &mdash;
+              <a href="mailto:volunteers@leyit.dev" style="color:#B8861B;">volunteers@leyit.dev</a>
+            </p>
+          </div>
+        </div>
+      `,
+      ...(attachments.length > 0 && {
+        attachments: attachments.map(a => ({ filename: a.filename, content: a.content })),
+      }),
+    };
   }
 
-  // Log the broadcast (fire-and-forget — never block the response)
-  void service.from("broadcast_logs").insert({
-    subject,
-    recipient_count: sent,
-    scope:    scope ?? "global",
-    gender:   gender ?? "all",
-    event_id: event_id ?? null,
-  });
+  // Send in batches of 50, capturing per-recipient Resend message IDs
+  const BATCH = 50;
+  const recipientResults: { recipient: Recipient; messageId: string | null }[] = [];
+
+  for (let i = 0; i < recipients.length; i += BATCH) {
+    const batch = recipients.slice(i, i + BATCH);
+    const { data } = await resend.batch.send(batch.map(buildEmail));
+    batch.forEach((r, j) => {
+      recipientResults.push({ recipient: r, messageId: data?.[j]?.id ?? null });
+    });
+  }
+
+  const sent = recipientResults.length;
+
+  // Insert broadcast log, then per-recipient rows
+  const { data: logRow } = await service
+    .from("broadcast_logs")
+    .insert({
+      subject,
+      recipient_count: sent,
+      scope:    scope ?? "global",
+      gender:   gender ?? "all",
+      event_id: event_id ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (logRow?.id) {
+    void service.from("broadcast_recipients").insert(
+      recipientResults.map(({ recipient, messageId }) => ({
+        broadcast_id:      logRow.id,
+        volunteer_id:      recipient.id,
+        email:             recipient.email,
+        first_name:        recipient.first_name,
+        last_name:         recipient.last_name ?? null,
+        resend_message_id: messageId,
+        status:            "sent",
+      }))
+    );
+  }
 
   return NextResponse.json({ sent });
 }

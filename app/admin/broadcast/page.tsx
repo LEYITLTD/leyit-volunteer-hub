@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 
 type Scope      = "global" | "event";
 type Gender     = "all" | "male" | "female";
@@ -12,6 +13,17 @@ type SendPayload = {
   subject: string; message: string;
   attachments: { filename: string; content: string }[];
   include_qr: boolean;
+};
+
+type BroadcastHistory = {
+  id: string;
+  subject: string;
+  recipient_count: number;
+  scope: string;
+  gender: string;
+  event_name: string | null;
+  sent_at: string;
+  stats: { total: number; delivered: number; opened: number; clicked: number; bounced: number };
 };
 
 function fmtDate(d: string) {
@@ -57,6 +69,9 @@ export default function BroadcastPage() {
   const [sentCount,   setSentCount]   = useState(0);
   const [dragging,    setDragging]    = useState(false);
 
+  const [history,     setHistory]     = useState<BroadcastHistory[]>([]);
+  const [histLoading, setHistLoading] = useState(true);
+
   const subjectRef    = useRef<HTMLInputElement>(null);
   const messageRef    = useRef<HTMLTextAreaElement>(null);
   const fileInputRef  = useRef<HTMLInputElement>(null);
@@ -67,6 +82,16 @@ export default function BroadcastPage() {
       .then(r => r.json())
       .then(d => setEvents(Array.isArray(d) ? d.map((e: { id: string; name: string; event_start: string }) => ({ id: e.id, name: e.name, event_start: e.event_start })) : []));
   }, []);
+
+  const fetchHistory = useCallback(() => {
+    setHistLoading(true);
+    fetch("/api/admin/broadcast/history")
+      .then(r => r.json())
+      .then(d => setHistory(Array.isArray(d) ? d : []))
+      .finally(() => setHistLoading(false));
+  }, []);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   const fetchCount = useCallback(() => {
     if (scope === "event" && !eventId) { setCount(null); return; }
@@ -130,6 +155,7 @@ export default function BroadcastPage() {
       if (!res.ok) throw new Error(data.error ?? "Failed to send");
       setSentCount(data.sent);
       setStep("done");
+      fetchHistory();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send");
       setStep("compose");
@@ -453,6 +479,74 @@ export default function BroadcastPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* ── History ───────────────────────────────────────────────────────── */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--color-text-primary)", margin: 0 }}>Past Broadcasts</h2>
+          <button onClick={fetchHistory} style={{ fontSize: 12, color: "var(--color-text-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>Refresh</button>
+        </div>
+
+        {histLoading ? (
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Loading…</p>
+        ) : history.length === 0 ? (
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>No broadcasts sent yet.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {history.map(b => {
+              const openRate = b.stats.total > 0 ? Math.round((b.stats.opened / b.stats.total) * 100) : 0;
+              const scopeLabel = b.event_name ?? (b.scope === "global" ? "All volunteers" : b.scope);
+              const genderLabel = b.gender === "all" ? "" : b.gender === "male" ? " · Brothers" : " · Sisters";
+              return (
+                <Link key={b.id} href={`/admin/broadcast/${b.id}`} style={{ textDecoration: "none" }}>
+                  <div style={{
+                    background: "var(--color-card)", border: "1px solid var(--color-card-border)",
+                    borderRadius: 10, padding: "14px 18px", display: "flex", alignItems: "center",
+                    gap: 16, cursor: "pointer", transition: "border-color .15s",
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--color-gold)")}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--color-card-border)")}
+                  >
+                    {/* Open rate circle */}
+                    <div style={{ flexShrink: 0, textAlign: "center", minWidth: 50 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: openRate >= 30 ? "#16A34A" : openRate >= 15 ? "#D97706" : "var(--color-text-secondary)", letterSpacing: "-0.02em" }}>{openRate}%</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>opened</div>
+                    </div>
+
+                    <div style={{ width: 1, height: 32, background: "var(--color-card-border)", flexShrink: 0 }} />
+
+                    {/* Subject + meta */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.subject}</div>
+                      <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>
+                        {new Date(b.sent_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" })}
+                        {" · "}{scopeLabel}{genderLabel}
+                        {" · "}{b.recipient_count} recipients
+                      </div>
+                    </div>
+
+                    {/* Mini stat pills */}
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {[
+                        { label: "Delivered", val: b.stats.delivered, color: "#3B82F6" },
+                        { label: "Opened",    val: b.stats.opened,    color: "#16A34A" },
+                        { label: "Clicked",   val: b.stats.clicked,   color: "#EA580C" },
+                      ].map(s => (
+                        <div key={s.label} style={{ textAlign: "center", minWidth: 44 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{s.val}</div>
+                          <div style={{ fontSize: 9, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
