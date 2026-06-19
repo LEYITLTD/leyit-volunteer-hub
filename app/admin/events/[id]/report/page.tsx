@@ -70,7 +70,7 @@ function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: stri
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ width: 4, height: 22, background: "linear-gradient(180deg,#C9A227,#A8854A)", borderRadius: 2, flexShrink: 0 }} />
-        <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 700, color: "#1C1917", margin: 0 }}>
+        <h2 style={{ fontFamily: "Montserrat, 'Inter', system-ui, sans-serif", fontSize: 16, fontWeight: 800, color: "#1C1917", margin: 0 }}>
           {children}
         </h2>
       </div>
@@ -431,25 +431,30 @@ export default function EventReportPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* ── Report body ───────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 60px", fontFamily: "'Hanken Grotesk', 'Inter', system-ui, sans-serif" }}>
-
-        {/* Gold gradient accent bar */}
-        <div style={{ height: 4, background: "linear-gradient(90deg,#C9A227,#A8854A,#C9A22720)", borderRadius: 2, marginBottom: 28 }} />
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 60px", fontFamily: "Montserrat, 'Inter', system-ui, sans-serif" }}>
 
         {/* ── Event header ─────────────────────────────────────────────── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#A8A29E", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            VolunteerHub · Event Report
-          </div>
-          <div style={{ fontSize: 10, color: "#A8A29E" }}>
-            Generated {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          {/* Logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/logo-gold.png" alt="LUL Global Volunteers" style={{ height: 48, width: "auto", objectFit: "contain" }} />
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#A8A29E", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Event Report
+            </div>
+            <div style={{ fontSize: 10, color: "#A8A29E", marginTop: 2 }}>
+              Generated {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+            </div>
           </div>
         </div>
 
+        {/* Gold gradient accent bar */}
+        <div style={{ height: 3, background: "linear-gradient(90deg,#C9A227,#A8854A,#C9A22720)", borderRadius: 2, marginBottom: 24 }} />
+
         <h1 style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          fontSize: 36, fontWeight: 700, color: "#1C1917",
-          margin: "8px 0 10px", lineHeight: 1.1, letterSpacing: "-0.01em",
+          fontFamily: "Montserrat, 'Inter', system-ui, sans-serif",
+          fontSize: 30, fontWeight: 800, color: "#1C1917",
+          margin: "0 0 10px", lineHeight: 1.1, letterSpacing: "-0.02em",
         }}>
           {event.name}
         </h1>
@@ -585,7 +590,7 @@ export default function EventReportPage({ params }: { params: Promise<{ id: stri
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 6 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, fontWeight: 700, color: "#1C1917", margin: 0 }}>
+                        <h3 style={{ fontFamily: "Montserrat, 'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 700, color: "#1C1917", margin: 0 }}>
                           {rd.role.role_name}
                         </h3>
                         <span style={{
@@ -689,7 +694,7 @@ export default function EventReportPage({ params }: { params: Promise<{ id: stri
 
         {/* Footer */}
         <div style={{ marginTop: 48, paddingTop: 16, borderTop: "1px solid #EAE6DD", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 11, color: "#D1C9C0" }}>VolunteerHub · {event.name}</div>
+          <div style={{ fontSize: 11, color: "#D1C9C0" }}>LUL Global Volunteers · {event.name}</div>
           <div style={{ fontSize: 11, color: "#D1C9C0" }}>Confidential — Internal use only</div>
         </div>
       </div>

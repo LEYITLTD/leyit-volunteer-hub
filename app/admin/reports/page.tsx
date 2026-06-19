@@ -56,7 +56,7 @@ function EventCard({ event }: { event: EventRow }) {
       }}>
         <div style={{
           fontSize: 20, fontWeight: 700, lineHeight: 1,
-          fontFamily: "var(--font-cormorant,'Cormorant Garamond',serif)",
+          fontFamily: "Montserrat, 'Inter', system-ui, sans-serif",
           color: isPast ? "var(--color-text-muted)" : "var(--color-gold)",
         }}>
           {new Date(event.event_start).toLocaleDateString("en-GB", { day: "numeric", timeZone: "Europe/London" })}
@@ -177,7 +177,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{
-          fontFamily: "var(--font-cormorant,'Cormorant Garamond',serif)",
+          fontFamily: "Montserrat, 'Inter', system-ui, sans-serif",
           fontSize: 30, fontWeight: 600, color: "var(--color-text-primary)",
           margin: "0 0 4px",
         }}>
