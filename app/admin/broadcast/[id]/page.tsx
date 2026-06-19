@@ -85,10 +85,18 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
   const [search,  setSearch]  = useState("");
 
   useEffect(() => {
-    fetch(`/api/admin/broadcast/${id}`)
-      .then(r => r.json())
-      .then(d => setData(d))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    function fetchData() {
+      fetch(`/api/admin/broadcast/${id}`)
+        .then(r => r.json())
+        .then(d => { if (!cancelled) setData(d); })
+        .finally(() => { if (!cancelled) setLoading(false); });
+    }
+
+    fetchData();
+    const interval = setInterval(fetchData, 10_000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [id]);
 
   if (loading) {
