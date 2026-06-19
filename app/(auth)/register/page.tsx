@@ -122,6 +122,9 @@ export default function RegisterPage() {
       if (!form.email || !form.email.includes("@"))    return "Please enter a valid email address.";
       if (!form.phone)                                  return "Please enter a phone number.";
       if (!form.dateOfBirth)                            return "Please enter your date of birth.";
+      const dob = new Date(form.dateOfBirth);
+      const age = (new Date().getFullYear() - dob.getFullYear()) - (new Date() < new Date(new Date().getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+      if (age < 16)                                     return "You must be 16 or older to register.";
       if (!form.gender)                                 return "Please select your gender.";
       if (!form.addressLine1)                            return "Please enter your address (line 1).";
       if (!form.city)                                    return "Please enter your city or town.";
@@ -235,7 +238,18 @@ export default function RegisterPage() {
             <Input label="Last name" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} required />
             <Input label="Email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
             <Input label="Phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
-            <Input label="Date of birth" type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} required />
+            <div className="flex flex-col gap-1">
+              <Input label="Date of birth" type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} required />
+              {form.dateOfBirth && (() => {
+                const dob = new Date(form.dateOfBirth);
+                const age = (new Date().getFullYear() - dob.getFullYear()) - (new Date() < new Date(new Date().getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+                return age < 16 ? (
+                  <p style={{ fontSize: 12, color: "var(--color-error)", fontWeight: 600, marginTop: 2 }}>
+                    You must be 16 or older to register.
+                  </p>
+                ) : null;
+              })()}
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text-secondary">
                 Gender <span style={{ color: "var(--color-error)" }}>*</span>
