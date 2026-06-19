@@ -8,38 +8,26 @@ export async function GET() {
 
   const service = createServiceClient();
 
-  const { data, error: dbError } = await service
-    .from("broadcast_logs")
-    .select(`
-      id, subject, recipient_count, scope, gender, event_id, sent_at,
-      events ( name ),
-      broadcast_recipients ( status )
-    `)
-    .order("sent_at", { ascending: false })
-    .limit(50);
+  const { data, error: dbError } = await service.rpc("broadcast_history");
 
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (dbError) {
+    // Fallback: plain logs without stats
+    const { data: logs, error: logsErr } = await service
+      .from("broadcast_logs")
+      .select("id, subject, recipient_count, scope, gender, event_id, sent_at")
+      .order("sent_at", { ascending: false })
+      .limit(50);
 
-  const rows = (data ?? []).map((b) => {
-    const recipients = (b.broadcast_recipients ?? []) as { status: string }[];
-    const total      = recipients.length;
-    const delivered  = recipients.filter(r => ["delivered","opened","clicked"].includes(r.status)).length;
-    const opened     = recipients.filter(r => ["opened","clicked"].includes(r.status)).length;
-    const clicked    = recipients.filter(r => r.status === "clicked").length;
-    const bounced    = recipients.filter(r => r.status === "bounced").length;
+    if (logsErr) return NextResponse.json({ error: logsErr.message }, { status: 500 });
 
-    return {
-      id:              b.id,
-      subject:         b.subject,
-      recipient_count: b.recipient_count,
-      scope:           b.scope,
-      gender:          b.gender,
-      event_id:        b.event_id,
-      event_name:      (b.events as unknown as { name: string } | null)?.name ?? null,
-      sent_at:         b.sent_at,
-      stats: { total, delivered, opened, clicked, bounced },
-    };
-  });
+    return NextResponse.json(
+      (logs ?? []).map(b => ({
+        ...b,
+        event_name: null,
+        stats: { total: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 },
+      }))
+    );
+  }
 
-  return NextResponse.json(rows);
+  return NextResponse.json(data ?? []);
 }

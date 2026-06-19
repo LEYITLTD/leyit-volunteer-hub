@@ -165,17 +165,17 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Stats row */}
-      <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 12, padding: "20px 28px", marginBottom: 20, display: "flex", gap: 32, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ textAlign: "center", minWidth: 80 }}>
+      <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 12, padding: "20px 28px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+        <div style={{ textAlign: "center", flex: 1 }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.03em", lineHeight: 1 }}>{openRate}%</div>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>Open rate</div>
         </div>
         <div style={{ width: 1, height: 40, background: "var(--color-card-border)", flexShrink: 0 }} />
-        <StatPill label="Sent"      value={total}     color="var(--color-text-primary)" />
-        <StatPill label="Delivered" value={delivered}  color="#3B82F6" />
-        <StatPill label="Opened"    value={opened}     color="#16A34A" />
-        <StatPill label="Clicked"   value={clicked}    color="#EA580C" />
-        <StatPill label="Bounced"   value={bounced}    color="#DC2626" />
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Sent"      value={total}    color="var(--color-text-primary)" /></div>
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Delivered" value={delivered} color="#3B82F6" /></div>
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Opened"    value={opened}   color="#16A34A" /></div>
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Clicked"   value={clicked}  color="#EA580C" /></div>
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Bounced"   value={bounced}  color="#DC2626" /></div>
       </div>
 
       {/* Filters + search */}
