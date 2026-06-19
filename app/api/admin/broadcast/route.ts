@@ -135,9 +135,10 @@ export async function POST(request: Request) {
 
   for (let i = 0; i < recipients.length; i += BATCH) {
     const batch = recipients.slice(i, i + BATCH);
-    const { data } = await resend.batch.send(batch.map(buildEmail));
+    const result = await resend.batch.send(batch.map(buildEmail));
+    const batchData = result.data as { id: string }[] | null;
     batch.forEach((r, j) => {
-      recipientResults.push({ recipient: r, messageId: data?.[j]?.id ?? null });
+      recipientResults.push({ recipient: r, messageId: batchData?.[j]?.id ?? null });
     });
   }
 
