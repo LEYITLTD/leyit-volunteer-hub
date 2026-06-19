@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: React.ReactNode; soon?: boolean }[] = [
   {
     href: "/admin/overview",
     label: "Overview",
