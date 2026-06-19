@@ -71,6 +71,7 @@ export default function BroadcastPage() {
 
   const [history,     setHistory]     = useState<BroadcastHistory[]>([]);
   const [histLoading, setHistLoading] = useState(true);
+  const [histError,   setHistError]   = useState<string | null>(null);
 
   const subjectRef    = useRef<HTMLInputElement>(null);
   const messageRef    = useRef<HTMLTextAreaElement>(null);
@@ -85,9 +86,17 @@ export default function BroadcastPage() {
 
   const fetchHistory = useCallback(() => {
     setHistLoading(true);
+    setHistError(null);
     fetch("/api/admin/broadcast/history")
       .then(r => r.json())
-      .then(d => setHistory(Array.isArray(d) ? d : []))
+      .then(d => {
+        if (Array.isArray(d)) {
+          setHistory(d);
+        } else {
+          setHistError(d?.error ?? JSON.stringify(d));
+        }
+      })
+      .catch(err => setHistError(String(err)))
       .finally(() => setHistLoading(false));
   }, []);
 
@@ -490,6 +499,8 @@ export default function BroadcastPage() {
 
         {histLoading ? (
           <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Loading…</p>
+        ) : histError ? (
+          <p style={{ fontSize: 13, color: "var(--color-error)", background: "var(--color-error-bg)", padding: "10px 12px", borderRadius: 8 }}>Error: {histError}</p>
         ) : history.length === 0 ? (
           <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>No broadcasts sent yet.</p>
         ) : (

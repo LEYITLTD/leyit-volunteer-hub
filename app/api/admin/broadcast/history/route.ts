@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { error } = await requireAdminUser();
   if (error) return error;
