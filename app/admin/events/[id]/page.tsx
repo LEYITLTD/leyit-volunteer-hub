@@ -24,7 +24,7 @@ type CertConfig = {
   template_storage_path: string; template_url: string | null;
   name_x: number; name_y: number; font_size: number; text_color: string;
 };
-type PageTab = "overview" | "applications" | "checkins" | "certificate";
+type PageTab = "overview" | "applications" | "checkins" | "points" | "certificate";
 
 type CheckInRow = {
   volunteer_id:  string;
@@ -641,6 +641,191 @@ function CheckInsTab({ eventId }: { eventId: string }) {
   );
 }
 
+/* ─── PointsTab ──────────────────────────────────────────────────────────── */
+
+type PointsTx = {
+  id: string; volunteer_id: string; amount: number; type: string;
+  description: string | null; earned_at: string;
+  volunteers: { first_name: string; last_name: string } | null;
+};
+
+function PointsTab({ eventId, confirmedVolunteers }: {
+  eventId: string;
+  confirmedVolunteers: { id: string; first_name: string; last_name: string }[];
+}) {
+  const [txs,      setTxs]      = useState<PointsTx[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [volId,    setVolId]    = useState("");
+  const [amount,   setAmount]   = useState("");
+  const [reason,   setReason]   = useState("");
+  const [saving,   setSaving]   = useState(false);
+  const [err,      setErr]      = useState<string | null>(null);
+
+  function load() {
+    return fetch(`/api/admin/events/${eventId}/points`)
+      .then(r => r.json())
+      .then(d => Array.isArray(d) ? setTxs(d) : null);
+  }
+
+  useEffect(() => { load().finally(() => setLoading(false)); }, [eventId]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    const pts = parseInt(amount, 10);
+    if (!volId) { setErr("Select a volunteer."); return; }
+    if (!pts || pts === 0) { setErr("Enter a non-zero point value."); return; }
+    if (!reason.trim()) { setErr("Reason is required."); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/points`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ volunteer_id: volId, amount: pts, reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setTxs(prev => [data, ...prev]);
+      setVolId(""); setAmount(""); setReason("");
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const totalPoints = txs.reduce((s, t) => s + t.amount, 0);
+
+  return (
+    <div className="space-y-5">
+
+      {/* Add points form */}
+      <div className="rounded-xl border p-5" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+        <h3 className="text-[13px] font-semibold uppercase tracking-[0.07em] mb-4" style={{ color: "var(--color-text-muted)" }}>
+          Award Points
+        </h3>
+        <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3 items-end">
+          {/* Volunteer */}
+          <div className="flex-1 min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>Volunteer</label>
+            <select
+              value={volId}
+              onChange={e => setVolId(e.target.value)}
+              className="w-full rounded-lg px-3 py-2.5 text-[13px]"
+              style={{ background: "var(--color-input-bg)", border: "1px solid var(--color-input-border)", color: "var(--color-text-primary)", outline: "none" }}
+            >
+              <option value="">Select volunteer…</option>
+              {confirmedVolunteers.map(v => (
+                <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Points */}
+          <div style={{ width: 110 }}>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>Points</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              placeholder="e.g. 10"
+              className="w-full rounded-lg px-3 py-2.5 text-[13px]"
+              style={{ background: "var(--color-input-bg)", border: "1px solid var(--color-input-border)", color: "var(--color-text-primary)", outline: "none" }}
+            />
+            <p className="text-[10px] mt-1" style={{ color: "var(--color-text-muted)" }}>Negative = deduction</p>
+          </div>
+
+          {/* Reason */}
+          <div className="flex-[2] min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: "var(--color-text-muted)" }}>Reason</label>
+            <input
+              type="text"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="e.g. Excellent setup coordination"
+              className="w-full rounded-lg px-3 py-2.5 text-[13px]"
+              style={{ background: "var(--color-input-bg)", border: "1px solid var(--color-input-border)", color: "var(--color-text-primary)", outline: "none" }}
+            />
+          </div>
+
+          <button
+            type="submit" disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold flex-shrink-0"
+            style={{ background: "var(--color-gold)", color: "#1A1714", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {saving ? "Saving…" : "Add"}
+          </button>
+        </form>
+        {err && <p className="mt-3 text-[12px] font-semibold" style={{ color: "var(--color-error)" }}>{err}</p>}
+        {confirmedVolunteers.length === 0 && (
+          <p className="mt-3 text-[12px]" style={{ color: "var(--color-text-muted)" }}>No confirmed volunteers yet — confirm applications first.</p>
+        )}
+      </div>
+
+      {/* Transaction list */}
+      <div className="rounded-xl border overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "var(--color-card-border)" }}>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.07em]" style={{ color: "var(--color-text-muted)" }}>
+            Transaction history
+          </span>
+          {txs.length > 0 && (
+            <span className="text-[13px] font-bold tabular-nums" style={{ color: totalPoints >= 0 ? "var(--color-gold)" : "#DC2626" }}>
+              {totalPoints > 0 ? "+" : ""}{totalPoints} pts total
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+          </div>
+        ) : txs.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No point transactions for this event yet.</p>
+          </div>
+        ) : (
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--color-card-border)" }}>
+                {["Volunteer", "Points", "Reason", "Date"].map(h => (
+                  <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-muted)" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {txs.map((tx, i) => {
+                const isLast = i === txs.length - 1;
+                const vol    = tx.volunteers;
+                const pos    = tx.amount > 0;
+                return (
+                  <tr key={tx.id} style={{ borderBottom: isLast ? undefined : "1px solid var(--color-card-border)" }}>
+                    <td className="px-5 py-3 font-medium" style={{ color: "var(--color-text-primary)" }}>
+                      {vol ? `${vol.first_name} ${vol.last_name}` : "—"}
+                    </td>
+                    <td className="px-5 py-3 tabular-nums font-bold" style={{ color: pos ? "#16A34A" : "#DC2626" }}>
+                      {pos ? "+" : ""}{tx.amount}
+                    </td>
+                    <td className="px-5 py-3" style={{ color: "var(--color-text-secondary)" }}>
+                      {tx.description ?? "—"}
+                    </td>
+                    <td className="px-5 py-3 tabular-nums text-[12px]" style={{ color: "var(--color-text-muted)" }}>
+                      {new Date(tx.earned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export default function EventDetailPage() {
@@ -718,8 +903,13 @@ export default function EventDetailPage() {
     { key: "overview",     label: "Overview" },
     { key: "applications", label: `Applications (${totalApplied})` },
     { key: "checkins",     label: "Check-ins" },
+    { key: "points",       label: "Points" },
     { key: "certificate",  label: "Certificate" },
   ];
+
+  const confirmedVolunteers = event.event_applications
+    .filter(a => a.status === "confirmed")
+    .map(a => ({ id: a.volunteers.id, first_name: a.volunteers.first_name, last_name: a.volunteers.last_name }));
 
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
@@ -950,6 +1140,11 @@ export default function EventDetailPage() {
       {/* ── Check-ins tab ─────────────────────────────────────────────── */}
       {tab === "checkins" && (
         <CheckInsTab eventId={event.id} />
+      )}
+
+      {/* ── Points tab ────────────────────────────────────────────────── */}
+      {tab === "points" && (
+        <PointsTab eventId={event.id} confirmedVolunteers={confirmedVolunteers} />
       )}
 
       {/* ── Certificate tab ───────────────────────────────────────────── */}
