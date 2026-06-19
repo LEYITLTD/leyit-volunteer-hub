@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     .single();
 
   if (logRow?.id) {
-    void service.from("broadcast_recipients").insert(
+    await service.from("broadcast_recipients").insert(
       recipientResults.map(({ recipient, messageId }) => ({
         broadcast_id:      logRow.id,
         volunteer_id:      recipient.id,
