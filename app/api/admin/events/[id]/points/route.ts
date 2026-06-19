@@ -36,6 +36,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const service = createServiceClient();
 
+  // awarded_by references admins.id, not auth.users.id — look it up by email
+  const { data: adminRow } = await service
+    .from("admins")
+    .select("id")
+    .eq("email", user!.email!)
+    .single();
+
   const { data: tx, error: txErr } = await service
     .from("points_transactions")
     .insert({
@@ -44,7 +51,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       type:        amount > 0 ? "manual_bonus" : "deduction",
       amount,
       description: reason.trim(),
-      awarded_by:  user!.id,
+      awarded_by:  adminRow?.id ?? null,
     })
     .select("id, volunteer_id, amount, type, description, earned_at, volunteers(first_name, last_name)")
     .single();
@@ -54,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // Log to activity feed
   await service.from("activity_log").insert({
     actor_type:  "admin",
-    actor_id:    user!.id,
+    actor_id:    adminRow?.id ?? null,
     event_id:    eventId,
     volunteer_id,
     action_type: "points_awarded",
