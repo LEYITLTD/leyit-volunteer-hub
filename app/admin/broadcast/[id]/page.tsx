@@ -84,20 +84,22 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
   const [filter,  setFilter]  = useState<Filter>("all");
   const [search,  setSearch]  = useState("");
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  function fetchData() {
+    return fetch(`/api/admin/broadcast/${id}`)
+      .then(r => r.json())
+      .then(d => setData(d));
+  }
+
   useEffect(() => {
-    let cancelled = false;
-
-    function fetchData() {
-      fetch(`/api/admin/broadcast/${id}`)
-        .then(r => r.json())
-        .then(d => { if (!cancelled) setData(d); })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    }
-
-    fetchData();
-    const interval = setInterval(fetchData, 10_000);
-    return () => { cancelled = true; clearInterval(interval); };
+    fetchData().finally(() => setLoading(false));
   }, [id]);
+
+  function handleRefresh() {
+    setRefreshing(true);
+    fetchData().finally(() => setRefreshing(false));
+  }
 
   if (loading) {
     return (
@@ -163,13 +165,28 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
       </Link>
 
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
-          {log.subject}
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0 }}>
-          {fmtDate(log.sent_at)} · {scopeLabel}{genderLabel}
-        </p>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
+            {log.subject}
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0 }}>
+            {fmtDate(log.sent_at)} · {scopeLabel}{genderLabel}
+          </p>
+        </div>
+        <button onClick={handleRefresh} disabled={refreshing} style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: refreshing ? "default" : "pointer",
+          border: "1px solid var(--color-card-border)", borderRadius: 8,
+          background: "var(--color-card)", color: "var(--color-text-secondary)",
+          opacity: refreshing ? 0.6 : 1, flexShrink: 0,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
       </div>
 
       {/* Stats row */}
