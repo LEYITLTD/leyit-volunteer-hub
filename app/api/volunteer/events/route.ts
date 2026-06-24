@@ -26,11 +26,11 @@ export async function GET() {
 
   const { data: compliance } = await service
     .from("volunteer_compliance")
-    .select("lseg_status")
+    .select("overall_status")
     .eq("volunteer_id", volunteer.id)
     .single();
 
-  if (compliance?.lseg_status !== "clear") {
+  if (compliance?.overall_status !== "approved") {
     return NextResponse.json({ error: "Account not verified" }, { status: 403 });
   }
 
@@ -38,8 +38,8 @@ export async function GET() {
   const { data: events, error } = await service
     .from("events")
     .select(`
-      id, name, city, venue_name, venue_address, description, event_start, event_end, doors_open, status,
-      event_roles ( id, role_name, capacity, gender_restriction ),
+      id, name, city, venue_name, venue_address, description, event_start, event_end, volunteer_start, volunteer_end, status,
+      event_roles ( id, role_name, capacity, gender_restriction, roles ( description ) ),
       event_applications ( id, role_id, status, volunteer_id )
     `)
     .in("status", ["published", "active"])
@@ -64,7 +64,10 @@ export async function GET() {
       const appliedCount = (event.event_applications ?? []).filter(
         (a) => a.role_id === role.id && a.status !== "cancelled" && a.status !== "declined",
       ).length;
-      return { ...role, appliedCount };
+      // role.roles is the joined catalog entry (to-one) — pull its current description.
+      const catalog = (role as { roles?: { description: string | null } | { description: string | null }[] }).roles;
+      const description = (Array.isArray(catalog) ? catalog[0]?.description : catalog?.description) ?? null;
+      return { ...role, appliedCount, description };
     });
 
     return {
@@ -73,9 +76,10 @@ export async function GET() {
       city:          event.city,
       venue_name:    (event as Record<string, unknown>).venue_name    as string | null ?? null,
       venue_address: (event as Record<string, unknown>).venue_address as string | null ?? null,
-      description:   (event as Record<string, unknown>).description   as string | null ?? null,
-      doors_open:    (event as Record<string, unknown>).doors_open    as string | null ?? null,
-      thumbnail_url: (event as Record<string, unknown>).thumbnail_url as string | null ?? null,
+      description:     (event as Record<string, unknown>).description     as string | null ?? null,
+      volunteer_start: (event as Record<string, unknown>).volunteer_start as string | null ?? null,
+      volunteer_end:   (event as Record<string, unknown>).volunteer_end   as string | null ?? null,
+      thumbnail_url:   (event as Record<string, unknown>).thumbnail_url   as string | null ?? null,
       event_start:   event.event_start,
       event_end:     event.event_end,
       status:        event.status,

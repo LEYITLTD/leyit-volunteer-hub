@@ -131,8 +131,8 @@ export default function EditProfilePage() {
           </svg>
         </button>
         <h1 style={{
-          fontFamily: "var(--font-cormorant, 'Cormorant Garamond', Georgia, serif)",
-          fontSize: 24, fontWeight: 600, color: "#1C1917", margin: 0,
+          fontFamily: "var(--font-display)",
+          fontSize: 24, fontWeight: 700, color: "#1C1917", margin: 0,
         }}>
           Edit details
         </h1>

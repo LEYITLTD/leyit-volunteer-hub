@@ -9,7 +9,7 @@ type EventInfo = {
   id: string; name: string; description: string | null;
   venue_name: string | null; venue_address: string | null;
   city: string | null; event_start: string; event_end: string;
-  doors_open: string | null;
+  volunteer_start: string | null; volunteer_end: string | null;
 };
 type Summary = {
   total_confirmed: number; total_checked_in: number; attendance_rate: number;
@@ -475,8 +475,8 @@ export default function EventReportPage({ params }: { params: Promise<{ id: stri
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
             <span>{fmtTime(event.event_start)} – {fmtTime(event.event_end)}</span>
-            {event.doors_open && (
-              <span style={{ fontSize: 12, color: "#A8A29E" }}>(Doors {fmtTime(event.doors_open)})</span>
+            {event.volunteer_start && (
+              <span style={{ fontSize: 12, color: "#A8A29E" }}>(Volunteers {fmtTime(event.volunteer_start)}{event.volunteer_end ? `–${fmtTime(event.volunteer_end)}` : ""})</span>
             )}
           </div>
 

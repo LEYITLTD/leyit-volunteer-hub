@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: Params) {
   if (error) return error;
 
   const { id } = await params;
-  const { role_name, capacity, station_type, gender_restriction, station_window_start, station_window_end } = await request.json();
+  const { role_name, role_catalog_id, capacity, station_type, gender_restriction, station_window_start, station_window_end } = await request.json();
 
   if (!role_name || !capacity) {
     return NextResponse.json({ error: "role_name and capacity are required" }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(request: Request, { params }: Params) {
   const service = createServiceClient();
   const { data, error: dbErr } = await service
     .from("event_roles")
-    .insert({ event_id: id, role_name, capacity, station_type: station_type ?? "general", gender_restriction: gender_restriction ?? "any", station_window_start, station_window_end })
+    .insert({ event_id: id, role_name, role_catalog_id: role_catalog_id ?? null, capacity, station_type: station_type ?? "general", gender_restriction: gender_restriction ?? "any", station_window_start, station_window_end })
     .select()
     .single();
 

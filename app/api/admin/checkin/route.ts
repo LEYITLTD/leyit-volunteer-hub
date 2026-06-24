@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 import { createServiceClient } from "@/lib/supabase/service";
+import { awardScanPoints } from "@/lib/points-engine";
 
 type CheckinBody = { volunteer_id: string; event_id: string };
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
 
   const [{ data: volunteer }, { data: event }] = await Promise.all([
     service.from("volunteers").select("id, first_name, last_name, email").eq("id", volunteer_id).maybeSingle(),
-    service.from("events").select("id, name").eq("id", event_id).maybeSingle(),
+    service.from("events").select("id, name, event_start, event_end").eq("id", event_id).maybeSingle(),
   ]);
 
   if (!volunteer) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
@@ -85,11 +86,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: ciErr?.message ?? "Failed to record scan" }, { status: 500 });
   }
 
+  // Award attendance points automatically (config-driven). Never block the scan
+  // if the points engine errors — the check-in is already recorded.
+  let points_awarded = 0;
+  try {
+    points_awarded = await awardScanPoints(service, {
+      checkInId:   checkIn.id,
+      volunteerId: volunteer_id,
+      eventId:     event_id,
+      station,
+      scannedAt:   now,
+      eventStart:  event.event_start,
+      eventEnd:    event.event_end,
+    });
+  } catch {
+    // points failure is non-fatal
+  }
+
   return NextResponse.json({
     success:   true,
     scan_type: scanType,
     volunteer,
     event:     { id: event.id, name: event.name },
     check_in:  checkIn,
+    points_awarded,
   });
 }

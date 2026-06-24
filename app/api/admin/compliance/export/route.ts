@@ -18,7 +18,9 @@ export async function GET() {
 
   const service = createServiceClient();
 
-  // Volunteers who need LSEG screening (no clear status)
+  // Volunteers who have NOT yet been reviewed (LSEG status pending / unset).
+  // Excludes anyone already cleared or flagged (possible_match / high_risk) —
+  // if no one is awaiting review, the CSV is emitted with just the header row.
   const { data: volunteers } = await service
     .from("volunteers")
     .select(`
@@ -28,7 +30,7 @@ export async function GET() {
 
   const toExport = (volunteers ?? []).filter(v => {
     const comp = Array.isArray(v.volunteer_compliance) ? v.volunteer_compliance[0] : v.volunteer_compliance;
-    return !comp?.lseg_status || comp.lseg_status !== "clear";
+    return !comp?.lseg_status || comp.lseg_status === "pending";
   });
 
   const headers = [

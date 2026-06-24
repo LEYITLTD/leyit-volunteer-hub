@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 type Role = {
   id: string; role_name: string; capacity: number;
   gender_restriction: string; appliedCount: number;
+  description: string | null;
 };
 type MyApplication = { id: string; role_id: string; status: string };
 type Event = {
   id: string; name: string;
   city: string | null; venue_name: string | null; venue_address: string | null;
   description: string | null; thumbnail_url: string | null;
-  event_start: string; event_end: string; doors_open: string | null;
+  event_start: string; event_end: string;
+  volunteer_start: string | null; volunteer_end: string | null;
   status: string;
   eligibleRoles: Role[]; myApplication: MyApplication | null;
 };
@@ -70,7 +72,7 @@ function EventPoster({
           <span style={{
             position: "absolute", inset: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Cormorant Garamond',Georgia,serif",
+            fontFamily: "var(--font-display)",
             fontSize: height * 0.68, fontWeight: 700,
             color: "#C9A227", opacity: 0.09,
             lineHeight: 1, userSelect: "none",
@@ -126,7 +128,7 @@ function EventPoster({
       {/* Bottom: event name + date */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px 18px 14px" }}>
         <h2 style={{
-          fontFamily: "'Cormorant Garamond',Georgia,serif",
+          fontFamily: "var(--font-display)",
           fontSize: height >= 180 ? 22 : 18,
           fontWeight: 700, color: "#FFFFFF",
           margin: "0 0 3px", lineHeight: 1.15,
@@ -189,7 +191,7 @@ function ApplyModal({
         <EventPoster event={event} height={160} showCloseBtn onClose={onClose} />
 
         {/* Meta row below banner */}
-        {(event.venue_name || event.city || event.doors_open) && (
+        {(event.venue_name || event.city || event.volunteer_start) && (
           <div className="px-5 pt-3 pb-0 flex flex-wrap gap-x-4 gap-y-0.5 shrink-0">
             {(event.venue_name || event.city) && (
               <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
@@ -201,12 +203,12 @@ function ApplyModal({
                   : event.city}
               </span>
             )}
-            {event.doors_open && (
+            {event.volunteer_start && (
               <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--color-text-muted)" }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                Doors open {fmtTime(event.doors_open)}
+                Volunteers arrive {fmtTime(event.volunteer_start)}
               </span>
             )}
           </div>
@@ -229,14 +231,21 @@ function ApplyModal({
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-2" style={{ color: "var(--color-text-muted)" }}>
                 Your role
               </p>
-              <div className="flex items-center justify-between px-4 py-3.5 rounded-xl border"
+              <div className="px-4 py-3.5 rounded-xl border"
                 style={{ borderColor: "var(--color-gold)", background: "var(--color-gold-subtle)" }}>
-                <span className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                  {availableRoles[0].role_name}
-                </span>
-                <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                  {Math.max(0, availableRoles[0].capacity - availableRoles[0].appliedCount)} spots left
-                </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[15px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                    {availableRoles[0].role_name}
+                  </span>
+                  <span className="text-[12px] shrink-0" style={{ color: "var(--color-text-secondary)" }}>
+                    {Math.max(0, availableRoles[0].capacity - availableRoles[0].appliedCount)} spots left
+                  </span>
+                </div>
+                {availableRoles[0].description && (
+                  <p className="text-[12.5px] leading-relaxed mt-1.5" style={{ color: "var(--color-text-secondary)" }}>
+                    {availableRoles[0].description}
+                  </p>
+                )}
               </div>
             </div>
           ) : (
@@ -249,17 +258,26 @@ function ApplyModal({
                   const selected = selectedRole === role.id;
                   return (
                     <button key={role.id} type="button" onClick={() => setSelectedRole(role.id)}
-                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl border w-full text-left transition-colors"
+                      className="flex items-start gap-3 px-4 py-3.5 rounded-xl border w-full text-left transition-colors"
                       style={{ borderColor: selected ? "var(--color-gold)" : "var(--color-card-border)", background: selected ? "var(--color-gold-subtle)" : "transparent" }}>
-                      <span className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                      <span className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
                         style={{ borderColor: selected ? "var(--color-gold)" : "var(--color-input-border)" }}>
                         {selected && <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--color-gold)" }} />}
                       </span>
-                      <span className="flex-1 text-[14px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                        {role.role_name}
-                      </span>
-                      <span className="text-[12px] shrink-0" style={{ color: "var(--color-text-secondary)" }}>
-                        {Math.max(0, role.capacity - role.appliedCount)} left
+                      <span className="flex-1 min-w-0">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="text-[14px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                            {role.role_name}
+                          </span>
+                          <span className="text-[12px] shrink-0" style={{ color: "var(--color-text-secondary)" }}>
+                            {Math.max(0, role.capacity - role.appliedCount)} left
+                          </span>
+                        </span>
+                        {role.description && (
+                          <span className="block text-[12.5px] leading-relaxed mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                            {role.description}
+                          </span>
+                        )}
                       </span>
                     </button>
                   );
@@ -442,12 +460,12 @@ function EventCard({
               : event.city}
           </div>
         )}
-        {event.doors_open && (
+        {event.volunteer_start && (
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#A8A29E", marginBottom: 4 }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            Doors open {fmtTime(event.doors_open)}
+            Volunteers arrive {fmtTime(event.volunteer_start)}
           </div>
         )}
 
@@ -613,8 +631,8 @@ export default function BrowseEventsPage() {
       {/* Page header */}
       <div style={{ padding: "8px 22px 6px" }}>
         <h1 style={{
-          fontFamily: "var(--font-cormorant,'Cormorant Garamond',serif)",
-          fontSize: 28, fontWeight: 600, color: "#1C1917", margin: "0 0 4px",
+          fontFamily: "var(--font-display)",
+          fontSize: 28, fontWeight: 700, color: "#1C1917", margin: "0 0 4px",
         }}>
           Events
         </h1>

@@ -1,19 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-const ROLE_OPTIONS = ["Welcome Team", "Registration Team", "Main Hall Team"];
 const GENDER_OPTIONS = [
   { value: "any",    label: "Any" },
   { value: "male",   label: "Male only" },
   { value: "female", label: "Female only" },
 ];
 
-type RoleRow = { id: number; role_name: string; gender_restriction: string; capacity: string };
+type CatalogRole = { id: string; name: string; description: string | null };
+type RoleRow = { id: number; role_catalog_id: string; role_name: string; gender_restriction: string; capacity: string };
 let _nextId = 1;
 
 /* ─── Image upload area ──────────────────────────────────────────────────── */
@@ -163,34 +163,63 @@ export default function NewEventPage() {
   const [venueName,    setVenueName]    = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [description,  setDescription]  = useState("");
+  const [volunteerStart, setVolunteerStart] = useState("");
   const [startDt,      setStartDt]      = useState("");
   const [endDt,        setEndDt]        = useState("");
-  const [doorsOpen,    setDoorsOpen]    = useState("");
+  const [volunteerEnd, setVolunteerEnd] = useState("");
   const [imageFile,    setImageFile]    = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [catalog,      setCatalog]      = useState<CatalogRole[]>([]);
   const [roles,        setRoles]        = useState<RoleRow[]>([
-    { id: _nextId++, role_name: "Welcome Team", gender_restriction: "any", capacity: "1" },
+    { id: _nextId++, role_catalog_id: "", role_name: "", gender_restriction: "any", capacity: "1" },
   ]);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
+  /* Load the global role catalog (managed in Settings) */
+  useEffect(() => {
+    fetch("/api/admin/roles")
+      .then(r => r.ok ? r.json() : [])
+      .then((d) => {
+        const list: CatalogRole[] = Array.isArray(d) ? d : [];
+        setCatalog(list);
+        // Default the first (empty) role row to the first catalog entry.
+        if (list.length) {
+          setRoles(rows => rows.map((row, i) =>
+            i === 0 && !row.role_catalog_id
+              ? { ...row, role_catalog_id: list[0].id, role_name: list[0].name }
+              : row,
+          ));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   function addRole() {
-    setRoles(r => [...r, { id: _nextId++, role_name: "Welcome Team", gender_restriction: "any", capacity: "1" }]);
+    const first = catalog[0];
+    setRoles(r => [...r, { id: _nextId++, role_catalog_id: first?.id ?? "", role_name: first?.name ?? "", gender_restriction: "any", capacity: "1" }]);
   }
   function removeRole(id: number) { setRoles(r => r.filter(row => row.id !== id)); }
   function updateRole(id: number, field: keyof RoleRow, value: string) {
     setRoles(r => r.map(row => row.id === id ? { ...row, [field]: value } : row));
   }
+  function selectRole(id: number, catalogId: string) {
+    const cat = catalog.find(c => c.id === catalogId);
+    setRoles(r => r.map(row => row.id === id ? { ...row, role_catalog_id: cat?.id ?? "", role_name: cat?.name ?? "" } : row));
+  }
 
   async function submit() {
     if (!name.trim()) { setError("Event name is required."); return; }
     if (!city.trim()) { setError("City is required."); return; }
-    if (!startDt)     { setError("Start date and time is required."); return; }
-    if (!endDt)       { setError("End date and time is required."); return; }
-    if (new Date(endDt) <= new Date(startDt)) { setError("End time must be after start time."); return; }
-    if (doorsOpen && new Date(doorsOpen) >= new Date(startDt)) { setError("Doors open time must be before the event start."); return; }
+    if (!startDt)     { setError("Event start date and time is required."); return; }
+    if (!endDt)       { setError("Event end date and time is required."); return; }
+    if (new Date(endDt) <= new Date(startDt)) { setError("Event end must be after the event start."); return; }
+    if (volunteerStart && new Date(volunteerStart) > new Date(startDt)) { setError("Volunteer start time must be at or before the event start."); return; }
+    if (volunteerEnd && new Date(volunteerEnd) < new Date(endDt)) { setError("Volunteer end time must be at or after the event end."); return; }
+    if (volunteerStart && volunteerEnd && new Date(volunteerEnd) <= new Date(volunteerStart)) { setError("Volunteer end must be after the volunteer start."); return; }
     if (roles.length === 0) { setError("Add at least one role."); return; }
     for (const r of roles) {
+      if (!r.role_catalog_id) { setError("Please choose a role for every row."); return; }
       if (!r.capacity || parseInt(r.capacity) < 1) { setError(`Capacity for "${r.role_name}" must be at least 1.`); return; }
     }
 
@@ -219,11 +248,13 @@ export default function NewEventPage() {
           venue_name:    venueName.trim()    || null,
           venue_address: venueAddress.trim() || null,
           description:   description.trim()  || null,
-          event_start:   new Date(startDt).toISOString(),
-          event_end:     new Date(endDt).toISOString(),
-          doors_open:    doorsOpen ? new Date(doorsOpen).toISOString() : null,
+          event_start:    new Date(startDt).toISOString(),
+          event_end:      new Date(endDt).toISOString(),
+          volunteer_start: volunteerStart ? new Date(volunteerStart).toISOString() : null,
+          volunteer_end:   volunteerEnd   ? new Date(volunteerEnd).toISOString()   : null,
           thumbnail_url,
           roles: roles.map(r => ({
+            role_catalog_id:    r.role_catalog_id,
             role_name:          r.role_name,
             gender_restriction: r.gender_restriction,
             capacity:           parseInt(r.capacity),
@@ -302,10 +333,10 @@ export default function NewEventPage() {
         {/* ── Date & time ────────────────────────────────────────────── */}
         <div className="rounded-xl border p-5 sm:p-6 space-y-4" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-muted)" }}>Date &amp; time</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className={lblCls} style={lblSty}>Doors open <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span></label>
-              <input type="datetime-local" value={doorsOpen} onChange={e => setDoorsOpen(e.target.value)} className={inputCls} style={inputSty} />
+              <label className={lblCls} style={lblSty}>Volunteer start <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span></label>
+              <input type="datetime-local" value={volunteerStart} onChange={e => setVolunteerStart(e.target.value)} className={inputCls} style={inputSty} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className={lblCls} style={lblSty}>Event starts <span style={{ color: "var(--color-error)" }}>*</span></label>
@@ -315,7 +346,14 @@ export default function NewEventPage() {
               <label className={lblCls} style={lblSty}>Event ends <span style={{ color: "var(--color-error)" }}>*</span></label>
               <input type="datetime-local" value={endDt} onChange={e => setEndDt(e.target.value)} className={inputCls} style={inputSty} />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label className={lblCls} style={lblSty}>Volunteer end <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span></label>
+              <input type="datetime-local" value={volunteerEnd} onChange={e => setVolunteerEnd(e.target.value)} className={inputCls} style={inputSty} />
+            </div>
           </div>
+          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+            Volunteer start/end are when volunteers should arrive and finish (e.g. for setup &amp; cleanup). They drive attendance points.
+          </p>
         </div>
 
         {/* ── Roles ──────────────────────────────────────────────────── */}
@@ -324,6 +362,12 @@ export default function NewEventPage() {
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-muted)" }}>Volunteer roles</h2>
             <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{roles.length} role{roles.length !== 1 ? "s" : ""}</span>
           </div>
+
+          {catalog.length === 0 && (
+            <p className="text-[12px] mb-3 rounded-lg px-3 py-2.5" style={{ color: "var(--color-warning)", background: "var(--color-warning-bg)" }}>
+              No roles defined yet. Add roles in <Link href="/admin/settings" className="underline font-semibold">Settings → Volunteer roles</Link> first.
+            </p>
+          )}
 
           <div className="space-y-2">
             <div className="hidden sm:grid grid-cols-[1fr_140px_100px_32px] gap-2.5 px-0.5">
@@ -340,8 +384,9 @@ export default function NewEventPage() {
                     <button onClick={() => removeRole(row.id)} className="text-[11px] px-2 py-0.5 rounded" style={{ color: "var(--color-error)", background: "var(--color-error-bg)" }}>Remove</button>
                   )}
                 </div>
-                <select value={row.role_name} onChange={e => updateRole(row.id, "role_name", e.target.value)} className={inputCls} style={inputSty}>
-                  {ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                <select value={row.role_catalog_id} onChange={e => selectRole(row.id, e.target.value)} className={inputCls} style={inputSty}>
+                  <option value="" disabled>Select a role…</option>
+                  {catalog.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
                 <select value={row.gender_restriction} onChange={e => updateRole(row.id, "gender_restriction", e.target.value)} className={inputCls} style={inputSty}>
                   {GENDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
