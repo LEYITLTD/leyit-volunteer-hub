@@ -63,11 +63,34 @@ export default function SettingsPage() {
   const [pointsSaving,setPointsSaving]= useState(false);
   const [pointsMsg,   setPointsMsg]   = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  /* ── SMS ──────────────────────────────────────────────── */
+  const [senderId,    setSenderId]    = useState("");
+  const [smsLoad,     setSmsLoad]     = useState(true);
+  const [smsSaving,   setSmsSaving]   = useState(false);
+  const [smsMsg,      setSmsMsg]      = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
   useEffect(() => {
     fetch("/api/admin/users").then(r => r.json()).then(d => setAdmins(Array.isArray(d) ? d : [])).finally(() => setTeamLoad(false));
     fetch("/api/admin/roles").then(r => r.json()).then(d => setRoles(Array.isArray(d) ? d : [])).finally(() => setRolesLoad(false));
     fetch("/api/admin/points-config").then(r => r.json()).then(d => { setCfg(d.config ?? null); setTiers(Array.isArray(d.tiers) ? d.tiers : []); }).finally(() => setPointsLoad(false));
+    fetch("/api/admin/sms-config").then(r => r.json()).then(d => setSenderId(d.sender_id ?? "")).finally(() => setSmsLoad(false));
   }, []);
+
+  async function saveSms() {
+    setSmsSaving(true);
+    setSmsMsg(null);
+    try {
+      const res  = await fetch("/api/admin/sms-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sender_id: senderId.trim() }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to save");
+      setSenderId(data.sender_id);
+      setSmsMsg({ type: "ok", text: "Saved." });
+    } catch (e) {
+      setSmsMsg({ type: "err", text: e instanceof Error ? e.message : "Failed to save" });
+    } finally {
+      setSmsSaving(false);
+    }
+  }
 
   /* Admin handlers */
   function openModal()  { setFullName(""); setEmail(""); setFormError(null); setCreds(null); setModal(true); }
@@ -273,6 +296,31 @@ export default function SettingsPage() {
                 <Button variant="gold" onClick={savePoints} disabled={pointsSaving}>{pointsSaving ? "Saving…" : "Save changes"}</Button>
                 {pointsMsg && (
                   <span className="text-[12px] font-medium" style={{ color: pointsMsg.type === "ok" ? "var(--color-success)" : "var(--color-error)" }}>{pointsMsg.text}</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── SMS ────────────────────────────────────────── */}
+        <div className="rounded-xl border overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)" }}>
+          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--color-card-border)" }}>
+            <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>SMS</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>The sender ID (caller ID) volunteers see on SMS broadcasts.</p>
+          </div>
+          {smsLoad ? (
+            <div className="flex items-center justify-center py-10"><div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} /></div>
+          ) : (
+            <div className="p-5 space-y-3">
+              <div className="flex flex-col gap-1.5 max-w-[260px]">
+                <label className="text-[12px] font-medium" style={{ color: "var(--color-text-primary)" }}>Default sender ID</label>
+                <input value={senderId} onChange={e => setSenderId(e.target.value)} maxLength={11} className={numCls} style={numSty} placeholder="e.g. LULVols" />
+                <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>3–11 letters/numbers, no spaces. Recipients can&apos;t reply to a text sender ID.</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="gold" onClick={saveSms} disabled={smsSaving}>{smsSaving ? "Saving…" : "Save changes"}</Button>
+                {smsMsg && (
+                  <span className="text-[12px] font-medium" style={{ color: smsMsg.type === "ok" ? "var(--color-success)" : "var(--color-error)" }}>{smsMsg.text}</span>
                 )}
               </div>
             </div>
