@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getTiers, tierForPoints } from "@/lib/points-engine";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -40,6 +41,10 @@ export async function GET() {
     .eq("volunteer_id", volunteer.id);
 
   const totalPoints = (pts ?? []).reduce((sum, r) => sum + r.amount, 0);
+
+  // Tier (config-driven) for this points total
+  const tiers = await getTiers(service);
+  const { current: tier, next: nextTier } = tierForPoints(totalPoints, tiers);
 
   // Confirmed event count
   const { count: confirmedCount } = await service
@@ -88,6 +93,8 @@ export async function GET() {
   return NextResponse.json({
     volunteer,
     totalPoints,
+    tier,
+    nextTier,
     confirmedCount: confirmedCount ?? 0,
     upcomingEvents,
   });

@@ -22,9 +22,12 @@ type UpcomingEvent = {
   role_name:   string;
 };
 
+type Tier = { name: string; min_points: number };
 type MeResponse = {
   volunteer:      Volunteer;
   totalPoints:    number;
+  tier:           Tier | null;
+  nextTier:       Tier | null;
   confirmedCount: number;
   upcomingEvents: UpcomingEvent[];
 };
@@ -40,14 +43,12 @@ type EventItem = {
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
-const POINTS = 1000;
-
-function getTier(pts: number) {
-  if (pts >= 400) return { label: "Gold tier",   emoji: "🥇", color: "#E7C766" };
-  if (pts >= 250) return { label: "Silver tier", emoji: "🥈", color: "#C0C0C0" };
-  if (pts >= 100) return { label: "Cert tier",   emoji: "🏅", color: "#CD7F32" };
-  return null;
-}
+const TIER_STYLE: Record<string, { emoji: string; color: string }> = {
+  Bronze:   { emoji: "🥉", color: "#CD7F32" },
+  Silver:   { emoji: "🥈", color: "#C0C0C0" },
+  Gold:     { emoji: "🥇", color: "#E7C766" },
+  Platinum: { emoji: "💎", color: "#8FD0E8" },
+};
 
 function daysUntil(dateStr: string): number {
   const now    = new Date();
@@ -95,10 +96,11 @@ export default function VolunteerDashboard() {
     );
   }
 
-  const { volunteer, confirmedCount, upcomingEvents } = meData;
+  const { volunteer, confirmedCount, upcomingEvents, totalPoints, tier, nextTier } = meData;
   const nextEvent   = upcomingEvents[0] ?? null;
   const daysToNext  = nextEvent ? daysUntil(nextEvent.event_start) : null;
-  const tier        = getTier(POINTS);
+  const tierStyle   = tier ? TIER_STYLE[tier.name] ?? null : null;
+  const toNext      = nextTier ? Math.max(0, nextTier.min_points - totalPoints) : 0;
   const initials    = `${volunteer.first_name[0] ?? ""}${volunteer.last_name[0] ?? ""}`.toUpperCase();
   const fullName    = `${volunteer.first_name} ${volunteer.last_name}`;
 
@@ -110,8 +112,8 @@ export default function VolunteerDashboard() {
         <div>
           <div style={{ fontSize: 13, color: "#78716C" }}>Assalamu alaikum,</div>
           <div style={{
-            fontFamily: "var(--font-cormorant, 'Cormorant Garamond', Georgia, serif)",
-            fontSize: 26, fontWeight: 600, color: "#1C1917", lineHeight: 1.25,
+            fontFamily: "var(--font-display)",
+            fontSize: 26, fontWeight: 700, color: "#1C1917", lineHeight: 1.25,
           }}>
             {fullName}
           </div>
@@ -181,22 +183,33 @@ export default function VolunteerDashboard() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 42, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-              {POINTS.toLocaleString()}
+              {totalPoints.toLocaleString()}
             </div>
             {tier && (
               <span style={{
-                background: "rgba(201,162,39,0.2)", color: tier.color,
+                background: "rgba(201,162,39,0.2)", color: tierStyle?.color ?? "#E7C766",
                 fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 20,
               }}>
-                {tier.emoji} {tier.label}
+                {tierStyle?.emoji ?? "🏅"} {tier.name} tier
               </span>
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(243,233,210,0.7)" }}>
-            <span>Rank #3 of 700</span>
-            <span>Top tier reached 🎉</span>
-          </div>
+          {nextTier ? (
+            <>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.12)", borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
+                <div style={{
+                  width: `${Math.min(100, Math.round((totalPoints / nextTier.min_points) * 100))}%`,
+                  height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#C9A227,#E7C766)",
+                }} />
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(243,233,210,0.7)" }}>
+                {toNext.toLocaleString()} points to {nextTier.name}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 12, color: "rgba(243,233,210,0.7)" }}>Top tier reached 🎉</div>
+          )}
         </div>
 
         {/* ── Stats row ──────────────────────────────────────── */}

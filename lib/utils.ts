@@ -22,8 +22,8 @@ export function getRewardTier(points: number): {
   emoji: string;
   color: string;
 } {
-  if (points >= 400) return { tier: "Gold", emoji: "🥇", color: "#8A6D2F" };
-  if (points >= 250) return { tier: "Silver", emoji: "🥈", color: "#6B7280" };
-  if (points >= 100) return { tier: "Certificate", emoji: "📜", color: "#92400E" };
-  return { tier: "None", emoji: "", color: "" };
+  if (points >= 1500) return { tier: "Platinum", emoji: "💎", color: "#0E7490" };
+  if (points >= 800)  return { tier: "Gold", emoji: "🥇", color: "#8A6D2F" };
+  if (points >= 300)  return { tier: "Silver", emoji: "🥈", color: "#6B7280" };
+  return { tier: "Bronze", emoji: "🥉", color: "#B45309" };
 }

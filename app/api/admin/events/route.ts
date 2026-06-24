@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json();
-  const { name, city, venue_name, venue_address, description, event_start, event_end, doors_open, thumbnail_url, roles } = body;
+  const { name, city, venue_name, venue_address, description, event_start, event_end, volunteer_start, volunteer_end, thumbnail_url, roles } = body;
 
   if (!name || !event_start || !event_end) {
     return NextResponse.json({ error: "name, event_start and event_end are required" }, { status: 400 });
@@ -46,7 +46,8 @@ export async function POST(request: Request) {
       description:   description   ?? null,
       event_start,
       event_end,
-      doors_open:    doors_open    ?? null,
+      volunteer_start: volunteer_start ?? null,
+      volunteer_end:   volunteer_end   ?? null,
       thumbnail_url: thumbnail_url ?? null,
       early_bird_cutoff_days: 14,
       created_by: admin?.id ?? null,
@@ -59,9 +60,10 @@ export async function POST(request: Request) {
 
   if (Array.isArray(roles) && roles.length > 0) {
     await service.from("event_roles").insert(
-      roles.map((r: { role_name: string; capacity: number; gender_restriction?: string }) => ({
+      roles.map((r: { role_name: string; capacity: number; gender_restriction?: string; role_catalog_id?: string }) => ({
         event_id:           event.id,
         role_name:          r.role_name,
+        role_catalog_id:    r.role_catalog_id ?? null,
         capacity:           r.capacity ?? 1,
         station_type:       "general",
         gender_restriction: r.gender_restriction ?? "any",

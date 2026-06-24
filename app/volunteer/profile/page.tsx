@@ -68,6 +68,33 @@ export default function ProfilePage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef                  = useRef<HTMLInputElement>(null);
 
+  /* Help & support */
+  const [supportOpen,    setSupportOpen]    = useState(false);
+  const [supportSubject, setSupportSubject] = useState("");
+  const [supportMessage, setSupportMessage] = useState("");
+  const [supportSending, setSupportSending] = useState(false);
+  const [supportError,   setSupportError]   = useState<string | null>(null);
+  const [supportSent,    setSupportSent]    = useState(false);
+
+  function openSupport() {
+    setSupportSubject(""); setSupportMessage(""); setSupportError(null); setSupportSent(false); setSupportOpen(true);
+  }
+  async function sendSupport() {
+    if (!supportSubject.trim() || !supportMessage.trim()) { setSupportError("Please add a subject and a message."); return; }
+    setSupportError(null);
+    setSupportSending(true);
+    try {
+      const res  = await fetch("/api/volunteer/support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject: supportSubject.trim(), message: supportMessage.trim() }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to send message");
+      setSupportSent(true);
+    } catch (e) {
+      setSupportError(e instanceof Error ? e.message : "Failed to send message");
+    } finally {
+      setSupportSending(false);
+    }
+  }
+
   useEffect(() => {
     fetch("/api/volunteer/me")
       .then(r => r.json())
@@ -143,7 +170,7 @@ export default function ProfilePage() {
           {initials}
         </div>
 
-        <div style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', Georgia, serif)", fontSize: 24, fontWeight: 600, color: "#1C1917", lineHeight: 1.2 }}>
+        <div style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "#1C1917", lineHeight: 1.2 }}>
           {fullName}
         </div>
         <div style={{ fontSize: 13.5, color: "#78716C", marginTop: 4 }}>
@@ -274,6 +301,7 @@ export default function ProfilePage() {
           return (
             <button
               key={item.label}
+              onClick={i === 2 ? openSupport : undefined}
               style={{ ...sharedStyle, border: "none", textAlign: "left" }}
             >
               {inner}
@@ -296,6 +324,70 @@ export default function ProfilePage() {
           Sign out
         </button>
       </form>
+
+      {/* Help & support modal */}
+      {supportOpen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-stretch justify-end sm:items-center sm:justify-center sm:p-6"
+          style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
+          onClick={() => setSupportOpen(false)}
+        >
+          <div
+            className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            style={{ background: "#fff", maxHeight: "92dvh" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #EFEAE0" }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "#1C1917" }}>Help &amp; support</span>
+              <button onClick={() => setSupportOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#F3EFE6", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#78716C" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {supportSent ? (
+              <div style={{ padding: "32px 22px", textAlign: "center" }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#DCFCE7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "#1C1917", margin: "0 0 6px" }}>Message sent</p>
+                <p style={{ fontSize: 13.5, color: "#78716C", lineHeight: 1.6, margin: "0 0 20px" }}>Our team will get back to you by email as soon as we can.</p>
+                <button onClick={() => setSupportOpen(false)} style={{ width: "100%", background: "#1A1714", color: "#fff", border: "none", borderRadius: 11, padding: 13, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Done</button>
+              </div>
+            ) : (
+              <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+                <p style={{ fontSize: 13, color: "#78716C", lineHeight: 1.6, margin: 0 }}>
+                  Need a hand? Send us a message and we&apos;ll reply to your registered email.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#57534E" }}>Subject</label>
+                  <input
+                    value={supportSubject} onChange={e => setSupportSubject(e.target.value)}
+                    placeholder="What do you need help with?"
+                    style={{ width: "100%", minHeight: 44, border: "1px solid #D9D2C5", borderRadius: 8, padding: "10px 12px", fontSize: 14, color: "#1C1917", background: "#FDFCFA" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#57534E" }}>Message</label>
+                  <textarea
+                    value={supportMessage} onChange={e => setSupportMessage(e.target.value)} rows={5}
+                    placeholder="Tell us a bit more…"
+                    style={{ width: "100%", border: "1px solid #D9D2C5", borderRadius: 8, padding: "10px 12px", fontSize: 14, color: "#1C1917", background: "#FDFCFA", resize: "none", lineHeight: 1.6 }}
+                  />
+                </div>
+                {supportError && (
+                  <p style={{ fontSize: 12.5, color: "#DC2626", background: "#FEE2E2", borderRadius: 8, padding: "9px 12px", margin: 0 }}>{supportError}</p>
+                )}
+                <button
+                  onClick={sendSupport} disabled={supportSending}
+                  style={{ width: "100%", background: "#A8854A", color: "#1A1411", border: "none", borderRadius: 11, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: supportSending ? 0.7 : 1 }}
+                >
+                  {supportSending ? "Sending…" : "Send message"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

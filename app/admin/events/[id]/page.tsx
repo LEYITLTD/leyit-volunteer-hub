@@ -16,6 +16,7 @@ type Application = {
 type Event = {
   id: string; name: string; city: string | null;
   event_start: string; event_end: string; status: string;
+  volunteer_start: string | null; volunteer_end: string | null;
   event_roles: Role[];
   event_applications: Application[];
 };
@@ -940,6 +941,11 @@ export default function EventDetailPage() {
             )}
             <span>{fmt(event.event_start)}</span>
             <span>{fmtTime(event.event_start)} – {fmtTime(event.event_end)}</span>
+            {event.volunteer_start && (
+              <span style={{ color: "var(--color-text-muted)" }}>
+                Volunteers {fmtTime(event.volunteer_start)}{event.volunteer_end ? ` – ${fmtTime(event.volunteer_end)}` : ""}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 self-start">

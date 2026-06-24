@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 /* ── Desktop sidebar nav ─────────────────────────────────── */
 
@@ -268,9 +269,98 @@ function BottomTabBar() {
   );
 }
 
+/* ── Compliance review gate ──────────────────────────────── */
+
+type GateState =
+  | { phase: "loading" }
+  | { phase: "approved" }
+  | { phase: "review"; status: "pending" | "rejected"; firstName: string };
+
+function ReviewScreen({ status, firstName }: { status: "pending" | "rejected"; firstName: string }) {
+  const rejected = status === "rejected";
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--gradient-auth-bg, var(--color-bg))" }}>
+      <div className="w-full max-w-[420px] rounded-2xl border p-8 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", boxShadow: "var(--shadow-card)" }}>
+        <Image src="/assets/logo-gold.png" alt="LUL" width={40} height={40} className="h-10 w-auto object-contain mx-auto mb-6" />
+
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+          style={{ background: rejected ? "var(--color-error-bg)" : "var(--color-gold-subtle)" }}>
+          {rejected ? (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          ) : (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          )}
+        </div>
+
+        <h1 className="font-display text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
+          {rejected ? "Application not approved" : "Your application is being reviewed"}
+        </h1>
+        <p className="text-[14px] leading-relaxed mb-1" style={{ color: "var(--color-text-secondary)" }}>
+          {firstName ? `Assalamu alaikum ${firstName},` : "Assalamu alaikum,"}
+        </p>
+        <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--color-text-secondary)" }}>
+          {rejected
+            ? "Unfortunately we're unable to approve your volunteer account at this time. If you believe this is a mistake, please contact our team."
+            : "Thank you for registering. Our team is reviewing your application — this usually takes 2–5 working days. You'll be notified by email once you're approved, and your dashboard will unlock automatically."}
+        </p>
+
+        <a href="mailto:admin@emanchannel.tv" className="block text-[13px] font-semibold mb-4" style={{ color: "var(--color-gold)" }}>
+          admin@emanchannel.tv
+        </a>
+
+        <form action="/api/auth/logout" method="POST">
+          <button type="submit" className="text-[13px] font-semibold px-4 py-2.5 rounded-lg w-full" style={{ color: "var(--color-text-secondary)", border: "1px solid var(--color-card-border)" }}>
+            Sign out
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ── Shell ───────────────────────────────────────────────── */
 
 export function VolunteerShell({ children }: { children: React.ReactNode }) {
+  const [gate, setGate] = useState<GateState>({ phase: "loading" });
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/volunteer/me")
+      .then(async (r) => {
+        if (r.status === 401) { window.location.href = "/login"; return null; }
+        return r.ok ? r.json() : null;
+      })
+      .then((data) => {
+        if (!active || !data) { if (active && !data) setGate({ phase: "approved" }); return; }
+        const v = data.volunteer ?? {};
+        const comp = Array.isArray(v.volunteer_compliance) ? v.volunteer_compliance[0] : v.volunteer_compliance;
+        const overall: string = comp?.overall_status ?? "pending";
+        if (overall === "approved") {
+          setGate({ phase: "approved" });
+        } else {
+          setGate({ phase: "review", status: overall === "rejected" ? "rejected" : "pending", firstName: v.first_name ?? "" });
+        }
+      })
+      .catch(() => { if (active) setGate({ phase: "approved" }); });
+    return () => { active = false; };
+  }, []);
+
+  if (gate.phase === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg)" }}>
+        <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--color-gold)", borderTopColor: "transparent" }} />
+      </div>
+    );
+  }
+
+  if (gate.phase === "review") {
+    return <ReviewScreen status={gate.status} firstName={gate.firstName} />;
+  }
+
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-bg)" }}>
 

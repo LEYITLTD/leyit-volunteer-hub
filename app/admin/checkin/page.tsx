@@ -16,6 +16,7 @@ type ScanResult = {
   event?: { id: string; name: string };
   message?: string;
   error?: string;
+  points_awarded?: number;
 };
 type Attendee = {
   application_id: string;
@@ -109,13 +110,20 @@ function ResultCard({ result, onDismiss }: { result: ScanResult; onDismiss: () =
                 </svg>
               </div>
             </div>
-            <span className="text-[12px] font-bold px-3 py-1.5 rounded-full"
-              style={{
-                background: result.scan_type === "check_in" ? "#1A2E1A" : "#1A263A",
-                color:      result.scan_type === "check_in" ? "#7DE882" : "#88CCFF",
-              }}>
-              {result.scan_type === "check_in" ? "✓ Checked in" : "→ Checked out"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold px-3 py-1.5 rounded-full"
+                style={{
+                  background: result.scan_type === "check_in" ? "#1A2E1A" : "#1A263A",
+                  color:      result.scan_type === "check_in" ? "#7DE882" : "#88CCFF",
+                }}>
+                {result.scan_type === "check_in" ? "✓ Checked in" : "→ Checked out"}
+              </span>
+              {!!result.points_awarded && (
+                <span className="text-[12px] font-bold px-3 py-1.5 rounded-full" style={{ background: "rgba(201,162,39,0.18)", color: "#E7C766" }}>
+                  +{result.points_awarded} pts
+                </span>
+              )}
+            </div>
           </div>
         )}
 

@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: Params) {
   ] = await Promise.all([
     service
       .from("events")
-      .select("id, name, description, venue_name, venue_address, city, event_start, event_end, doors_open")
+      .select("id, name, description, venue_name, venue_address, city, event_start, event_end, volunteer_start, volunteer_end")
       .eq("id", eventId)
       .single(),
     service

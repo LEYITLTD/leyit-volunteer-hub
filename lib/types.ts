@@ -57,7 +57,8 @@ export interface Event {
   venue_address?: string;
   event_start: string;
   event_end: string;
-  doors_open?: string;
+  volunteer_start?: string;
+  volunteer_end?: string;
   status: EventStatus;
   early_bird_cutoff_days: number;
   created_by: string;

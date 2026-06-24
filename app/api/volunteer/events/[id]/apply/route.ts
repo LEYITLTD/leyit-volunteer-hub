@@ -46,11 +46,11 @@ export async function POST(
 
   const { data: compliance } = await service
     .from("volunteer_compliance")
-    .select("lseg_status")
+    .select("overall_status")
     .eq("volunteer_id", volunteer.id)
     .single();
 
-  if (compliance?.lseg_status !== "clear") {
+  if (compliance?.overall_status !== "approved") {
     return NextResponse.json({ error: "Account not verified" }, { status: 403 });
   }
 
