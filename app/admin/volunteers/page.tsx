@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { TIER_STYLE } from "@/lib/points-engine";
 
 type Compliance = {
   dbs_status:      string | null;
@@ -16,8 +17,24 @@ type Volunteer = {
   email:                string;
   phone:                string;
   created_at:           string;
+  total_points:         number;
+  tier:                 string | null;
   volunteer_compliance: Compliance | null;
 };
+
+function TierChip({ tier, points }: { tier: string | null; points: number }) {
+  const style = tier ? TIER_STYLE[tier] : null;
+  if (!tier || !style) return <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>—</span>;
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10.5px] font-semibold whitespace-nowrap"
+      style={{ background: style.bg, color: style.color, padding: "2px 8px", borderRadius: 6 }}
+      title={`${points.toLocaleString()} points`}
+    >
+      <span aria-hidden>{style.emoji}</span>{tier}
+    </span>
+  );
+}
 
 const DBS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
   not_uploaded: { label: "No DBS",   bg: "#F3EFE6", color: "#9E9690" },
@@ -161,6 +178,7 @@ export default function VolunteersPage() {
                 <div className="flex gap-2 mt-3 flex-wrap">
                   <Badge map={DBS_LABELS}     value={v.volunteer_compliance?.dbs_status ?? null} />
                   <Badge map={OVERALL_LABELS} value={v.volunteer_compliance?.overall_status ?? null} />
+                  <TierChip tier={v.tier} points={v.total_points} />
                 </div>
               </Link>
             ))}
@@ -174,7 +192,7 @@ export default function VolunteersPage() {
             <table className="w-full text-[13px] border-collapse">
               <thead>
                 <tr style={{ background: "#FAF7F1", borderBottom: "1px solid #EFEAE0" }}>
-                  {["Volunteer", "Registered", "DBS", "Status", ""].map((h) => (
+                  {["Volunteer", "Registered", "DBS", "Status", "Tier", ""].map((h) => (
                     <th
                       key={h}
                       className="text-left px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.06em]"
@@ -220,16 +238,19 @@ export default function VolunteersPage() {
                       <td className="px-5 py-3.5">
                         <Badge map={OVERALL_LABELS} value={v.volunteer_compliance?.overall_status ?? null} />
                       </td>
+                      <td className="px-5 py-3.5">
+                        <TierChip tier={v.tier} points={v.total_points} />
+                      </td>
                       <td className="px-5 py-3.5 text-right">
                         <Link
                           href={`/admin/volunteers/${v.id}`}
-                          className="text-[12px] font-semibold px-3 py-1.5 rounded-lg"
-                          style={{
-                            background: "var(--color-gold-subtle)",
-                            color:      "var(--color-gold)",
-                          }}
+                          aria-label={`View ${v.first_name} ${v.last_name}'s profile`}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-[var(--color-gold-subtle)]"
+                          style={{ color: "var(--color-text-muted)" }}
                         >
-                          Review →
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
                         </Link>
                       </td>
                     </tr>

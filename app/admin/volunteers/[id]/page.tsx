@@ -3,6 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { TIER_STYLE } from "@/lib/points-engine";
+
+type PointsTxn = {
+  id: string; type: string; amount: number;
+  description: string | null; earned_at: string; event_name: string | null;
+};
+type PointsData = {
+  total: number;
+  tier: { name: string; min_points: number } | null;
+  nextTier: { name: string; min_points: number } | null;
+  transactions: PointsTxn[];
+};
+
+const PTS_TYPE_LABEL: Record<string, string> = {
+  check_in: "Checked in", check_out: "Checked out",
+  early_bird: "Early bird", attendance: "Attendance",
+  setup: "Setup", packaging: "Packaging", social_media: "Social media",
+  cleanup: "Cleanup", manual_bonus: "Bonus", deduction: "Deduction",
+};
+
+function fmtDateTime(d: string) {
+  return new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+}
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -626,6 +649,7 @@ export default function VolunteerDetailPage() {
   const [volunteer, setVolunteer]   = useState<Volunteer | null>(null);
   const [dbsUrl, setDbsUrl]         = useState<string | null>(null);
   const [templates, setTemplates]   = useState<Template[]>([]);
+  const [points, setPoints]         = useState<PointsData | null>(null);
   const [loading, setLoading]       = useState(true);
   const [modal, setModal]           = useState<"approve" | "reject" | "lseg-approve" | "lseg-reject" | null>(null);
   const [success, setSuccess]       = useState<string | null>(null);
@@ -634,10 +658,11 @@ export default function VolunteerDetailPage() {
     setLoading(true);
     fetch(`/api/admin/volunteers/${id}`)
       .then((r) => r.json())
-      .then(({ volunteer: v, dbsSignedUrl, templates: tpls }) => {
+      .then(({ volunteer: v, dbsSignedUrl, templates: tpls, points: pts }) => {
         setVolunteer(v);
         setDbsUrl(dbsSignedUrl);
         setTemplates(tpls ?? []);
+        setPoints(pts ?? null);
       })
       .finally(() => setLoading(false));
   }
@@ -759,14 +784,15 @@ export default function VolunteerDetailPage() {
               <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
                 <button
                   onClick={() => setModal("lseg-approve")}
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-2"
                   style={{ background: "var(--color-gold)", color: "#1A1714" }}
                 >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   Mark LSEG as clear
                 </button>
                 <button
                   onClick={() => setModal("lseg-reject")}
-                  className="w-full py-2 text-[12px] font-medium"
+                  className="w-full px-4 py-2 text-[12px] font-medium"
                   style={{ color: "#9E5555", background: "transparent" }}
                 >
                   Mark LSEG as high risk
@@ -835,14 +861,14 @@ export default function VolunteerDetailPage() {
                 <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: "var(--color-card-border)" }}>
                   <button
                     onClick={() => setModal("approve")}
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold"
+                    className="w-full px-4 py-2.5 rounded-xl text-[13px] font-semibold"
                     style={{ background: "var(--color-gold)", color: "#1A1714" }}
                   >
                     Approve DBS
                   </button>
                   <button
                     onClick={() => setModal("reject")}
-                    className="w-full py-2 text-[12px] font-medium"
+                    className="w-full px-4 py-2 text-[12px] font-medium"
                     style={{ color: "#9E5555", background: "transparent" }}
                   >
                     Reject DBS
@@ -855,6 +881,73 @@ export default function VolunteerDetailPage() {
 
         {/* Left column — personal info */}
         <div className="lg:col-span-3 flex flex-col gap-5">
+          {/* Activity & points */}
+          {(() => {
+            const tierStyle = points?.tier ? TIER_STYLE[points.tier.name] : null;
+            const total = points?.total ?? 0;
+            const next = points?.nextTier ?? null;
+            return (
+              <section className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}>
+                <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}>
+                  <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Activity &amp; points</h2>
+                  {points?.tier && tierStyle && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ background: tierStyle.bg, color: tierStyle.color, padding: "3px 9px", borderRadius: 6 }}>
+                      <span aria-hidden>{tierStyle.emoji}</span> {points.tier.name}
+                    </span>
+                  )}
+                </div>
+                <div className="p-5">
+                  {/* Total + progress */}
+                  <div className="flex items-end justify-between gap-3 mb-1">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-0.5" style={{ color: "var(--color-text-muted)" }}>Total points</p>
+                      <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--color-text-primary)" }}>{total.toLocaleString()}</p>
+                    </div>
+                    {next && (
+                      <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
+                        {Math.max(0, next.min_points - total).toLocaleString()} to {next.name}
+                      </p>
+                    )}
+                  </div>
+                  {next && (
+                    <div className="mt-2 mb-4 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-bg)" }}>
+                      <div style={{ width: `${Math.min(100, Math.round((total / next.min_points) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#C9A227,#A8854A)" }} />
+                    </div>
+                  )}
+
+                  {/* Transaction feed */}
+                  <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--color-card-border)" }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-muted)" }}>Points history</p>
+                    {!points || points.transactions.length === 0 ? (
+                      <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No points activity yet.</p>
+                    ) : (
+                      <div className="flex flex-col">
+                        {points.transactions.map((t, i) => {
+                          const positive = t.amount >= 0;
+                          return (
+                            <div key={t.id} className="flex items-center justify-between gap-3 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--color-divider-subtle)" : "none" }}>
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
+                                  {t.description || PTS_TYPE_LABEL[t.type] || t.type}
+                                </p>
+                                <p className="text-[11.5px] truncate" style={{ color: "var(--color-text-muted)" }}>
+                                  {t.event_name ? `${t.event_name} · ` : ""}{fmtDateTime(t.earned_at)}
+                                </p>
+                              </div>
+                              <span className="text-[13px] font-bold tabular-nums flex-shrink-0" style={{ color: positive ? "var(--color-success)" : "var(--color-error)" }}>
+                                {positive ? "+" : ""}{t.amount}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+
           {/* Personal details */}
           <section
             className="rounded-2xl border overflow-hidden"

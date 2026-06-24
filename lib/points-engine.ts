@@ -31,6 +31,14 @@ export const DEFAULT_TIERS: Tier[] = [
   { name: "Platinum", min_points: 1500 },
 ];
 
+/** Shared visual style per tier name, used across volunteer + admin UIs. */
+export const TIER_STYLE: Record<string, { emoji: string; color: string; bg: string }> = {
+  Bronze:   { emoji: "🥉", color: "#9A6B2F", bg: "#F5E9D7" },
+  Silver:   { emoji: "🥈", color: "#6B7280", bg: "#EEF1F4" },
+  Gold:     { emoji: "🥇", color: "#9A7B1F", bg: "#FBF1CF" },
+  Platinum: { emoji: "💎", color: "#0E7490", bg: "#D8F1F7" },
+};
+
 /* ── Config / tier loaders ─────────────────────────────────────────────── */
 
 export async function getPointsConfig(service: SupabaseClient): Promise<PointsConfig> {
