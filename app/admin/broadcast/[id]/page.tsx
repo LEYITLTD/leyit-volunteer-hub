@@ -264,8 +264,8 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Recipient table */}
-      <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 12, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 12, overflowX: "auto", WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"] }}>
+        <table style={{ width: "100%", minWidth: 540, borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "var(--color-bg)", borderBottom: "1px solid var(--color-card-border)" }}>
               {(isSms
