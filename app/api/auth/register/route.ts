@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
 import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
+import { toMobileE164, toE164 } from "@/lib/phone";
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "You must accept the privacy policy" }, { status: 400 });
     }
 
+    // Normalise phone numbers. The main phone must be a valid mobile (used for SMS),
+    // stored canonically as E.164. Emergency contact is normalised if possible but
+    // not required to be a mobile.
+    const phoneE164 = toMobileE164(phone, "GB");
+    if (!phoneE164) {
+      return NextResponse.json({ error: "Please enter a valid UK mobile number (e.g. 07700 900123)." }, { status: 400 });
+    }
+    const emergencyPhoneNormalised = toE164(emergencyPhone, "GB") ?? emergencyPhone;
+
     const service = createServiceClient();
 
     // --- Duplicate check ---
@@ -81,13 +91,13 @@ export async function POST(request: Request) {
         first_name:              firstName,
         last_name:               lastName,
         email,
-        phone,
+        phone:                   phoneE164,
         address,
         date_of_birth:           dateOfBirth,
         nationality,
         gender,
         emergency_contact_name:  emergencyName,
-        emergency_contact_phone: emergencyPhone,
+        emergency_contact_phone: emergencyPhoneNormalised,
         dietary_requirements:    dietary,
         medical_info:            medical,
         age_verified:            ageConfirmed,

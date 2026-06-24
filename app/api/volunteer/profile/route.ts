@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { toMobileE164 } from "@/lib/phone";
 
 export async function PATCH(request: Request) {
   // 1. Authenticate via SSR client
@@ -43,6 +44,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "address must be a string"     }, { status: 400 });
   }
 
+  // Normalise phone to a valid UK mobile (E.164). Empty clears it.
+  const phoneRaw = typeof phone === "string" ? phone.trim() : "";
+  let phoneE164: string | null = null;
+  if (phoneRaw) {
+    phoneE164 = toMobileE164(phoneRaw, "GB");
+    if (!phoneE164) {
+      return NextResponse.json({ error: "Please enter a valid UK mobile number (e.g. 07700 900123)." }, { status: 400 });
+    }
+  }
+
   // 3. Find volunteer record
   const service = createServiceClient();
 
@@ -62,7 +73,7 @@ export async function PATCH(request: Request) {
     .update({
       first_name:  (first_name as string).trim(),
       last_name:   (last_name  as string).trim(),
-      phone:       phone       ? (phone       as string).trim() : null,
+      phone:       phoneE164,
       nationality: nationality ? (nationality as string).trim() : null,
       address:     address     ? (address     as string).trim() : null,
     })

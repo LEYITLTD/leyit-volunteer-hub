@@ -7,6 +7,7 @@ type Recipient = {
   id: string;
   volunteer_id: string | null;
   email: string;
+  phone: string | null;
   first_name: string;
   last_name: string | null;
   status: string;
@@ -14,6 +15,8 @@ type Recipient = {
   opened_at: string | null;
   clicked_at: string | null;
   bounced_at: string | null;
+  failed_at: string | null;
+  error_message: string | null;
 };
 
 type BroadcastLog = {
@@ -22,6 +25,8 @@ type BroadcastLog = {
   recipient_count: number;
   scope: string;
   gender: string;
+  channel: string;
+  sender_id: string | null;
   event_id: string | null;
   sent_at: string;
   events: { name: string } | null;
@@ -51,9 +56,9 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string; bo
   opened:    { label: "Opened",    bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" },
   clicked:   { label: "Clicked",   bg: "#FFF7ED", color: "#EA580C", border: "#FED7AA" },
   bounced:   { label: "Bounced",   bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+  failed:    { label: "Failed",    bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+  invalid:   { label: "No number", bg: "#FFF7ED", color: "#B45309", border: "#FED7AA" },
 };
-
-const STATUS_ORDER = ["sent","delivered","opened","clicked","bounced"];
 
 function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status] ?? STATUS_META.sent;
@@ -75,7 +80,7 @@ function StatPill({ label, value, color }: { label: string; value: number; color
   );
 }
 
-type Filter = "all" | "opened" | "clicked" | "delivered" | "bounced" | "sent";
+type Filter = "all" | "opened" | "clicked" | "delivered" | "bounced" | "sent" | "failed";
 
 export default function BroadcastDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -98,7 +103,11 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
 
   function handleRefresh() {
     setRefreshing(true);
-    fetchData().finally(() => setRefreshing(false));
+    // For SMS, poll Voodoo's delivery report first, then re-read.
+    const pre = data?.log?.channel === "sms"
+      ? fetch(`/api/admin/broadcast/${id}/refresh`, { method: "POST" }).catch(() => {})
+      : Promise.resolve();
+    pre.then(() => fetchData()).finally(() => setRefreshing(false));
   }
 
   if (loading) {
@@ -119,23 +128,28 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
   }
 
   const { log, recipients } = data;
+  const isSms = log.channel === "sms";
 
   const total     = recipients.length;
   const delivered = recipients.filter(r => ["delivered","opened","clicked"].includes(r.status)).length;
   const opened    = recipients.filter(r => ["opened","clicked"].includes(r.status)).length;
   const clicked   = recipients.filter(r => r.status === "clicked").length;
   const bounced   = recipients.filter(r => r.status === "bounced").length;
-  const openRate  = total > 0 ? Math.round((opened / total) * 100) : 0;
+  const failed    = recipients.filter(r => ["failed","invalid"].includes(r.status)).length;
+  const pending   = recipients.filter(r => r.status === "sent").length;
+  const heroRate  = total > 0 ? Math.round(((isSms ? delivered : opened) / total) * 100) : 0;
 
   const filtered = recipients.filter(r => {
     const matchesFilter = filter === "all" || r.status === filter
       || (filter === "opened"  && r.status === "clicked")
-      || (filter === "delivered" && ["delivered","opened","clicked"].includes(r.status));
+      || (filter === "delivered" && ["delivered","opened","clicked"].includes(r.status))
+      || (filter === "failed" && ["failed","invalid"].includes(r.status));
     const q = search.toLowerCase();
     const matchesSearch = !q
       || r.first_name.toLowerCase().includes(q)
       || (r.last_name ?? "").toLowerCase().includes(q)
-      || r.email.toLowerCase().includes(q);
+      || r.email.toLowerCase().includes(q)
+      || (r.phone ?? "").includes(q);
     return matchesFilter && matchesSearch;
   });
 
@@ -147,13 +161,20 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
 
   const genderLabel = log.gender === "all" ? "" : log.gender === "male" ? " · Brothers" : " · Sisters";
 
-  const FILTERS: { key: Filter; label: string; count: number }[] = [
-    { key: "all",       label: "All",       count: total },
-    { key: "opened",    label: "Opened",    count: opened },
-    { key: "delivered", label: "Delivered", count: delivered },
-    { key: "clicked",   label: "Clicked",   count: clicked },
-    { key: "bounced",   label: "Bounced",   count: bounced },
-  ];
+  const FILTERS: { key: Filter; label: string; count: number }[] = isSms
+    ? [
+        { key: "all",       label: "All",       count: total },
+        { key: "delivered", label: "Delivered", count: delivered },
+        { key: "failed",    label: "Failed",    count: failed },
+        { key: "sent",      label: "Pending",   count: pending },
+      ]
+    : [
+        { key: "all",       label: "All",       count: total },
+        { key: "opened",    label: "Opened",    count: opened },
+        { key: "delivered", label: "Delivered", count: delivered },
+        { key: "clicked",   label: "Clicked",   count: clicked },
+        { key: "bounced",   label: "Bounced",   count: bounced },
+      ];
 
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
@@ -171,7 +192,8 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
             {log.subject}
           </h1>
           <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0 }}>
-            {fmtDate(log.sent_at)} · {scopeLabel}{genderLabel}
+            {isSms ? "SMS" : "Email"} · {fmtDate(log.sent_at)} · {scopeLabel}{genderLabel}
+            {isSms && log.sender_id ? ` · from ${log.sender_id}` : ""}
           </p>
         </div>
         <button onClick={handleRefresh} disabled={refreshing} style={{
@@ -192,15 +214,26 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
       {/* Stats row */}
       <div style={{ background: "var(--color-card)", border: "1px solid var(--color-card-border)", borderRadius: 12, padding: "20px 28px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
         <div style={{ textAlign: "center", flex: 1 }}>
-          <div style={{ fontSize: 32, fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.03em", lineHeight: 1 }}>{openRate}%</div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>Open rate</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.03em", lineHeight: 1 }}>{heroRate}%</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>{isSms ? "Delivered" : "Open rate"}</div>
         </div>
         <div style={{ width: 1, height: 40, background: "var(--color-card-border)", flexShrink: 0 }} />
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Sent"      value={total}    color="var(--color-text-primary)" /></div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Delivered" value={delivered} color="#3B82F6" /></div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Opened"    value={opened}   color="#16A34A" /></div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Clicked"   value={clicked}  color="#EA580C" /></div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Bounced"   value={bounced}  color="#DC2626" /></div>
+        {isSms ? (
+          <>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Sent"      value={total}     color="var(--color-text-primary)" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Delivered" value={delivered} color="#16A34A" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Failed"    value={failed}    color="#DC2626" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Pending"   value={pending}   color="var(--color-text-secondary)" /></div>
+          </>
+        ) : (
+          <>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Sent"      value={total}    color="var(--color-text-primary)" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Delivered" value={delivered} color="#3B82F6" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Opened"    value={opened}   color="#16A34A" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Clicked"   value={clicked}  color="#EA580C" /></div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}><StatPill label="Bounced"   value={bounced}  color="#DC2626" /></div>
+          </>
+        )}
       </div>
 
       {/* Filters + search */}
@@ -235,13 +268,15 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "var(--color-bg)", borderBottom: "1px solid var(--color-card-border)" }}>
-              {["Volunteer", "Email", "Status", "Delivered", "Opened", "Clicked"].map((h, i) => (
+              {(isSms
+                ? ["Volunteer", "Number", "Status", "Delivered", "Detail"]
+                : ["Volunteer", "Email", "Status", "Delivered", "Opened", "Clicked"]
+              ).map((h) => (
                 <th key={h} style={{
                   padding: "9px 14px", textAlign: "left",
                   fontSize: 10, fontWeight: 700, color: "var(--color-text-muted)",
                   textTransform: "uppercase", letterSpacing: "0.06em",
                   whiteSpace: "nowrap",
-                  display: i >= 3 ? undefined : undefined,
                 }}>{h}</th>
               ))}
             </tr>
@@ -249,7 +284,7 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: "32px 14px", textAlign: "center", color: "var(--color-text-muted)", fontSize: 13 }}>
+                <td colSpan={isSms ? 5 : 6} style={{ padding: "32px 14px", textAlign: "center", color: "var(--color-text-muted)", fontSize: 13 }}>
                   No recipients match.
                 </td>
               </tr>
@@ -268,17 +303,30 @@ export default function BroadcastDetailPage({ params }: { params: Promise<{ id: 
                       </span>
                     </div>
                   </td>
-                  <td style={{ padding: "10px 14px", color: "var(--color-text-secondary)" }}>{r.email}</td>
+                  <td style={{ padding: "10px 14px", color: "var(--color-text-secondary)" }}>{isSms ? (r.phone || "—") : r.email}</td>
                   <td style={{ padding: "10px 14px" }}><StatusBadge status={r.status} /></td>
-                  <td style={{ padding: "10px 14px", color: r.delivered_at ? "var(--color-text-secondary)" : "var(--color-text-muted)", fontSize: 12 }}>
-                    {r.delivered_at ? fmtDate(r.delivered_at) : "—"}
-                  </td>
-                  <td style={{ padding: "10px 14px", color: r.opened_at ? "#16A34A" : "var(--color-text-muted)", fontSize: 12, fontWeight: r.opened_at ? 600 : 400 }}>
-                    {r.opened_at ? fmtDate(r.opened_at) : "—"}
-                  </td>
-                  <td style={{ padding: "10px 14px", color: r.clicked_at ? "#EA580C" : "var(--color-text-muted)", fontSize: 12, fontWeight: r.clicked_at ? 600 : 400 }}>
-                    {r.clicked_at ? fmtDate(r.clicked_at) : "—"}
-                  </td>
+                  {isSms ? (
+                    <>
+                      <td style={{ padding: "10px 14px", color: r.delivered_at ? "#16A34A" : "var(--color-text-muted)", fontSize: 12, fontWeight: r.delivered_at ? 600 : 400 }}>
+                        {r.delivered_at ? fmtDate(r.delivered_at) : "—"}
+                      </td>
+                      <td style={{ padding: "10px 14px", color: r.error_message ? "#DC2626" : "var(--color-text-muted)", fontSize: 12 }}>
+                        {r.error_message ?? "—"}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ padding: "10px 14px", color: r.delivered_at ? "var(--color-text-secondary)" : "var(--color-text-muted)", fontSize: 12 }}>
+                        {r.delivered_at ? fmtDate(r.delivered_at) : "—"}
+                      </td>
+                      <td style={{ padding: "10px 14px", color: r.opened_at ? "#16A34A" : "var(--color-text-muted)", fontSize: 12, fontWeight: r.opened_at ? 600 : 400 }}>
+                        {r.opened_at ? fmtDate(r.opened_at) : "—"}
+                      </td>
+                      <td style={{ padding: "10px 14px", color: r.clicked_at ? "#EA580C" : "var(--color-text-muted)", fontSize: 12, fontWeight: r.clicked_at ? 600 : 400 }}>
+                        {r.clicked_at ? fmtDate(r.clicked_at) : "—"}
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))
             )}
