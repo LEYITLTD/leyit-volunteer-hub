@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
+import { getTiers, tierForPoints } from "@/lib/points-engine";
 
 export async function GET(
   _req: Request,
@@ -47,5 +48,28 @@ export async function GET(
     .select("key, subject, body_html")
     .in("key", ["dbs_rejected", "application_approved"]);
 
-  return NextResponse.json({ volunteer, dbsSignedUrl, templates });
+  // Points history + tier
+  const [{ data: txns }, tiers] = await Promise.all([
+    service
+      .from("points_transactions")
+      .select("id, type, amount, description, earned_at, events ( name )")
+      .eq("volunteer_id", id)
+      .order("earned_at", { ascending: false }),
+    getTiers(service),
+  ]);
+
+  const transactions = (txns ?? []).map(t => {
+    const ev = Array.isArray(t.events) ? t.events[0] : t.events;
+    return {
+      id: t.id, type: t.type, amount: t.amount,
+      description: t.description, earned_at: t.earned_at,
+      event_name: (ev as { name: string } | null)?.name ?? null,
+    };
+  });
+  const total = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+  const { current, next } = tierForPoints(total, tiers);
+
+  const points = { total, tier: current, nextTier: next, transactions };
+
+  return NextResponse.json({ volunteer, dbsSignedUrl, templates, points });
 }

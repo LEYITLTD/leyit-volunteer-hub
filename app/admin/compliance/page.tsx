@@ -459,7 +459,7 @@ function LsegPanel({
                   disabled={!!busy}
                   style={{
                     flex: 1, background: "#15803D", border: "none",
-                    color: "#fff", borderRadius: 7, padding: "8px",
+                    color: "#fff", borderRadius: 7, padding: "8px 14px",
                     fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                     opacity: busy ? 0.7 : 1,
                   }}
@@ -471,7 +471,7 @@ function LsegPanel({
                   disabled={!!busy}
                   style={{
                     flex: 1, background: "#FEE2E2", border: "none",
-                    color: "#DC2626", borderRadius: 7, padding: "8px",
+                    color: "#DC2626", borderRadius: 7, padding: "8px 14px",
                     fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                     opacity: busy ? 0.7 : 1,
                   }}
