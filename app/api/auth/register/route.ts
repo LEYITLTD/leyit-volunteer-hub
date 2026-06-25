@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
 import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
 import { toMobileE164, toE164 } from "@/lib/phone";
+import { logCommunication } from "@/lib/communications";
 
 export async function POST(request: Request) {
   try {
@@ -144,12 +145,13 @@ export async function POST(request: Request) {
 
     if (tpl) {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      const sent = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL!,
         to: email,
         subject: tpl.subject,
         html: wrapEmailHtml(renderTemplate(tpl.body_html, { first_name: firstName })),
       });
+      await logCommunication(service, { volunteer_id: volunteer.id, channel: "email", category: "system", subject: tpl.subject, body: "Registration received", status: "sent", provider_message_id: sent.data?.id ?? null });
     }
 
     return NextResponse.json({ success: true, dbsUploaded }, { status: 201 });
