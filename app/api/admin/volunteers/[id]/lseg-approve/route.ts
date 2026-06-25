@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 import { Resend } from "resend";
 import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
+import { logCommunication } from "@/lib/communications";
 
 export async function POST(
   _request: Request,
@@ -54,12 +55,13 @@ export async function POST(
 
     if (volunteer && tpl) {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      const sent = await resend.emails.send({
         from:    process.env.RESEND_FROM_EMAIL!,
         to:      volunteer.email,
         subject: tpl.subject,
         html:    wrapEmailHtml(renderTemplate(tpl.body_html, { first_name: volunteer.first_name })),
       });
+      await logCommunication(service, { volunteer_id: id, channel: "email", category: "system", subject: tpl.subject, body: "Application approved", status: "sent", provider_message_id: sent.data?.id ?? null });
     }
   }
 

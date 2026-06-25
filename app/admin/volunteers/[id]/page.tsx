@@ -16,6 +16,21 @@ type PointsData = {
   transactions: PointsTxn[];
 };
 
+type CommItem = {
+  id: string;
+  channel: "email" | "sms";
+  category: "system" | "direct" | "broadcast";
+  subject: string | null;
+  status: string;
+  created_at: string;
+};
+
+const COMM_CATEGORY: Record<string, { label: string; bg: string; color: string }> = {
+  system:    { label: "System",    bg: "#F3EFE6", color: "#8A7A5A" },
+  direct:    { label: "Direct",    bg: "#EDE9FE", color: "#5B21B6" },
+  broadcast: { label: "Broadcast", bg: "#E7EEF6", color: "#1D4ED8" },
+};
+
 const PTS_TYPE_LABEL: Record<string, string> = {
   check_in: "Checked in", check_out: "Checked out",
   early_bird: "Early bird", attendance: "Attendance",
@@ -654,6 +669,42 @@ export default function VolunteerDetailPage() {
   const [modal, setModal]           = useState<"approve" | "reject" | "lseg-approve" | "lseg-reject" | null>(null);
   const [success, setSuccess]       = useState<string | null>(null);
 
+  // Communications
+  const [comms,      setComms]      = useState<CommItem[] | null>(null);
+  const [msgChannel, setMsgChannel] = useState<"email" | "sms">("email");
+  const [msgSubject, setMsgSubject] = useState("");
+  const [msgBody,    setMsgBody]    = useState("");
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgError,   setMsgError]   = useState<string | null>(null);
+  const [msgOk,      setMsgOk]      = useState(false);
+
+  function loadComms() {
+    fetch(`/api/admin/volunteers/${id}/communications`)
+      .then(r => r.json())
+      .then(d => setComms(Array.isArray(d) ? d : []))
+      .catch(() => setComms([]));
+  }
+
+  async function sendMessage() {
+    if (!msgBody.trim()) { setMsgError("Message is required."); return; }
+    if (msgChannel === "email" && !msgSubject.trim()) { setMsgError("Subject is required."); return; }
+    setMsgError(null); setMsgOk(false); setMsgSending(true);
+    try {
+      const res  = await fetch(`/api/admin/volunteers/${id}/message`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel: msgChannel, subject: msgSubject.trim(), message: msgBody.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to send");
+      setMsgOk(true); setMsgSubject(""); setMsgBody("");
+      loadComms();
+    } catch (e) {
+      setMsgError(e instanceof Error ? e.message : "Failed to send");
+    } finally {
+      setMsgSending(false);
+    }
+  }
+
   function load() {
     setLoading(true);
     fetch(`/api/admin/volunteers/${id}`)
@@ -667,7 +718,7 @@ export default function VolunteerDetailPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, [id]);
+  useEffect(() => { load(); loadComms(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   function handleDone(msg: string) {
     setModal(null);
@@ -947,6 +998,82 @@ export default function VolunteerDetailPage() {
               </section>
             );
           })()}
+
+          {/* Communications */}
+          <section className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--color-card-border)", background: "var(--color-card)" }}>
+            <div className="px-5 py-3.5 border-b" style={{ borderColor: "var(--color-card-border)", background: "var(--color-card-header-bg)" }}>
+              <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>Communications</h2>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Send a direct message and view everything sent to {volunteer.first_name}.</p>
+            </div>
+            <div className="p-5">
+              {/* Composer */}
+              <div className="rounded-xl border p-4 mb-5" style={{ borderColor: "var(--color-card-border)", background: "var(--color-bg)" }}>
+                <div className="flex gap-1.5 mb-3" style={{ background: "var(--color-card)", padding: 4, borderRadius: 8, border: "1px solid var(--color-card-border)", width: "fit-content" }}>
+                  {(["email", "sms"] as const).map(c => (
+                    <button key={c} onClick={() => { setMsgChannel(c); setMsgError(null); setMsgOk(false); }}
+                      className="text-[12px] font-semibold capitalize"
+                      style={{ padding: "5px 14px", borderRadius: 6, cursor: "pointer", border: "none",
+                        background: msgChannel === c ? "var(--color-gold-subtle)" : "transparent",
+                        color: msgChannel === c ? "var(--color-gold)" : "var(--color-text-muted)" }}>
+                      {c === "email" ? "Email" : "SMS"}
+                    </button>
+                  ))}
+                </div>
+                {msgChannel === "email" && (
+                  <input value={msgSubject} onChange={e => setMsgSubject(e.target.value)} placeholder="Subject"
+                    className="w-full border rounded-lg px-3 py-2 text-[13px] mb-2"
+                    style={{ borderColor: "var(--color-input-border)", background: "var(--color-input-bg)", color: "var(--color-text-primary)" }} />
+                )}
+                <textarea value={msgBody} onChange={e => setMsgBody(e.target.value)} rows={3}
+                  placeholder={msgChannel === "sms" ? "Text message… ({{first_name}} supported)" : "Message… ({{first_name}} supported)"}
+                  className="w-full border rounded-lg px-3 py-2 text-[13px] resize-none"
+                  style={{ borderColor: "var(--color-input-border)", background: "var(--color-input-bg)", color: "var(--color-text-primary)", lineHeight: 1.5 }} />
+                {msgError && <p className="text-[12px] mt-2" style={{ color: "var(--color-error)" }}>{msgError}</p>}
+                {msgOk && <p className="text-[12px] mt-2" style={{ color: "var(--color-success)" }}>Message sent.</p>}
+                <div className="flex justify-end mt-3">
+                  <button onClick={sendMessage} disabled={msgSending}
+                    className="text-[13px] font-semibold px-4 py-2 rounded-lg"
+                    style={{ background: "var(--color-gold)", color: "#1A1714", opacity: msgSending ? 0.6 : 1, cursor: msgSending ? "default" : "pointer" }}>
+                    {msgSending ? "Sending…" : `Send ${msgChannel === "sms" ? "SMS" : "email"}`}
+                  </button>
+                </div>
+              </div>
+
+              {/* History */}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--color-text-muted)" }}>History</p>
+              {comms === null ? (
+                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>Loading…</p>
+              ) : comms.length === 0 ? (
+                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>Nothing sent yet.</p>
+              ) : (
+                <div className="flex flex-col">
+                  {comms.map((c, i) => {
+                    const cat = COMM_CATEGORY[c.category] ?? COMM_CATEGORY.system;
+                    const failed = c.status === "failed";
+                    return (
+                      <div key={c.id} className="flex items-center gap-3 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--color-divider-subtle)" : "none" }}>
+                        <span className="flex items-center justify-center rounded-lg flex-shrink-0" style={{ width: 28, height: 28, background: "var(--color-bg)", color: "var(--color-text-muted)" }}>
+                          {c.channel === "sms" ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+                          )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
+                            {c.subject || (c.channel === "sms" ? "SMS message" : "Message")}
+                          </p>
+                          <p className="text-[11.5px]" style={{ color: "var(--color-text-muted)" }}>{c.created_at ? fmtDateTime(c.created_at) : "—"}</p>
+                        </div>
+                        <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: cat.bg, color: cat.color, padding: "2px 7px", borderRadius: 5 }}>{cat.label}</span>
+                        {failed && <span className="text-[10px] font-semibold flex-shrink-0" style={{ background: "var(--color-error-bg)", color: "var(--color-error)", padding: "2px 7px", borderRadius: 5 }}>Failed</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* Personal details */}
           <section

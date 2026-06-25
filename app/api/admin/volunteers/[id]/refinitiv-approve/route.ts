@@ -3,22 +3,15 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdminUser } from "@/lib/supabase/admin-guard";
 import { Resend } from "resend";
 import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
-import { logCommunication } from "@/lib/communications";
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { error, user } = await requireAdminUser();
   if (error) return error;
 
   const { id } = await params;
-  const { expiryDate } = await request.json();
-
-  if (!expiryDate) {
-    return NextResponse.json({ error: "DBS expiry date is required" }, { status: 400 });
-  }
-
   const service = createServiceClient();
 
   const { data: admin } = await service
@@ -30,10 +23,10 @@ export async function POST(
   const { data: updated, error: updErr } = await service
     .from("volunteer_compliance")
     .update({
-      dbs_status:      "verified",
-      dbs_expiry_date: expiryDate,
-      dbs_reviewed_by: admin?.id ?? null,
-      dbs_reviewed_at: new Date().toISOString(),
+      refinitiv_status:      "clear",
+      refinitiv_screened_at: new Date().toISOString(),
+      refinitiv_override_by: admin?.id ?? null,
+      refinitiv_override_at: new Date().toISOString(),
     })
     .eq("volunteer_id", id)
     .select("overall_status")
@@ -61,13 +54,12 @@ export async function POST(
 
     if (volunteer && tpl) {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const sent = await resend.emails.send({
+      await resend.emails.send({
         from:    process.env.RESEND_FROM_EMAIL!,
         to:      volunteer.email,
         subject: tpl.subject,
         html:    wrapEmailHtml(renderTemplate(tpl.body_html, { first_name: volunteer.first_name })),
       });
-      await logCommunication(service, { volunteer_id: id, channel: "email", category: "system", subject: tpl.subject, body: "Application approved", status: "sent", provider_message_id: sent.data?.id ?? null });
     }
   }
 

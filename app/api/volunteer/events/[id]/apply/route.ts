@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Resend } from "resend";
 import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
+import { logCommunication } from "@/lib/communications";
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-GB", {
@@ -145,12 +146,13 @@ export async function POST(
       };
 
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      const sent = await resend.emails.send({
         from:    process.env.RESEND_FROM_EMAIL!,
         to:      volunteer.email,
         subject: renderTemplate(tpl.subject, vars),
         html:    wrapEmailHtml(renderTemplate(tpl.body_html, vars)),
       });
+      await logCommunication(service, { volunteer_id: volunteer.id, channel: "email", category: "system", subject: renderTemplate(tpl.subject, vars), body: `Applied to ${event.name} — ${role.role_name}`, status: "sent", provider_message_id: sent.data?.id ?? null });
     }
   } catch {
     // Email failure should never block the application
