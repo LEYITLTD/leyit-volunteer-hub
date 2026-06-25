@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { AddressAutocomplete, type AddressResult } from "@/components/ui/AddressAutocomplete";
 
 type Step = 1 | 2 | 3;
 const STEP_LABELS = ["Personal details", "Emergency & medical", "DBS certificate (optional)"];
@@ -38,16 +37,6 @@ export default function RegisterPage() {
     ageConfirmed: false, privacyAccepted: false,
   });
 
-  function fillAddress(result: AddressResult) {
-    setForm((f) => ({
-      ...f,
-      addressLine1: result.line1,
-      addressLine2: result.line2,
-      city:         result.city,
-      county:       result.county,
-      postcode:     result.postcode,
-    }));
-  }
 
   const [dbsFile, setDbsFile]           = useState<File | null>(null);
   const [compressing, setCompressing]   = useState(false);
@@ -295,7 +284,6 @@ export default function RegisterPage() {
 
             {/* Address block */}
             <div className="sm:col-span-2 flex flex-col gap-3.5">
-              <AddressAutocomplete onSelect={fillAddress} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Input
                   label="Address line 1"
