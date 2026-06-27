@@ -119,7 +119,14 @@ export default function LoginPage() {
             Register here
           </Link>
         </p>
-        <p className="text-center mt-2">
+        <p className="text-center mt-2 flex items-center justify-center gap-3">
+          <Link
+            href="/contact"
+            className="text-[12px] text-text-muted hover:text-text-secondary"
+          >
+            Contact us
+          </Link>
+          <span className="text-text-muted">·</span>
           <Link
             href="/admin-login"
             className="text-[12px] text-text-muted hover:text-text-secondary"

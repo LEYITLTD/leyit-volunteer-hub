@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ContactModal } from "@/components/ui/ContactModal";
 
 /* ── Desktop sidebar nav ─────────────────────────────────── */
 
@@ -275,7 +276,7 @@ type Stage = "awaiting_review" | "dbs_required" | "dbs_review" | "rejected";
 type GateState =
   | { phase: "loading" }
   | { phase: "approved" }
-  | { phase: "review"; stage: Stage; firstName: string };
+  | { phase: "review"; stage: Stage; firstName: string; email: string };
 
 const STAGE_COPY: Record<Stage, { heading: string; body: string }> = {
   awaiting_review: {
@@ -296,10 +297,11 @@ const STAGE_COPY: Record<Stage, { heading: string; body: string }> = {
   },
 };
 
-function ReviewScreen({ stage, firstName, onUploaded }: { stage: Stage; firstName: string; onUploaded: () => void }) {
+function ReviewScreen({ stage, firstName, email, onUploaded }: { stage: Stage; firstName: string; email: string; onUploaded: () => void }) {
   const [file, setFile]           = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr]             = useState<string | null>(null);
+  const [contactOpen, setContactOpen] = useState(false);
   const inputRef                  = useRef<HTMLInputElement>(null);
 
   const rejected = stage === "rejected";
@@ -381,9 +383,13 @@ function ReviewScreen({ stage, firstName, onUploaded }: { stage: Stage; firstNam
           </div>
         )}
 
-        <a href="mailto:admin@emanchannel.tv" className="block text-[13px] font-semibold mb-4" style={{ color: "var(--color-gold)" }}>
-          admin@emanchannel.tv
-        </a>
+        <button
+          type="button" onClick={() => setContactOpen(true)}
+          className="w-full text-[13px] font-semibold px-4 py-2.5 rounded-lg mb-3"
+          style={{ color: "var(--color-gold)", background: "var(--color-gold-subtle)" }}
+        >
+          Contact us
+        </button>
 
         <form action="/api/auth/logout" method="POST">
           <button type="submit" className="text-[13px] font-semibold px-4 py-2.5 rounded-lg w-full" style={{ color: "var(--color-text-secondary)", border: "1px solid var(--color-card-border)" }}>
@@ -391,6 +397,15 @@ function ReviewScreen({ stage, firstName, onUploaded }: { stage: Stage; firstNam
           </button>
         </form>
       </div>
+
+      {contactOpen && (
+        <ContactModal
+          onClose={() => setContactOpen(false)}
+          defaultName={firstName}
+          defaultEmail={email}
+          lockIdentity
+        />
+      )}
     </div>
   );
 }
@@ -414,16 +429,17 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
         const lseg: string     = comp?.lseg_status ?? "pending";
         const dbs: string      = comp?.dbs_status ?? "not_uploaded";
         const firstName        = v.first_name ?? "";
+        const email            = v.email ?? "";
 
         if (overall === "approved") { setGate({ phase: "approved" }); return; }
-        if (overall === "rejected") { setGate({ phase: "review", stage: "rejected", firstName }); return; }
+        if (overall === "rejected") { setGate({ phase: "review", stage: "rejected", firstName, email }); return; }
 
         // pending — derive the onboarding sub-stage
         let stage: Stage = "awaiting_review";
         if (lseg === "possible_match" || lseg === "high_risk") {
           stage = dbs === "not_uploaded" ? "dbs_required" : "dbs_review";
         }
-        setGate({ phase: "review", stage, firstName });
+        setGate({ phase: "review", stage, firstName, email });
       })
       .catch(() => setGate({ phase: "approved" }));
   }
@@ -440,7 +456,7 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
   }
 
   if (gate.phase === "review") {
-    return <ReviewScreen stage={gate.stage} firstName={gate.firstName} onUploaded={loadGate} />;
+    return <ReviewScreen stage={gate.stage} firstName={gate.firstName} email={gate.email} onUploaded={loadGate} />;
   }
 
   return (
