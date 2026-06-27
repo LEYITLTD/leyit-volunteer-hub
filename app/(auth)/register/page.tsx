@@ -487,9 +487,13 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <p className="text-center mt-5">
+      <p className="text-center mt-5 flex items-center justify-center gap-3">
         <Link href="/login" className="text-[13px] hover:text-text-secondary" style={{ color: "var(--color-text-muted)" }}>
           ← Back to login
+        </Link>
+        <span style={{ color: "var(--color-text-muted)" }}>·</span>
+        <Link href="/contact" className="text-[13px] hover:text-text-secondary" style={{ color: "var(--color-text-muted)" }}>
+          Contact us
         </Link>
       </p>
     </div>
