@@ -11,11 +11,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unverified, setUnverified] = useState(false);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUnverified(false);
+    setResendMsg(null);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -23,13 +27,25 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Sign in failed");
+      if (!res.ok) {
+        if (data.code === "email_unverified") { setUnverified(true); setError(data.error ?? "Please verify your email first."); return; }
+        throw new Error(data.error ?? "Sign in failed");
+      }
       window.location.href = data.redirect ?? "/volunteer/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function resendVerification() {
+    setResendMsg(null);
+    await fetch("/api/auth/resend-verification", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+    setResendMsg("If your email needs verifying, we've sent a fresh link to your inbox.");
   }
 
   return (
@@ -77,9 +93,16 @@ export default function LoginPage() {
           />
 
           {error && (
-            <p className="text-[13px] text-error bg-error-bg rounded-[var(--radius-md)] px-3 py-2">
-              {error}
-            </p>
+            <div className="text-[13px] rounded-[var(--radius-md)] px-3 py-2" style={{ color: unverified ? "var(--color-warning)" : "var(--color-error)", background: unverified ? "var(--color-warning-bg)" : "var(--color-error-bg)" }}>
+              <p>{error}</p>
+              {unverified && (
+                resendMsg
+                  ? <p className="mt-1.5 font-medium" style={{ color: "var(--color-success)" }}>{resendMsg}</p>
+                  : <button type="button" onClick={resendVerification} className="mt-1.5 font-semibold underline" style={{ color: "var(--color-gold)" }}>
+                      Resend verification email
+                    </button>
+              )}
+            </div>
           )}
 
           <Button type="submit" fullWidth disabled={loading}>

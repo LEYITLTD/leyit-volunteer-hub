@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { Resend } from "resend";
-import { wrapEmailHtml, renderTemplate } from "@/lib/email-wrapper";
 import { toMobileE164, toE164 } from "@/lib/phone";
-import { logCommunication } from "@/lib/communications";
+import { issueVerificationEmail, originFromRequest } from "@/lib/verification";
 
 export async function POST(request: Request) {
   try {
@@ -135,23 +133,16 @@ export async function POST(request: Request) {
       }
     }
 
-    // --- Send confirmation email (single "application received" message; DBS is
-    // optional at signup and only requested later if the LSEG check isn't clear) ---
-    const { data: tpl } = await service
-      .from("email_templates")
-      .select("subject, body_html")
-      .eq("key", "registration_dbs_uploaded")
-      .single();
-
-    if (tpl) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const sent = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
-        to: email,
-        subject: tpl.subject,
-        html: wrapEmailHtml(renderTemplate(tpl.body_html, { first_name: firstName })),
-      });
-      await logCommunication(service, { volunteer_id: volunteer.id, channel: "email", category: "system", subject: tpl.subject, body: "Registration received", status: "sent", provider_message_id: sent.data?.id ?? null });
+    // --- Send the email-verification link (they must verify before logging in).
+    // The "application received" confirmation is sent once they verify. ---
+    try {
+      await issueVerificationEmail(
+        service,
+        { volunteer_id: volunteer.id, email, first_name: firstName },
+        originFromRequest(request),
+      );
+    } catch (e) {
+      console.error("[register] verification email failed", e);
     }
 
     return NextResponse.json({ success: true, dbsUploaded }, { status: 201 });

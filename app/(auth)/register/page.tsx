@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [done, setDone]     = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
@@ -174,6 +175,15 @@ export default function RegisterPage() {
     }
   }
 
+  async function resendVerification() {
+    setResendMsg(null);
+    await fetch("/api/auth/resend-verification", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: form.email }),
+    }).catch(() => {});
+    setResendMsg("If your email needs verifying, we've sent a fresh link.");
+  }
+
   if (done) {
     return (
       <div className="w-full max-w-[500px]">
@@ -181,19 +191,26 @@ export default function RegisterPage() {
           <Image src="/assets/logo-gold.png" alt="LUL" width={100} height={70} className="h-[70px] w-auto" />
         </div>
         <div className="bg-card border border-card-border rounded-xl p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div className="w-[60px] h-[60px] rounded-full bg-success-bg flex items-center justify-center mx-auto mb-5" style={{ color: "var(--color-success)" }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
+          <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: "var(--color-gold-subtle)", color: "var(--color-gold)" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>
             </svg>
           </div>
-          <h2 className="font-display text-[26px] font-semibold mb-2">Registration submitted</h2>
-          <p className="text-[14px] text-text-secondary max-w-[380px] mx-auto mb-6">
-            Your application is under review. We&apos;ll run a background check and be in touch once it&apos;s complete.
-            {dbsFile && " Your DBS certificate has also been received."}
+          <h2 className="font-display text-[26px] font-semibold mb-2">Check your inbox</h2>
+          <p className="text-[14px] text-text-secondary max-w-[400px] mx-auto mb-2">
+            We&apos;ve sent a verification link to <strong className="text-text-primary">{form.email}</strong>. Please click it to confirm your email — then you can log in. The link is valid for 1 hour.
           </p>
-          <Link href="/login" className="text-gold font-semibold text-[14px] hover:underline">
-            ← Back to login
-          </Link>
+          <p className="text-[13px] text-text-muted max-w-[400px] mx-auto mb-6">
+            Can&apos;t find it? Check your spam folder, or resend below.
+          </p>
+          {resendMsg
+            ? <p className="text-[13px] text-success mb-6">{resendMsg}</p>
+            : <button onClick={resendVerification} className="text-gold font-semibold text-[14px] hover:underline mb-6">Resend verification email</button>}
+          <div>
+            <Link href="/login" className="text-[13px] text-text-muted hover:text-text-secondary">
+              ← Back to login
+            </Link>
+          </div>
         </div>
       </div>
     );

@@ -233,10 +233,10 @@ function applyPreviewTags(html: string) {
 /* ─── Template categories ────────────────────────────────────────────────── */
 
 const TEMPLATE_CATEGORIES: { label: string; keys: string[] }[] = [
-  { label: "Registration",   keys: ["registration_dbs_required", "registration_dbs_uploaded"] },
+  { label: "Registration",   keys: ["email_verification", "registration_dbs_uploaded", "registration_dbs_required"] },
   { label: "Events",         keys: ["event_application_received", "application_approved"] },
   { label: "Waitlist",       keys: ["waitlist_spot_available", "volunteer_cancelled"] },
-  { label: "Compliance",     keys: ["dbs_rejected"] },
+  { label: "Compliance",     keys: ["volunteer_rejected", "dbs_rejected"] },
   { label: "Certificates",   keys: ["certificate_sent"] },
   { label: "Admin",          keys: ["admin_account_created"] },
 ];
