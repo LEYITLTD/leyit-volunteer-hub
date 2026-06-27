@@ -343,12 +343,8 @@ function LsegPanel({
   async function markHighRisk(id: string) {
     setBusy(id + "-risk");
     try {
-      await fetch(`/api/admin/volunteers/${id}/lseg-reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "" }),
-      });
-      showToast("LSEG marked as high risk");
+      await fetch(`/api/admin/volunteers/${id}/request-dbs`, { method: "POST" });
+      showToast("DBS verification requested");
       setExpanded(null);
       onRefresh();
     } finally {
@@ -476,7 +472,7 @@ function LsegPanel({
                     opacity: busy ? 0.7 : 1,
                   }}
                 >
-                  {busy === v.id + "-risk" ? "Saving…" : "Confirm high risk"}
+                  {busy === v.id + "-risk" ? "Saving…" : "Require DBS"}
                 </button>
               </div>
             </div>

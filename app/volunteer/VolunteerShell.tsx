@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* ── Desktop sidebar nav ─────────────────────────────────── */
 
@@ -271,13 +271,55 @@ function BottomTabBar() {
 
 /* ── Compliance review gate ──────────────────────────────── */
 
+type Stage = "awaiting_review" | "dbs_required" | "dbs_review" | "rejected";
 type GateState =
   | { phase: "loading" }
   | { phase: "approved" }
-  | { phase: "review"; status: "pending" | "rejected"; firstName: string };
+  | { phase: "review"; stage: Stage; firstName: string };
 
-function ReviewScreen({ status, firstName }: { status: "pending" | "rejected"; firstName: string }) {
-  const rejected = status === "rejected";
+const STAGE_COPY: Record<Stage, { heading: string; body: string }> = {
+  awaiting_review: {
+    heading: "Your application is being reviewed",
+    body: "Thank you for registering. Our team is reviewing your application — this usually takes 24–48 hours. You'll be notified by email once you're approved, and your dashboard will unlock automatically.",
+  },
+  dbs_required: {
+    heading: "One last step",
+    body: "To complete your application we need to verify a DBS certificate. Please upload it below — once our team has reviewed it, we'll confirm your status.",
+  },
+  dbs_review: {
+    heading: "We're reviewing your DBS",
+    body: "Thanks for uploading your DBS certificate. Our team is reviewing it now and we'll email you as soon as it's confirmed.",
+  },
+  rejected: {
+    heading: "Application not approved",
+    body: "Unfortunately we're unable to approve your volunteer account at this time. If you believe this is a mistake, please contact our team.",
+  },
+};
+
+function ReviewScreen({ stage, firstName, onUploaded }: { stage: Stage; firstName: string; onUploaded: () => void }) {
+  const [file, setFile]           = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr]             = useState<string | null>(null);
+  const inputRef                  = useRef<HTMLInputElement>(null);
+
+  const rejected = stage === "rejected";
+  const copy = STAGE_COPY[stage];
+
+  async function submit() {
+    if (!file) { setErr("Please choose your DBS certificate first."); return; }
+    setErr(null); setUploading(true);
+    try {
+      const fd = new FormData(); fd.append("certificate", file);
+      const res  = await fetch("/api/volunteer/dbs", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      onUploaded();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Upload failed");
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--gradient-auth-bg, var(--color-bg))" }}>
       <div className="w-full max-w-[420px] rounded-2xl border p-8 text-center" style={{ background: "var(--color-card)", borderColor: "var(--color-card-border)", boxShadow: "var(--shadow-card)" }}>
@@ -289,6 +331,10 @@ function ReviewScreen({ status, firstName }: { status: "pending" | "rejected"; f
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
+          ) : stage === "dbs_required" ? (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
           ) : (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -297,16 +343,43 @@ function ReviewScreen({ status, firstName }: { status: "pending" | "rejected"; f
         </div>
 
         <h1 className="font-display text-[22px] font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
-          {rejected ? "Application not approved" : "Your application is being reviewed"}
+          {copy.heading}
         </h1>
         <p className="text-[14px] leading-relaxed mb-1" style={{ color: "var(--color-text-secondary)" }}>
           {firstName ? `Assalamu alaikum ${firstName},` : "Assalamu alaikum,"}
         </p>
         <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--color-text-secondary)" }}>
-          {rejected
-            ? "Unfortunately we're unable to approve your volunteer account at this time. If you believe this is a mistake, please contact our team."
-            : "Thank you for registering. Our team is reviewing your application — this usually takes 2–5 working days. You'll be notified by email once you're approved, and your dashboard will unlock automatically."}
+          {copy.body}
         </p>
+
+        {stage === "dbs_required" && (
+          <div className="mb-6 text-left">
+            <input
+              ref={inputRef} type="file" accept="application/pdf,image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={e => { setErr(null); setFile(e.target.files?.[0] ?? null); }}
+            />
+            <button
+              type="button" onClick={() => inputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 text-[13px] font-medium rounded-xl px-4 py-3 mb-3"
+              style={{ border: "1.5px dashed var(--color-input-border)", color: "var(--color-text-secondary)", background: "var(--color-input-bg)" }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span className="truncate">{file ? file.name : "Choose your DBS certificate"}</span>
+            </button>
+            <p className="text-[11px] mb-3" style={{ color: "var(--color-text-muted)" }}>PDF or image · max 10 MB</p>
+            {err && <p className="text-[12px] mb-3" style={{ color: "var(--color-error)" }}>{err}</p>}
+            <button
+              type="button" onClick={submit} disabled={uploading}
+              className="w-full text-[14px] font-semibold rounded-xl px-4 py-3"
+              style={{ background: "var(--color-gold)", color: "#1A1714", opacity: uploading ? 0.6 : 1 }}
+            >
+              {uploading ? "Uploading…" : "Submit DBS certificate"}
+            </button>
+          </div>
+        )}
 
         <a href="mailto:admin@emanchannel.tv" className="block text-[13px] font-semibold mb-4" style={{ color: "var(--color-gold)" }}>
           admin@emanchannel.tv
@@ -327,27 +400,36 @@ function ReviewScreen({ status, firstName }: { status: "pending" | "rejected"; f
 export function VolunteerShell({ children }: { children: React.ReactNode }) {
   const [gate, setGate] = useState<GateState>({ phase: "loading" });
 
-  useEffect(() => {
-    let active = true;
+  function loadGate() {
     fetch("/api/volunteer/me")
       .then(async (r) => {
         if (r.status === 401) { window.location.href = "/login"; return null; }
         return r.ok ? r.json() : null;
       })
       .then((data) => {
-        if (!active || !data) { if (active && !data) setGate({ phase: "approved" }); return; }
+        if (!data) { setGate({ phase: "approved" }); return; }
         const v = data.volunteer ?? {};
         const comp = Array.isArray(v.volunteer_compliance) ? v.volunteer_compliance[0] : v.volunteer_compliance;
-        const overall: string = comp?.overall_status ?? "pending";
-        if (overall === "approved") {
-          setGate({ phase: "approved" });
-        } else {
-          setGate({ phase: "review", status: overall === "rejected" ? "rejected" : "pending", firstName: v.first_name ?? "" });
+        const overall: string  = comp?.overall_status ?? "pending";
+        const lseg: string     = comp?.lseg_status ?? "pending";
+        const dbs: string      = comp?.dbs_status ?? "not_uploaded";
+        const firstName        = v.first_name ?? "";
+
+        if (overall === "approved") { setGate({ phase: "approved" }); return; }
+        if (overall === "rejected") { setGate({ phase: "review", stage: "rejected", firstName }); return; }
+
+        // pending — derive the onboarding sub-stage
+        let stage: Stage = "awaiting_review";
+        if (lseg === "possible_match" || lseg === "high_risk") {
+          stage = dbs === "not_uploaded" ? "dbs_required" : "dbs_review";
         }
+        setGate({ phase: "review", stage, firstName });
       })
-      .catch(() => { if (active) setGate({ phase: "approved" }); });
-    return () => { active = false; };
-  }, []);
+      .catch(() => setGate({ phase: "approved" }));
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadGate(); }, []);
 
   if (gate.phase === "loading") {
     return (
@@ -358,7 +440,7 @@ export function VolunteerShell({ children }: { children: React.ReactNode }) {
   }
 
   if (gate.phase === "review") {
-    return <ReviewScreen status={gate.status} firstName={gate.firstName} />;
+    return <ReviewScreen stage={gate.stage} firstName={gate.firstName} onUploaded={loadGate} />;
   }
 
   return (

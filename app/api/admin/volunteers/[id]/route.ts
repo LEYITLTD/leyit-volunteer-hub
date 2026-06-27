@@ -46,7 +46,7 @@ export async function GET(
   const { data: templates } = await service
     .from("email_templates")
     .select("key, subject, body_html")
-    .in("key", ["dbs_rejected", "application_approved"]);
+    .in("key", ["volunteer_rejected", "application_approved"]);
 
   // Points history + tier
   const [{ data: txns }, tiers] = await Promise.all([

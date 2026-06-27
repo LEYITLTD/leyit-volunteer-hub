@@ -135,12 +135,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // --- Send confirmation email ---
-    const templateKey = dbsUploaded ? "registration_dbs_uploaded" : "registration_dbs_required";
+    // --- Send confirmation email (single "application received" message; DBS is
+    // optional at signup and only requested later if the LSEG check isn't clear) ---
     const { data: tpl } = await service
       .from("email_templates")
       .select("subject, body_html")
-      .eq("key", templateKey)
+      .eq("key", "registration_dbs_uploaded")
       .single();
 
     if (tpl) {
