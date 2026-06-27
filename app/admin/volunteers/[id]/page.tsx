@@ -314,7 +314,7 @@ function RejectModal({
         >
           <div>
             <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Reject DBS certificate
+              Reject application
             </h2>
             <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
               {volunteer.first_name} {volunteer.last_name} · {volunteer.email}
@@ -328,13 +328,12 @@ function RejectModal({
           {/* Left — compose */}
           <div className="flex flex-col gap-5 p-6 w-full sm:w-[42%] flex-shrink-0 overflow-y-auto">
             <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>
-              Write a clear reason — this will be included verbatim in the email sent to{" "}
-              <strong style={{ color: "var(--color-text-primary)" }}>{volunteer.first_name}</strong>.
+              This is the <strong style={{ color: "var(--color-text-primary)" }}>final decision</strong> — {volunteer.first_name} will be sent the rejection email (previewed on the right) and their account will be disabled. The reason below is kept as an internal note.
             </p>
 
             <div className="flex flex-col gap-1.5 flex-1">
               <label className="text-[12px] font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                Rejection reason
+                Internal reason
               </label>
               <textarea
                 value={reason}
@@ -536,7 +535,7 @@ function LsegApproveModal({
 
 /* ─── LSEG Reject Modal ──────────────────────────────────────────────────── */
 
-function LsegRejectModal({
+function RequireDbsModal({
   volunteer,
   onClose,
   onDone,
@@ -545,7 +544,6 @@ function LsegRejectModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [reason,     setReason]   = useState("");
   const [submitting, setSubmit]   = useState(false);
   const [err, setErr]             = useState<string | null>(null);
 
@@ -553,11 +551,7 @@ function LsegRejectModal({
     setSubmit(true);
     setErr(null);
     try {
-      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/lseg-reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
+      const res = await fetch(`/api/admin/volunteers/${volunteer.id}/request-dbs`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       onDone();
@@ -580,7 +574,7 @@ function LsegRejectModal({
         >
           <div>
             <h2 className="text-[16px] font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Mark LSEG as high risk
+              Require DBS check
             </h2>
             <p className="text-[12px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
               {volunteer.first_name} {volunteer.last_name} · {volunteer.email}
@@ -592,28 +586,9 @@ function LsegRejectModal({
         <div className="p-6 flex flex-col gap-5">
           <div
             className="rounded-xl p-4 text-[13px] leading-relaxed"
-            style={{ background: "#FEE2E2", color: "#DC2626", border: "1px solid #FBD5D5" }}
+            style={{ background: "#FEF9C3", color: "#92400E" }}
           >
-            This will set {volunteer.first_name}&apos;s overall compliance to{" "}
-            <strong>Rejected</strong>. No email is sent automatically — notify the volunteer separately if needed.
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[12px] font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-              Internal notes <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(optional)</span>
-            </label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Name matched against sanctions list — case ref #..."
-              rows={4}
-              className="border rounded-xl px-3 py-2.5 text-[13px] resize-none leading-relaxed"
-              style={{
-                borderColor: "var(--color-input-border)",
-                background:  "var(--color-input-bg)",
-                color:       "var(--color-text-primary)",
-              }}
-            />
+            The LSEG check wasn&apos;t clear, so we&apos;ll ask {volunteer.first_name} to verify with a <strong>DBS certificate</strong>. They&apos;ll get an email and an upload prompt on their dashboard. Their application stays open — you&apos;ll review the DBS once it&apos;s uploaded. No rejection happens at this stage.
           </div>
 
           {err && <p className="text-[13px]" style={{ color: "var(--color-error)" }}>{err}</p>}
@@ -630,9 +605,9 @@ function LsegRejectModal({
               onClick={submit}
               disabled={submitting}
               className="flex-1 text-[13px] px-4 py-2.5 rounded-xl font-semibold transition-opacity"
-              style={{ background: "#B33A3A", color: "#fff", opacity: submitting ? 0.5 : 1 }}
+              style={{ background: "var(--color-gold)", color: "#1A1714", opacity: submitting ? 0.5 : 1 }}
             >
-              {submitting ? "Saving…" : "Mark as High Risk"}
+              {submitting ? "Saving…" : "Require DBS check"}
             </button>
           </div>
         </div>
@@ -666,7 +641,7 @@ export default function VolunteerDetailPage() {
   const [templates, setTemplates]   = useState<Template[]>([]);
   const [points, setPoints]         = useState<PointsData | null>(null);
   const [loading, setLoading]       = useState(true);
-  const [modal, setModal]           = useState<"approve" | "reject" | "lseg-approve" | "lseg-reject" | null>(null);
+  const [modal, setModal]           = useState<"approve" | "reject" | "lseg-approve" | "require-dbs" | null>(null);
   const [success, setSuccess]       = useState<string | null>(null);
 
   // Communications
@@ -747,7 +722,7 @@ export default function VolunteerDetailPage() {
   const dbsStatus  = compliance?.dbs_status ?? "not_uploaded";
   const isPending  = dbsStatus === "pending";
 
-  const rejectTpl  = templates.find((t) => t.key === "dbs_rejected")  ?? null;
+  const rejectTpl  = templates.find((t) => t.key === "volunteer_rejected")  ?? null;
   const approveTpl = templates.find((t) => t.key === "application_approved") ?? null;
 
   return (
@@ -842,11 +817,11 @@ export default function VolunteerDetailPage() {
                   Mark LSEG as clear
                 </button>
                 <button
-                  onClick={() => setModal("lseg-reject")}
-                  className="w-full px-4 py-2 text-[12px] font-medium"
-                  style={{ color: "#9E5555", background: "transparent" }}
+                  onClick={() => setModal("require-dbs")}
+                  className="w-full px-4 py-2 text-[12px] font-semibold rounded-xl"
+                  style={{ color: "var(--color-gold)", background: "var(--color-gold-subtle)" }}
                 >
-                  Mark LSEG as high risk
+                  Not clear — require DBS check
                 </button>
               </div>
             </div>
@@ -863,7 +838,7 @@ export default function VolunteerDetailPage() {
             >
               <div>
                 <h2 className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>DBS certificate</h2>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Optional — informational only</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>Required when the LSEG check isn&apos;t clear</p>
               </div>
               <Badge map={DBS_BADGE} value={dbsStatus} />
             </div>
@@ -1150,11 +1125,11 @@ export default function VolunteerDetailPage() {
           )}
         />
       )}
-      {modal === "lseg-reject" && (
-        <LsegRejectModal
+      {modal === "require-dbs" && (
+        <RequireDbsModal
           volunteer={volunteer}
           onClose={() => setModal(null)}
-          onDone={() => handleDone(`LSEG marked as high risk for ${volunteer.first_name}.`)}
+          onDone={() => handleDone(`DBS verification requested from ${volunteer.first_name}.`)}
         />
       )}
     </div>
