@@ -39,13 +39,21 @@ export async function POST(request: Request) {
     // Confirm this is a volunteer account
     const { data: volunteer } = await supabase
       .from("volunteers")
-      .select("id, is_active")
+      .select("id, is_active, email_verified")
       .eq("auth_user_id", data.user.id)
       .single();
 
     if (!volunteer) {
       await supabase.auth.signOut();
       return NextResponse.json({ error: "No volunteer account found for this email" }, { status: 403 });
+    }
+
+    if (!volunteer.email_verified) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { error: "Please verify your email address first — check your inbox for the link.", code: "email_unverified", email: email.toLowerCase() },
+        { status: 403 },
+      );
     }
 
     if (!volunteer.is_active) {
