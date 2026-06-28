@@ -62,7 +62,7 @@ function ResultCard({ result, onDismiss }: { result: ScanResult; onDismiss: () =
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8E8E" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[15px] mb-0.5" style={{ color: "#FF8E8E" }}>Check-in failed</p>
+              <p className="font-bold text-[15px] mb-0.5" style={{ color: "#FF8E8E" }}>Scan failed</p>
               <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.5)" }}>{result.error}</p>
             </div>
           </div>
@@ -572,7 +572,7 @@ export default function CheckInScannerPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-[18px] font-bold mb-1" style={{ color: "#F3E9D2" }}>QR Check-in Scanner</h2>
+                  <h2 className="text-[18px] font-bold mb-1" style={{ color: "#F3E9D2" }}>Attendance Scanner</h2>
                   <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
                     Ready to scan for <strong style={{ color: "rgba(255,255,255,0.7)" }}>{selectedEvent?.name}</strong>
                   </p>
