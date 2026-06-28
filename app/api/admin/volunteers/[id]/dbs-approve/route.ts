@@ -29,13 +29,13 @@ export async function POST(
 
   const { data: updated, error: updErr } = await service
     .from("volunteer_compliance")
-    .update({
+    .upsert({
+      volunteer_id:    id,
       dbs_status:      "verified",
       dbs_expiry_date: expiryDate,
       dbs_reviewed_by: admin?.id ?? null,
       dbs_reviewed_at: new Date().toISOString(),
-    })
-    .eq("volunteer_id", id)
+    }, { onConflict: "volunteer_id" })
     .select("overall_status")
     .single();
 

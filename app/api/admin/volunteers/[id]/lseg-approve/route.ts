@@ -23,13 +23,13 @@ export async function POST(
 
   const { data: updated, error: updErr } = await service
     .from("volunteer_compliance")
-    .update({
+    .upsert({
+      volunteer_id:     id,
       lseg_status:      "clear",
       lseg_screened_at: new Date().toISOString(),
       lseg_override_by: admin?.id ?? null,
       lseg_override_at: new Date().toISOString(),
-    })
-    .eq("volunteer_id", id)
+    }, { onConflict: "volunteer_id" })
     .select("overall_status")
     .single();
 
