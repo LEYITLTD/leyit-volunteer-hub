@@ -28,15 +28,15 @@
 
 ---
 
-## ADR-003 · Cloudflare R2 for DBS certificates and email PDF attachments
-**Date:** 2026-06-17  
-**Status:** Accepted
+## ADR-003 · Supabase Storage for DBS certificates and attachments
+**Date:** 2026-06-17 · revised 2026-06-28  
+**Status:** Superseded — Cloudflare R2 was never implemented; Supabase Storage is used instead.
 
-**Context:** DBS certificate uploads and pre-event PDF attachments need secure storage with no egress fees at ~700 volunteers' scale.
+**Context:** DBS certificate uploads and event attachments need secure file storage at ~700 volunteers' scale.
 
-**Decision:** Cloudflare R2 (S3-compatible API). Documents stored in a private bucket. Files served exclusively via signed URLs that expire (15 minutes for DBS certificates). Admin never links volunteers to their raw bucket path.
+**Decision:** Use **Supabase Storage** (private buckets: `dbs-documents`, `certificates`). Files are served exclusively via signed URLs that expire; admins never link volunteers to a raw bucket path. This keeps storage in the same platform as the database/auth (one provider, one set of keys) rather than adding Cloudflare R2 + the AWS SDK.
 
-**Consequences:** Zero egress cost. ~700 DBS PDFs + event attachments ≈ 2–3 GB, well within the 10 GB free tier. S3-compatible so the `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` packages handle signing.
+**Consequences:** No extra provider or SDK. The `dbs-documents` bucket is private (verified). Note: the volunteer self-upload route stored a public URL instead of the storage path — a known fix. Earlier `R2_*` env vars are unused and should be removed.
 
 ---
 
