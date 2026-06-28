@@ -163,9 +163,8 @@ boxlabel(s, 8.5, 1.7, 4.2, 1.25, "Supabase — Postgres", "Row-level security ·
 boxlabel(s, 8.5, 3.05, 2.0, 1.0, "Auth", "JWT sessions", GREENL, GREEN, GREEN, line=GREEN)
 boxlabel(s, 10.7, 3.05, 2.0, 1.0, "Storage", "DBS · certs", GREENL, GREEN, GREEN, line=GREEN)
 # external
-boxlabel(s, 8.5, 4.35, 1.3, 0.85, "Resend", "Email", GOLDL, INK, MUTED, line=LINE, tsize=10, ssize=8)
-boxlabel(s, 9.95, 4.35, 1.35, 0.85, "Voodoo", "SMS", GOLDL, INK, MUTED, line=LINE, tsize=10, ssize=8)
-boxlabel(s, 11.45, 4.35, 1.25, 0.85, "R2", "Object store", GOLDL, INK, MUTED, line=LINE, tsize=10, ssize=8)
+boxlabel(s, 9.4, 4.35, 1.55, 0.85, "Resend", "Email", GOLDL, INK, MUTED, line=LINE, tsize=10, ssize=8)
+boxlabel(s, 11.15, 4.35, 1.55, 0.85, "Voodoo", "SMS", GOLDL, INK, MUTED, line=LINE, tsize=10, ssize=8)
 arrow(s, 3.1, 2.47, 4.2, 2.7); arrow(s, 3.1, 3.72, 4.2, 3.5)
 arrow(s, 7.4, 2.9, 8.5, 2.4); arrow(s, 7.4, 3.3, 8.5, 3.5); arrow(s, 7.4, 3.7, 10.7, 3.5)
 arrow(s, 7.4, 4.0, 8.5, 4.6, color=MUTED)
@@ -237,7 +236,6 @@ field_table(s, 0.7, 1.95, 6.1, "Outbound", [
     ("Resend", "Transactional + broadcast email"),
     ("Voodoo SMS", "SMS broadcasts + direct SMS"),
     ("Supabase Storage", "dbs-documents (private), certificates"),
-    ("Cloudflare R2", "Object storage (assets)"),
 ], h_each=0.34)
 field_table(s, 7.0, 1.95, 5.6, "Inbound webhooks", [
     ("/api/webhooks/resend", "Delivery / open / bounce — HMAC-verified"),

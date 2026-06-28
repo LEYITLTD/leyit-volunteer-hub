@@ -377,13 +377,13 @@ tr:nth-child(even) td{background:#fafafa}
     <ul class="bullet-list">
       <li>Admin selects an event, then clicks <strong>"Send email to confirmed volunteers"</strong></li>
       <li>Composes subject line and body in a rich-text editor built into the dashboard</li>
-      <li>Attaches one or more PDF files by uploading directly in the composer (stored in Cloudflare R2, sent as email attachments via Resend)</li>
+      <li>Attaches one or more PDF files by uploading directly in the composer (stored in Supabase Storage, sent as email attachments via Resend)</li>
       <li>A preview shows the full email and recipient count before sending</li>
       <li>Sends only to volunteers with status = <span class="badge bg">Confirmed</span> for that event</li>
       <li>Full send log stored: subject, timestamp, attachment filenames, recipient count</li>
       <li>All past campaigns visible in an <strong>Email History</strong> section per event</li>
     </ul>
-    <div class="note" style="margin-top:.75rem;">PDF files are uploaded to Cloudflare R2 storage, which generates a signed URL. Resend then attaches the file to the outgoing email. The volunteer receives a genuine email attachment — no links to click.</div>
+    <div class="note" style="margin-top:.75rem;">PDF files are uploaded to Supabase Storage, which generates a signed URL. Resend then attaches the file to the outgoing email. The volunteer receives a genuine email attachment — no links to click.</div>
   </div>
 </div>
 
@@ -593,7 +593,7 @@ tr:nth-child(even) td{background:#fafafa}
         <tr><td><strong>Backend / API</strong></td><td>Next.js API routes (Node.js)</td><td>All business logic, auth, integrations</td><td>Co-located with frontend — no separate server to maintain</td></tr>
         <tr><td><strong>Database</strong></td><td>PostgreSQL via Supabase</td><td>All application data</td><td>Managed Postgres, built-in auth, real-time, row-level security</td></tr>
         <tr><td><strong>Authentication</strong></td><td>Supabase Auth</td><td>Volunteer + admin login</td><td>Handles email/password, sessions, JWTs out of the box</td></tr>
-        <tr><td><strong>File storage</strong></td><td>Cloudflare R2</td><td>DBS certificates + email PDF attachments</td><td>No egress fees, 10GB free tier, S3-compatible API</td></tr>
+        <tr><td><strong>File storage</strong></td><td>Supabase Storage</td><td>DBS certificates + email PDF attachments</td><td>Private buckets, signed URLs, same platform as the database (no extra provider)</td></tr>
         <tr><td><strong>Email</strong></td><td>Resend (Pro)</td><td>All transactional + campaign emails</td><td>No daily cap, great deliverability, developer-friendly API, PDF attachments</td></tr>
         <tr><td><strong>QR Codes</strong></td><td>qrcode.js (server-side)</td><td>Generate volunteer check-in QR codes</td><td>Open source, outputs PNG ready for email attachment</td></tr>
         <tr><td><strong>Hosting</strong></td><td>Vercel</td><td>Frontend + API hosting</td><td>Zero-config Next.js, auto-scaling, global CDN</td></tr>
@@ -649,7 +649,7 @@ tr:nth-child(even) td{background:#fafafa}
     <table><thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead><tbody>
       <tr><td><span class="tag">id</span></td><td>UUID PK</td><td></td></tr>
       <tr><td><span class="tag">volunteer_id</span></td><td>UUID FK → volunteers</td><td>1-to-1 relationship</td></tr>
-      <tr><td><span class="tag">dbs_document_url</span></td><td>TEXT</td><td>Cloudflare R2 path — served via signed URL</td></tr>
+      <tr><td><span class="tag">dbs_document_url</span></td><td>TEXT</td><td>Supabase Storage path — served via signed URL</td></tr>
       <tr><td><span class="tag">dbs_uploaded_at</span></td><td>TIMESTAMPTZ</td><td></td></tr>
       <tr><td><span class="tag">dbs_status</span></td><td>ENUM('not_uploaded','pending','verified','rejected')</td><td></td></tr>
       <tr><td><span class="tag">dbs_expiry_date</span></td><td>DATE</td><td>Admin enters at point of approval</td></tr>
@@ -815,10 +815,10 @@ tr:nth-child(even) td{background:#fafafa}
           <td>700 volunteers is a tiny database — well within 500MB free tier. Caveat: free projects pause after 1 week of inactivity. Solve with a scheduled ping, or upgrade to Pro (£20/month) for daily backups + no pausing</td>
         </tr>
         <tr>
-          <td><strong>Cloudflare R2</strong></td>
-          <td>Free tier</td>
+          <td><strong>Supabase Storage</strong></td>
+          <td>Included</td>
           <td><span class="badge bg">£0</span></td>
-          <td>10GB free, no egress fees. ~700 DBS certs + PDFs ≈ 2GB total. Stays free unless storage exceeds 10GB</td>
+          <td>Part of the Supabase project — 1GB free, generous on Pro. ~700 DBS certs + PDFs ≈ 2GB. Private buckets, signed URLs</td>
         </tr>
         <tr>
           <td><strong>Resend</strong></td>
