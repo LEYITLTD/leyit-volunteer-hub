@@ -43,6 +43,7 @@ export async function GET() {
       event_applications ( id, role_id, status, volunteer_id )
     `)
     .in("status", ["published", "active"])
+    .gte("event_end", new Date().toISOString())   // upcoming/ongoing only — past events drop off Browse
     .order("event_start", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
