@@ -571,12 +571,11 @@ function EventCard({
 
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 
-type FilterKey = "all" | "applied" | "confirmed";
+const ACTIVE = new Set(["applied", "confirmed", "waitlisted"]);
 
 export default function BrowseEventsPage() {
   const [events,    setEvents]    = useState<Event[]>([]);
   const [loading,   setLoading]   = useState(true);
-  const [filter,    setFilter]    = useState<FilterKey>("all");
   const [applyFor,  setApplyFor]  = useState<Event | null>(null);
   const [cancelFor, setCancelFor] = useState<Event | null>(null);
   const [claimFor,  setClaimFor]  = useState<Event | null>(null);
@@ -606,11 +605,8 @@ export default function BrowseEventsPage() {
     load();
   }
 
-  const filtered = events.filter(ev => {
-    if (filter === "applied")   return ev.myApplication?.status === "applied" || ev.myApplication?.status === "waitlisted";
-    if (filter === "confirmed") return ev.myApplication?.status === "confirmed";
-    return true;
-  });
+  // Browse only shows events you haven't signed up for (cancelled/declined re-open).
+  const filtered = events.filter(ev => !(ev.myApplication && ACTIVE.has(ev.myApplication.status)));
 
   if (loading) {
     return (
@@ -620,52 +616,28 @@ export default function BrowseEventsPage() {
     );
   }
 
-  const CHIPS: { key: FilterKey; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "applied", label: "Applied" },
-    { key: "confirmed", label: "Confirmed" },
-  ];
-
   return (
     <div style={{ flex: 1 }}>
       {/* Page header */}
-      <div style={{ padding: "8px 22px 6px" }}>
+      <div style={{ padding: "8px 22px 14px" }}>
         <h1 style={{
           fontFamily: "var(--font-display)",
           fontSize: 28, fontWeight: 700, color: "#1C1917", margin: "0 0 4px",
         }}>
-          Events
+          Browse Events
         </h1>
-      </div>
-
-      {/* Filter chips */}
-      <div style={{
-        display: "flex", gap: 8, overflowX: "auto",
-        padding: "2px 22px 16px",
-        WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
-      }}>
-        {CHIPS.map(({ key, label }) => (
-          <button key={key} onClick={() => setFilter(key)}
-            style={{
-              flexShrink: 0, borderRadius: 20, padding: "8px 16px",
-              fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
-              border: "1px solid",
-              background: filter === key ? "#1A1714" : "#fff",
-              color:      filter === key ? "#fff"    : "#57534E",
-              borderColor: filter === key ? "#1A1714" : "#E4DDD0",
-            }}>
-            {label}
-          </button>
-        ))}
+        <p style={{ fontSize: 13, color: "#78716C", margin: 0 }}>
+          Upcoming events you can sign up for. Once you apply, they move to <strong style={{ color: "#57534E" }}>My Events</strong>.
+        </p>
       </div>
 
       {/* Event list */}
       <div style={{ padding: "0 16px" }}>
         {filtered.length === 0 ? (
           <div style={{ background: "#fff", border: "1px solid #EAE6DD", borderRadius: 18, padding: 40, textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#1C1917", marginBottom: 6 }}>No events</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#1C1917", marginBottom: 6 }}>No events to sign up for</div>
             <div style={{ fontSize: 13, color: "#78716C" }}>
-              {filter === "all" ? "No events open right now — check back soon." : `No ${filter} events yet.`}
+              You&apos;ve signed up for everything that&apos;s open, or there&apos;s nothing new yet — check back soon.
             </div>
           </div>
         ) : (
